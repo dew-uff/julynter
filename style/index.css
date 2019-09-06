@@ -1,0 +1,118 @@
+.jp-Julynter-content {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+  overflow: auto;
+  background-color: var(--jp-layout-color1);
+}
+
+.jp-Julynter-content li {
+  display: flex;
+  flex-direction: row;
+  padding: 4px 12px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  cursor: pointer;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.jp-Julynter-content li:hover {
+  background: var(--jp-layout-color2);
+}
+
+.jp-Julynter {
+  display: flex;
+  flex-direction: column;
+  background: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color1);
+  font-size: var(--jp-ui-font-size0);
+  height: 100%;
+}
+
+.jp-Julynter header {
+  border-bottom: var(--jp-border-width) solid var(--jp-border-color2);
+  flex: 0 0 auto;
+  font-size: var(--jp-ui-font-size0);
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin: 0px;
+  padding: 12px 0 4px 12px;
+  text-transform: uppercase;
+}
+/*
+[data-jp-theme-light='true'] .jp-Julynter-icon {
+  background-image: url(list-light.svg);
+}
+
+[data-jp-theme-light='false'] .jp-Julynter-icon {
+  background-image: url(list-dark.svg);
+}
+
+*/
+
+.julynter-toolbar-icon,
+.julynter-toolbar-icon-selected {
+  float: left;
+  padding: 0px;
+  margin: 4px;
+  background-repeat: no-repeat;
+  background-color: none;
+  background-size: 100%;
+  background-position: center;
+  height: 24px;
+  width: 24px;
+  margin: 4px;
+  border-radius: 2px;
+}
+
+[data-jp-theme-light='true'] .julynter-toolbar-title-icon {
+  background-image: url('img/title.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-toolbar-title-icon {
+  background-image: url('img/title_darktheme.svg');
+}
+
+[data-jp-theme-light='true'] .julynter-toolbar-icon:hover {
+  background-color: var(--jp-input-background);
+}
+
+[data-jp-theme-light='false'] .julynter-toolbar-icon:hover {
+  background-color: #3a3a3a;
+}
+
+[data-jp-theme-light='true'] .julynter-toolbar-icon-selected {
+  background-color: var(--jp-layout-color2);
+}
+
+[data-jp-theme-light='false'] .julynter-toolbar-icon-selected {
+  background-color: #565656;
+}
+
+
+.julynter-toolbar-title-icon {
+  width: 30px;
+  height: 22px;
+  margin: 4px 9px 4px 4px;
+  content: "T";
+}
+
+.julynter-toolbar {
+  position: relative;
+  width: 100%;
+  margin: 0px;
+  user-select: none;
+  border-bottom: var(--jp-border-width) solid var(--jp-border-color2);
+  height: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.julynter-report-div {
+  display: inline-flex;
+  width: 100%;
+}

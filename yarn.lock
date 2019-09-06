@@ -88,6 +88,40 @@
     react-dom "~16.8.4"
     sanitize-html "~1.20.1"
 
+"@jupyterlab/attachments@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@jupyterlab/attachments/-/attachments-1.1.0.tgz#3e987d532be68f875f046c072c88c7e2421a9620"
+  integrity sha512-TrYJ3MWM4NtX4XZVlB4T2OWklJbm7AU87hdor+KzkzfTtfaEGWueP+f38RFweG+7H4bKiMbtYWFnRBOX9JDyjw==
+  dependencies:
+    "@jupyterlab/coreutils" "^3.1.0"
+    "@jupyterlab/observables" "^2.3.0"
+    "@jupyterlab/rendermime" "^1.1.0"
+    "@jupyterlab/rendermime-interfaces" "^1.4.0"
+    "@phosphor/disposable" "^1.2.0"
+    "@phosphor/signaling" "^1.2.3"
+
+"@jupyterlab/cells@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@jupyterlab/cells/-/cells-1.1.0.tgz#d5432c2bff45570ebdeac37f289fe93a2ba0be7a"
+  integrity sha512-EkG9x55QRcxaDYJ2Qgp7zUbzckUAmLRHw5i0PrAA0Z2L9UXUr6ZYc12urvvgPX6uAZE87PZ9Rqhi8aRmhPvQTg==
+  dependencies:
+    "@jupyterlab/apputils" "^1.1.0"
+    "@jupyterlab/attachments" "^1.1.0"
+    "@jupyterlab/codeeditor" "^1.1.0"
+    "@jupyterlab/codemirror" "^1.1.0"
+    "@jupyterlab/coreutils" "^3.1.0"
+    "@jupyterlab/observables" "^2.3.0"
+    "@jupyterlab/outputarea" "^1.1.0"
+    "@jupyterlab/rendermime" "^1.1.0"
+    "@jupyterlab/services" "^4.1.0"
+    "@phosphor/algorithm" "^1.1.3"
+    "@phosphor/coreutils" "^1.3.1"
+    "@phosphor/messaging" "^1.2.3"
+    "@phosphor/signaling" "^1.2.3"
+    "@phosphor/virtualdom" "^1.1.3"
+    "@phosphor/widgets" "^1.8.0"
+    react "~16.8.4"
+
 "@jupyterlab/codeeditor@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@jupyterlab/codeeditor/-/codeeditor-1.1.0.tgz#893e5cb8a4b1c4f3cfb85f0a24635313cf0b9e0c"
@@ -138,6 +172,25 @@
     path-posix "~1.0.0"
     url-parse "~1.4.3"
 
+"@jupyterlab/docmanager@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@jupyterlab/docmanager/-/docmanager-1.1.0.tgz#6cce845dad2bd4c212ffe98a54d605b9b4195ffd"
+  integrity sha512-IiCiIJG7laSXdbCPwOxUPaLo97dDB08+uUVuE3YAevft0sJTkL2GkOqVFqbmqT+8jcgeYkgjbLSmxeJZqu6g3A==
+  dependencies:
+    "@jupyterlab/apputils" "^1.1.0"
+    "@jupyterlab/coreutils" "^3.1.0"
+    "@jupyterlab/docregistry" "^1.1.0"
+    "@jupyterlab/services" "^4.1.0"
+    "@jupyterlab/statusbar" "^1.1.0"
+    "@phosphor/algorithm" "^1.1.3"
+    "@phosphor/coreutils" "^1.3.1"
+    "@phosphor/disposable" "^1.2.0"
+    "@phosphor/messaging" "^1.2.3"
+    "@phosphor/properties" "^1.1.3"
+    "@phosphor/signaling" "^1.2.3"
+    "@phosphor/widgets" "^1.8.0"
+    react "~16.8.4"
+
 "@jupyterlab/docregistry@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@jupyterlab/docregistry/-/docregistry-1.1.0.tgz#21c262282c8624afbbe12f536c24b79c97964aee"
@@ -158,6 +211,46 @@
     "@phosphor/signaling" "^1.2.3"
     "@phosphor/widgets" "^1.8.0"
 
+"@jupyterlab/fileeditor@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@jupyterlab/fileeditor/-/fileeditor-1.1.0.tgz#0b0dbb5a17c3854c837d9ef7d88a56d77de4f4d8"
+  integrity sha512-W8rMqDW5gjP0TYB252y1ESYGmAIiWFoec37YrcoIVQqFU0zEgfKHX9ZadpKwxETvCSBpBT0hLEYMbEnxeLYkLw==
+  dependencies:
+    "@jupyterlab/apputils" "^1.1.0"
+    "@jupyterlab/codeeditor" "^1.1.0"
+    "@jupyterlab/docregistry" "^1.1.0"
+    "@jupyterlab/statusbar" "^1.1.0"
+    "@phosphor/coreutils" "^1.3.1"
+    "@phosphor/messaging" "^1.2.3"
+    "@phosphor/widgets" "^1.8.0"
+    react "~16.8.4"
+
+"@jupyterlab/notebook@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@jupyterlab/notebook/-/notebook-1.1.0.tgz#b51806ab373efe0f797bb8533484d72faf19553b"
+  integrity sha512-mArr7wwYiZbpka+gv5842lfU0w13nVzNzqFpDJpyUfZuNdLihzp1iBmsLwu1ow6o9UOfjOkQX5IhEkb87W6juw==
+  dependencies:
+    "@jupyterlab/apputils" "^1.1.0"
+    "@jupyterlab/cells" "^1.1.0"
+    "@jupyterlab/codeeditor" "^1.1.0"
+    "@jupyterlab/coreutils" "^3.1.0"
+    "@jupyterlab/docregistry" "^1.1.0"
+    "@jupyterlab/observables" "^2.3.0"
+    "@jupyterlab/rendermime" "^1.1.0"
+    "@jupyterlab/services" "^4.1.0"
+    "@jupyterlab/statusbar" "^1.1.0"
+    "@jupyterlab/ui-components" "^1.1.0"
+    "@phosphor/algorithm" "^1.1.3"
+    "@phosphor/coreutils" "^1.3.1"
+    "@phosphor/domutils" "^1.1.3"
+    "@phosphor/dragdrop" "^1.3.3"
+    "@phosphor/messaging" "^1.2.3"
+    "@phosphor/properties" "^1.1.3"
+    "@phosphor/signaling" "^1.2.3"
+    "@phosphor/virtualdom" "^1.1.3"
+    "@phosphor/widgets" "^1.8.0"
+    react "~16.8.4"
+
 "@jupyterlab/observables@^2.3.0":
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/@jupyterlab/observables/-/observables-2.3.0.tgz#db58eee4c874920d5099ccdbe7dc85a9d278782b"
@@ -168,6 +261,25 @@
     "@phosphor/disposable" "^1.2.0"
     "@phosphor/messaging" "^1.2.3"
     "@phosphor/signaling" "^1.2.3"
+
+"@jupyterlab/outputarea@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@jupyterlab/outputarea/-/outputarea-1.1.0.tgz#8a2f3f9461a16a23e0e42ab5da993bacfe1d223a"
+  integrity sha512-ipApSGNgwvxrVfrniAZZW1+1LnXxdG480JW0vWBx9fRYafr0NK99hPAqfPNzYI2u9rd45O9zBCeSLMF3DvHXeA==
+  dependencies:
+    "@jupyterlab/apputils" "^1.1.0"
+    "@jupyterlab/coreutils" "^3.1.0"
+    "@jupyterlab/observables" "^2.3.0"
+    "@jupyterlab/rendermime" "^1.1.0"
+    "@jupyterlab/rendermime-interfaces" "^1.4.0"
+    "@jupyterlab/services" "^4.1.0"
+    "@phosphor/algorithm" "^1.1.3"
+    "@phosphor/coreutils" "^1.3.1"
+    "@phosphor/disposable" "^1.2.0"
+    "@phosphor/messaging" "^1.2.3"
+    "@phosphor/properties" "^1.1.3"
+    "@phosphor/signaling" "^1.2.3"
+    "@phosphor/widgets" "^1.8.0"
 
 "@jupyterlab/rendermime-interfaces@^1.4.0":
   version "1.4.0"
@@ -362,10 +474,17 @@
   resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.2.tgz#0e58ae66773d7fd7c372a493aff740878ec9ceaa"
   integrity sha512-f8JzJNWVhKtc9dg/dyDNfliTKNOJSLa7Oht/ElZdF/UbMUmAH3rLmAk3ODNjw0mZajDEgatA03tRjB4+Dp/tzA==
 
-"@types/react@~16.8.18":
-  version "16.8.25"
-  resolved "https://registry.yarnpkg.com/@types/react/-/react-16.8.25.tgz#0247613ab58b1b11ba10fed662e1947c5f2bb89c"
-  integrity sha512-ydAAkLnNTC4oYSxJ3zwK/4QcVmEecACJ4ZdxXITbxz/dhahBSDKY6OQ1uawAW6rE/7kfHccxulYLSAIZVrSq0A==
+"@types/react-dom@^16.8.4":
+  version "16.9.0"
+  resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-16.9.0.tgz#ba6ddb00bf5de700b0eb91daa452081ffccbfdea"
+  integrity sha512-OL2lk7LYGjxn4b0efW3Pvf2KBVP0y1v3wip1Bp7nA79NkOpElH98q3WdCEdDj93b2b0zaeBG9DvriuKjIK5xDA==
+  dependencies:
+    "@types/react" "*"
+
+"@types/react@*", "@types/react@^16.8.4", "@types/react@~16.8.18":
+  version "16.9.2"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-16.9.2.tgz#6d1765431a1ad1877979013906731aae373de268"
+  integrity sha512-jYP2LWwlh+FTqGd9v7ynUKZzjj98T8x7Yclz479QdRhHfuW9yQ+0jjnD31eXSXutmBpppj5PYNLYLRfnZJvcfg==
   dependencies:
     "@types/prop-types" "*"
     csstype "^2.2.0"
@@ -737,6 +856,16 @@ querystringify@^2.1.1:
   resolved "https://registry.yarnpkg.com/querystringify/-/querystringify-2.1.1.tgz#60e5a5fd64a7f8bfa4d2ab2ed6fdf4c85bad154e"
   integrity sha512-w7fLxIRCRT7U8Qu53jQnJyPkYZIaR4n5151KMfcJlO/A9397Wxb1amJvROTK6TOnp7PfoAmg/qXiNHI+08jRfA==
 
+react-dom@^16.8.4:
+  version "16.9.0"
+  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-16.9.0.tgz#5e65527a5e26f22ae3701131bcccaee9fb0d3962"
+  integrity sha512-YFT2rxO9hM70ewk9jq0y6sQk8cL02xm4+IzYBz75CQGlClQQ1Bxq0nhHF6OtSbit+AIahujJgb/CPRibFkMNJQ==
+  dependencies:
+    loose-envify "^1.1.0"
+    object-assign "^4.1.1"
+    prop-types "^15.6.2"
+    scheduler "^0.15.0"
+
 react-dom@~16.8.4:
   version "16.8.6"
   resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-16.8.6.tgz#71d6303f631e8b0097f56165ef608f051ff6e10f"
@@ -778,6 +907,15 @@ react-transition-group@^2.9.0:
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
     react-lifecycles-compat "^3.0.4"
+
+react@^16.8.4:
+  version "16.9.0"
+  resolved "https://registry.yarnpkg.com/react/-/react-16.9.0.tgz#40ba2f9af13bc1a38d75dbf2f4359a5185c4f7aa"
+  integrity sha512-+7LQnFBwkiw+BobzOF6N//BdoNw0ouwmSJTEm9cglOOmsg/TMiFHZLe2sEoN5M7LgJTj9oHH0gxklfnQe66S1w==
+  dependencies:
+    loose-envify "^1.1.0"
+    object-assign "^4.1.1"
+    prop-types "^15.6.2"
 
 react@~16.8.4:
   version "16.8.6"
@@ -845,6 +983,14 @@ scheduler@^0.13.6:
   version "0.13.6"
   resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.13.6.tgz#466a4ec332467b31a91b9bf74e5347072e4cd889"
   integrity sha512-IWnObHt413ucAYKsD9J1QShUKkbKLQQHdxRyw73sw4FN26iWr3DY/H34xGPe4nmL1DwXyWmSWmMrA9TfQbE/XQ==
+  dependencies:
+    loose-envify "^1.1.0"
+    object-assign "^4.1.1"
+
+scheduler@^0.15.0:
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.15.0.tgz#6bfcf80ff850b280fed4aeecc6513bc0b4f17f8e"
+  integrity sha512-xAefmSfN6jqAa7Kuq7LIJY0bwAPG3xlCj0HMEBQk1lxYiDKZscY2xJ5U/61ZTrYbmNQbXa+gc7czPkVo11tnCg==
   dependencies:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
