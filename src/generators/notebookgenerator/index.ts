@@ -1,5 +1,5 @@
 
-import { INotebookTracker } from '@jupyterlab/notebook';
+import { INotebookTracker, Notebook } from '@jupyterlab/notebook';
 
 import { notebookItemRenderer } from './itemrenderer';
 
@@ -18,6 +18,7 @@ import { Widget } from '@phosphor/widgets';
 import {
   renameDialog, IDocumentManager,
 } from '@jupyterlab/docmanager';
+import { Cell, CodeCell } from '@jupyterlab/cells';
 
 
 export class TitleGenerator {
@@ -34,6 +35,30 @@ export class TitleGenerator {
     return {
       text: text,
       type: 'title',
+      onClick: onClick
+    }
+  }
+}
+
+export class CellGenerator {
+  _notebook: Notebook;
+
+  constructor(notebook: INotebookTracker) {
+    this._notebook = notebook.currentWidget.content;
+  }
+
+  create(index: number, type: 'code' | 'markdown' | 'header' | 'raw', text:string): INotebookHeading {
+    const cell = this._notebook.widgets[index];
+    const onClickFactory = (line: number) => {
+      return () => {
+        this._notebook.activeCellIndex = index;
+        cell.node.scrollIntoView();
+      };
+    };
+    const onClick = onClickFactory(0);
+    return {
+      text: text,
+      type: type,
       onClick: onClick
     }
   }
@@ -102,7 +127,114 @@ export function createNotebookGenerator(
         let title = tracker.currentWidget.title.label.toLowerCase(); 
         doCheckTitle(title, headings, titleGenerator);
       }
+
+
+      // Iterate through the cells in the notebook
+      let cellGenerator = new CellGenerator(tracker);
+      let executionCounts: { [key:number]: [number, Cell] } = {};
+      let nonExecutedTail = tracker.currentWidget.content.widgets.length;
+      let emptyTail = tracker.currentWidget.content.widgets.length;
       
+      for (let i = tracker.currentWidget.content.widgets.length - 1; i >= 0; i--){
+        let cell: Cell = tracker.currentWidget.content.widgets[i];
+        let model = cell.model;
+        if (model.type === 'code') {
+          let executionCountNumber = (cell as CodeCell).model
+              .executionCount as number | null;
+          if (executionCountNumber === null) {
+            nonExecutedTail = i;
+          } else {
+            break;
+          }
+        }
+      }
+      for (let i = tracker.currentWidget.content.widgets.length - 1; i >= 0; i--){
+        let cell: Cell = tracker.currentWidget.content.widgets[i];
+        let model = cell.model;
+        let text = model.value.text;
+        if (text.trim() == '') {
+          emptyTail = i;
+        } else {
+          break;
+        }
+      }
+      
+      let lastExecutionCount = -1;
+      for (let i = 0; i < tracker.currentWidget.content.widgets.length; i++) {
+        let cell: Cell = tracker.currentWidget.content.widgets[i];
+        let model = cell.model;
+        if (model.type === 'code') {
+          let executionCountNumber = (cell as CodeCell).model
+              .executionCount as number | null;
+          if (executionCountNumber === null) {
+            if ((i < nonExecutedTail) && (model.value.text.trim() != "")) {
+              headings.push(cellGenerator.create(i, cell.model.type,
+                "Cell " + i + " is a non-executed cell among executed ones. " + 
+                "Please consider cleaning it to guarantee the reproducibility."
+              ))
+            }
+          } else {
+            if (executionCountNumber < lastExecutionCount) {
+              headings.push(cellGenerator.create(i, cell.model.type,
+                "Cell " + i + " has the execution count " + executionCountNumber +" in the wrong order. " + 
+                "Please consider re-running the notebook to guarantee the reproducibility."
+              ))
+            }
+            if (executionCounts.hasOwnProperty(executionCountNumber)) {
+              headings.push(cellGenerator.create(i, cell.model.type,
+                "Cell " + i + " repeats the execution count " + executionCountNumber +". " + 
+                "Please consider re-running the notebook to guarantee the reproducibility."
+              ))
+            }
+            executionCounts[executionCountNumber] = [i, cell];
+            lastExecutionCount = executionCountNumber;
+          }
+        }
+        let text = model.value.text;
+        
+        if (text.trim() == '' && i < emptyTail) {
+          headings.push(cellGenerator.create(i, cell.model.type,
+            "Cell " + i + " is empty in the middle of the notebook. " + 
+            "Please consider removing it to improve the readability."
+          ))
+        }
+      }
+      
+      lastExecutionCount = null;
+      console.log(executionCounts);
+      Object.keys(executionCounts)
+        .sort()
+        .forEach(function(currentCountS, i) {
+          console.log(currentCountS, i);
+          let currentCount = Number(currentCountS);
+          let tuple = executionCounts[currentCount];
+          let cell = tuple[1];
+          let index = tuple[0];
+          if ((lastExecutionCount === null) && (currentCount != 1)) {
+            headings.push(cellGenerator.create(index, cell.model.type,
+              "Cell " + index + " skips the execution count. " + 
+              "Please consider re-running the notebook to guarantee the reproducibility."
+            ))
+          } else if ((lastExecutionCount !== null) && (lastExecutionCount !== currentCount - 1)) {
+            headings.push(cellGenerator.create(index, cell.model.type,
+              "Cell " + index + " skips the execution count. " + 
+              "Please consider re-running the notebook to guarantee the reproducibility."
+            ))
+          }
+          lastExecutionCount = currentCount;
+        });
+      
+      // ToDo: check cell updates after execution
+      // ToDo: check imports on requirements
+      // ToDo: check variable definitions
+      // ToDo: check test
+      // ToDo: check first cell is markdown. Check last cell is markdown
+      // ToDo: check title size
+      // ToDo: check cyclomatic complexity
+      // ToDo: check position of imports
+      // ToDo: check paths?
+
+
       //let cell: Cell = panel.content.widgets[0];
       
       // Iterate through the cells in the notebook, generating their headings
