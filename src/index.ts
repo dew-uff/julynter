@@ -2,20 +2,13 @@ import {
   JupyterFrontEnd, JupyterFrontEndPlugin, ILayoutRestorer, ILabShell
 } from '@jupyterlab/application';
 
-import { DocumentRegistry } from '@jupyterlab/docregistry';
-
 import {
   NotebookPanel,
-  INotebookModel,
   INotebookTracker,
 } from '@jupyterlab/notebook';
 
 import { IDocumentManager } from '@jupyterlab/docmanager';
 
-import { IEditorTracker } from '@jupyterlab/fileeditor';
-
-import { IDisposable, DisposableDelegate } from '@phosphor/disposable';
-import { ToolbarButton } from '@jupyterlab/apputils';
 import { IJulynterRegistry, JulynterRegistry } from './registry';
 import { Julynter } from './julynter';
 
@@ -23,33 +16,19 @@ import {
   createNotebookGenerator,
 } from './generators';
 
+import {
+  JulynterKernelHandler,
+} from './kernel/handler';
+
+import {
+  KernelConnector,
+} from './kernel/kernelconnector';
+
+import {
+  Languages,
+} from './kernel/languages';
+
 import '../style/index.css';
-
-
-
-export class ButtonExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel, INotebookModel> {
-  createNew(panel: NotebookPanel, context: DocumentRegistry.IContext<INotebookModel>): IDisposable {
-    
-    var toolbar = new ToolbarButton({
-      className: "julynter-main",
-      onClick: () => {
-        alert("Teste");
-      },
-      tooltip: "View lint"
-    })
-    var button = toolbar.node;
-    var icon = document.createElement('i');
-    icon.classList.add('fa', "thermometer-1");
-    button.appendChild(icon);
-
-    panel.toolbar.insertItem(0, "teste", toolbar)
-      
-    return new DisposableDelegate(() => {
-      toolbar.dispose();
-    });
-
-  }
-}
 
 /**
  * Initialization data for the julynter extension.
@@ -60,7 +39,6 @@ const extension: JupyterFrontEndPlugin<IJulynterRegistry> = {
   provides: IJulynterRegistry,
   requires: [
     IDocumentManager,
-    IEditorTracker,
     ILabShell,
     ILayoutRestorer,
     INotebookTracker,
@@ -68,30 +46,28 @@ const extension: JupyterFrontEndPlugin<IJulynterRegistry> = {
   activate: activateJulynter
 };
 
+// VariableInspectionHandler -> JulynterHandler
+
 function activateJulynter(
   app: JupyterFrontEnd,
   docmanager: IDocumentManager,
-  editorTracker: IEditorTracker,
   labShell: ILabShell,
   restorer: ILayoutRestorer,
-  notebookTracker: INotebookTracker,
+  notebookTracker: INotebookTracker
 ): IJulynterRegistry {
-  console.log('JupyterLab extension julynter is activated!');
   // Create the widget.
   const julynter = new Julynter({ docmanager });
-
   // Create the registry.
   const registry = new JulynterRegistry();
-  
   // Add the julynter to the left area.
   julynter.title.iconClass = 'jp-TrustedIcon jp-SideBar-tabIcon';
   julynter.title.caption = 'Julynter';
   julynter.id = 'julynter';
   labShell.add(julynter, 'left', { rank: 700 });
-
+   
   // Add the julynter widget to the application restorer.
   restorer.add(julynter, 'juputerlab-julynter');
-
+ 
   // Create a notebook JulynterRegistry.IGenerator
   const notebookGenerator = createNotebookGenerator(
     notebookTracker,
@@ -99,12 +75,69 @@ function activateJulynter(
   );
   registry.addGenerator(notebookGenerator);
 
-  // Change the ToC when the active widget changes.
-  labShell.currentChanged.connect(() => {
+
+  const handlers: { [id: string]: Promise<JulynterKernelHandler> } = {};
+
+  /**
+   * Subscribes to the creation of new notebooks. If a new notebook is created, build a new handler for the notebook.
+   * Adds a promise for a instanced handler to the 'handlers' collection.
+   */
+  notebookTracker.widgetAdded.connect(( sender, nbPanel: NotebookPanel ) => {
+   //A promise that resolves after the initialization of the handler is done.
+    handlers[nbPanel.id] = new Promise( function( resolve, reject ) {
+      const session = nbPanel.session;
+      const connector = new KernelConnector( { session } );
+
+      connector.ready.then(() => { // Create connector and init w script if it exists for kernel type.
+        let kerneltype: string = connector.kernelType;
+
+        let scripts: Promise<Languages.LanguageModel> = Languages.getScript( kerneltype );
+
+        scripts.then(( result: Languages.LanguageModel ) => {
+          let initScript = result.initScript;
+          let queryCommand = result.queryCommand;
+          
+          const options: JulynterKernelHandler.IOptions = {
+                  queryCommand: queryCommand,
+                  connector: connector,
+                  initScript: initScript,
+                  id: session.path  //Using the sessions path as an identifier for now.
+          };
+          const handler = new JulynterKernelHandler( options );
+          nbPanel.disposed.connect(() => {
+              delete handlers[nbPanel.id];
+              handler.dispose();
+          } );
+          
+          handler.ready.then(() => {
+              resolve( handler );
+          } );
+        } );
+        //Otherwise log error message.
+        scripts.catch(( result: string ) => {
+            reject( result );
+        } )
+      } );
+    } );
+  } );
+
+
+  console.log('JupyterLab extension julynter is activated!');
+  
+
+  // Change the julynter when the active widget changes.
+  labShell.currentChanged.connect((sender, args) => {
     let widget = app.shell.currentWidget;
     if (!widget) {
       return;
     }
+    let future = handlers[widget.id];
+    future.then((source: JulynterKernelHandler) => {
+      if (source) {
+        julynter.handler = source;
+        julynter.handler.performInspection();
+      }
+    });
     let generator = registry.findGeneratorForWidget(widget);
     if (!generator) {
       // If the previously used widget is still available, stick with it.

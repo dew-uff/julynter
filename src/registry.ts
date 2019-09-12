@@ -8,6 +8,7 @@ import { Token } from '@phosphor/coreutils';
 
 import { IReport } from './julynter';
 import { Widget } from '@phosphor/widgets';
+import { IJulynterKernel } from './kernel/julynterkernel';
 
 /**
  * An interface for a JulynterRegistry.
@@ -111,5 +112,7 @@ export namespace JulynterRegistry {
      * a list of headings.
      */
     generate(widget: W): IReport[];
+
+    processKernelMessage(allArgs: IJulynterKernel.IJulynterKernelUpdate): void;
   }
 }

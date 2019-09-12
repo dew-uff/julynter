@@ -9,6 +9,9 @@ import { Widget } from '@phosphor/widgets';
 
 import { JulynterRegistry } from './registry';
 
+import { IJulynterKernel } from './kernel/julynterkernel';
+
+
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
@@ -16,6 +19,7 @@ import * as ReactDOM from 'react-dom';
  * Timeout for throttling Julynter rendering.
  */
 const RENDER_TIMEOUT = 1000;
+
 
 
 /**
@@ -27,6 +31,7 @@ export class Julynter extends Widget {
    */
   constructor(options: Julynter.IOptions) {
     super();
+    this._handler = null;
     this._docmanager = options.docmanager;
   }
 
@@ -146,10 +151,59 @@ export class Julynter extends Widget {
     this.update();
   }
 
+  get handler(): IJulynterKernel.IJulynterKernelHandler | null {
+    return this._handler;
+  }
+
+  set handler(handler: IJulynterKernel.IJulynterKernelHandler | null) {
+    if (this._handler === handler) {
+      return;
+    }
+    //Remove old subscriptions
+    if (this._handler) {
+      this._handler.inspected.disconnect( this.onInspectorUpdate, this );
+      this._handler.disposed.disconnect( this.onSourceDisposed, this );
+    }
+    this._handler = handler;
+    //Subscribe to new object
+    if ( this._handler ) {
+        this._handler.inspected.connect( this.onInspectorUpdate, this );
+        this._handler.disposed.connect( this.onSourceDisposed, this );
+        this._handler.performInspection();
+    }
+
+  }
+
+  dispose(): void {
+    if ( this.isDisposed ) {
+        return;
+    }
+    this.handler = null;
+    super.dispose();
+  }
+
+  protected onInspectorUpdate( sender: any, allArgs: IJulynterKernel.IJulynterKernelUpdate): void {
+    let generator = this.generator;
+    if (generator !== null) {
+      generator.processKernelMessage(allArgs);
+    }
+  }
+
+  /**
+   * Handle disposed signals.
+   */
+  protected onSourceDisposed( sender: any, args: void ): void {
+      this.handler = null;
+  }
+
+
+
   private _toolbar: any;
   private _docmanager: IDocumentManager;
   private _current: Julynter.ICurrentWidget | null;
   private _monitor: ActivityMonitor<any, any> | null;
+  private _handler: IJulynterKernel.IJulynterKernelHandler | null;
+
 }
 
 
@@ -157,6 +211,8 @@ export class Julynter extends Widget {
  * A namespace for Julynter statics.
  */
 export namespace Julynter {
+
+
   /**
    * Options for the constructor.
    */
