@@ -99,7 +99,7 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
   isEnabled?: (widget: Widget) => boolean;
   options: NotebookGeneratorOptionsManager;
   widget: Julynter;
-  executed_code: { [cell: string]: string } | null;
+  update: IJulynterKernel.IQueryResult | null;
   hasKernel: boolean;
 
   constructor(tracker: INotebookTracker, widget: Julynter) {
@@ -108,7 +108,7 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
     this.options = new NotebookGeneratorOptionsManager(widget, tracker, {
       checkTitle: true,
     });
-    this.executed_code = {};
+    this.update = {};
     this.hasKernel = false;
   }
   
@@ -177,13 +177,17 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
     let cellGenerator = new CellGenerator(tracker);
     let nonExecutedTail = this._getNonExecutedTail();
     let emptyTail = this._getEmptyTail();
-    let executed_code = this.executed_code;
+    let executed_code = this.update.executed_code;
   
     let lastExecutionCount = -1;
+    let firstCodeCell = -1;
     for (let i = 0; i < tracker.currentWidget.content.widgets.length; i++) {
       let cell: Cell = tracker.currentWidget.content.widgets[i];
       let model = cell.model;
       if (model.type === 'code') {
+        if (firstCodeCell == -1) {
+          firstCodeCell = i;
+        }
         let executionCount = (cell as CodeCell).model.executionCount;
         let executionCountNumber = executionCount as number | null;
         
@@ -240,14 +244,25 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
         ))
       }
     }
+    let has_imports = this.update.has_imports;
+    if (has_imports == null) {
+      has_imports = [];
+    }
+    console.log(has_imports);
     lastExecutionCount = null;
     Object.keys(executionCounts)
-      .sort()
+      .sort((a, b) => Number(a) - Number(b))
       .forEach(function(currentCountS, i) {
         let currentCount = Number(currentCountS);
         let tuple = executionCounts[currentCount];
         let cell = tuple[1];
         let index = tuple[0];
+        if (has_imports.includes(currentCount) && index != firstCodeCell) {
+          headings.push(cellGenerator.create(index, cell.model.type,
+            "Cell " + index + " has imports but it is not the first cell. " + 
+            "Please consider moving the import to the first cell of the notebook."
+          ))
+        }
         if ((lastExecutionCount === null) && (currentCount != 1)) {
           headings.push(cellGenerator.create(index, cell.model.type,
             "Cell " + index + " skips the execution count. " + 
@@ -270,25 +285,24 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
     this._checkTitle(headings);
     this._checkCellDefinitions(headings);
 
-    // ToDo: check cell updates after execution
     // ToDo: check imports on requirements
     // ToDo: check variable definitions
+    // ToDo: check paths?
     // ToDo: check test
     // ToDo: check first cell is markdown. Check last cell is markdown
     // ToDo: check title size
     // ToDo: check cyclomatic complexity
-    // ToDo: check position of imports
-    // ToDo: check paths?
     return headings;
   }
   processKernelMessage(update: IJulynterKernel.IJulynterKernelUpdate): void {
     if (update.status != ""){
-      this.executed_code = {};
+      this.update = {};
       this.hasKernel = false;
       //this.fromKernel.push(createHeading(update.status, "header", (line:number) => () => {}));
     } else {
+      console.log(update);
       this.hasKernel = true;
-      this.executed_code = update.result.executed_code;
+      this.update = update.result;
     }
   }
 
