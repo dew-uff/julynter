@@ -199,8 +199,9 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
                 "Please consider re-executing it to guarantee the reproducibility."
               ))
             } else {
-              let history_code = executed_code[executionCount];
+              let history_code = executed_code[executionCount].replace("\\n", "\n");
               if (history_code != (cell as CodeCell).model.value.text) {
+                console.log(i, history_code, (cell as CodeCell).model.value.text);
                 headings.push(cellGenerator.create(i, cell.model.type,
                   "Cell " + i + " has changed since its execution, but it wasn't executed after the changes. " + 
                   "Please consider re-executing it to guarantee the reproducibility."
@@ -248,6 +249,10 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
     if (has_imports == null) {
       has_imports = [];
     }
+    let absolute_paths = this.update.absolute_paths;
+    if (absolute_paths == null) {
+      absolute_paths = {};
+    }
     console.log(has_imports);
     lastExecutionCount = null;
     Object.keys(executionCounts)
@@ -263,6 +268,14 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
             "Please consider moving the import to the first cell of the notebook."
           ))
         }
+        if (absolute_paths.hasOwnProperty(currentCount)) {
+          headings.push(cellGenerator.create(index, cell.model.type,
+            "Cell " + index + " has the following absolute paths: " +
+            absolute_paths[currentCount].map(x => "'" + x + "'").join(", ") + ". " +
+            "Please consider using relative paths to guarantee the reproducibility."
+          ))
+        }
+
         if ((lastExecutionCount === null) && (currentCount != 1)) {
           headings.push(cellGenerator.create(index, cell.model.type,
             "Cell " + index + " skips the execution count. " + 
@@ -287,7 +300,6 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
 
     // ToDo: check imports on requirements
     // ToDo: check variable definitions
-    // ToDo: check paths?
     // ToDo: check test
     // ToDo: check first cell is markdown. Check last cell is markdown
     // ToDo: check title size

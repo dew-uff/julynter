@@ -54,7 +54,6 @@ _julynter_cell_dependencies = defaultdict(dict)
 _julynter_missing_dependencies = {}
 def _julynter_dependencies(ip, hm):
     processed = _julynter_dependencies_processed
-    name_visitor = _JulynterNameVisitor()
     name_definitions = _julynter_name_definitions
     name_usages = _julynter_name_usages
     cell_dependencies = _julynter_cell_dependencies
@@ -64,6 +63,7 @@ def _julynter_dependencies(ip, hm):
             continue
         processed.add(lineno)
         tree = ast.parse(inline)
+        name_visitor = _JulynterNameVisitor()
         name_visitor.visit(tree)
         name_definitions[lineno] = name_visitor.name_definitions
         name_usages[lineno] = name_visitor.name_usages
@@ -85,9 +85,9 @@ def _julynter_history(ip, hm):
         executed_code[lineno] = inline
     return executed_code
 def _julynter_absolute_paths(ip, hm):
-    path_visitor = _JulynterPathVisitor()
     absolute_paths = {}
     for session, lineno, inline in hm.get_range(raw=False, output=False):
+        path_visitor = _JulynterPathVisitor()
         tree = ast.parse(inline)
         path_visitor.visit(tree)
         if path_visitor.absolute_paths:
@@ -143,7 +143,6 @@ def _julynter_imports(ip, hm, requirements_file):
     missing_requirements = _julynter_missing_requirements
     missing_requirements.clear()
     checked = _julynter_requirements_checked
-    import_visitor = _JulynterImportVisitor()
     for lineno, requirements in old_missing.items():
         for req, _ in requirements.items():
             if checked.get(req, 5) >= 2:
@@ -159,6 +158,7 @@ def _julynter_imports(ip, hm, requirements_file):
             continue
         processed.add(lineno)
         tree = ast.parse(inline)
+        import_visitor = _JulynterImportVisitor()
         import_visitor.visit(tree)
         if import_visitor.imports:
             has_imports.append(lineno)

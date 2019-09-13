@@ -19,7 +19,7 @@ export namespace IJulynterKernel {
         executed_code?: { [cell: string]: string };
         cell_dependencies?: { [cell: string]: { [name: string]: string } };
         missing_dependencies?: { [cell: string]: string[] };
-        absolute_paths?: { [cell: string]: string[] };
+        absolute_paths?: { [cell: number]: string[] };
         has_imports?: number[];
         missing_requirements?: { [cell: string]: { [name: string]: {
             status: number;
