@@ -5,7 +5,9 @@ export namespace IJulynterKernel {
     export interface IJulynterKernelHandler {
         disposed: ISignal<any, void>;
         inspected: ISignal<any, IJulynterKernelUpdate>;
-        performInspection(): void;
+        performQuery(): void;
+        addModule(module:string): void;
+        requirements:string;
     }
 
     export interface IJulynterKernelUpdate {
@@ -16,12 +18,12 @@ export namespace IJulynterKernel {
     } 
 
     export interface IQueryResult {
-        executed_code?: { [cell: string]: string };
+        executed_code?: { [cell: number]: string };
         cell_dependencies?: { [cell: string]: { [name: string]: string } };
         missing_dependencies?: { [cell: string]: string[] };
         absolute_paths?: { [cell: number]: string[] };
         has_imports?: number[];
-        missing_requirements?: { [cell: string]: { [name: string]: {
+        missing_requirements?: { [cell: number]: { [name: string]: {
             status: number;
             msg: string;
         } } };

@@ -169,7 +169,7 @@ export class Julynter extends Widget {
     if ( this._handler ) {
         this._handler.inspected.connect( this.onInspectorUpdate, this );
         this._handler.disposed.connect( this.onSourceDisposed, this );
-        this._handler.performInspection();
+        this._handler.performQuery();
     }
 
   }

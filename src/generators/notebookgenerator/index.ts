@@ -14,6 +14,7 @@ import { NotebookGeneratorOptionsManager } from './optionsmanager';
 import { INotebookHeading } from './heading';
 import { Widget } from '@phosphor/widgets';
 
+import { showDialog, Dialog } from '@jupyterlab/apputils';
 
 import {
   renameDialog, IDocumentManager,
@@ -52,6 +53,45 @@ export class CellGenerator {
     const cell = this._notebook.widgets[index];
     const onClickFactory = (line: number) => {
       return () => {
+        this._notebook.activeCellIndex = index;
+        cell.node.scrollIntoView();
+      };
+    };
+    const onClick = onClickFactory(0);
+    return {
+      text: text,
+      type: type,
+      onClick: onClick
+    }
+  }
+}
+
+export class ModuleGenerator {
+  _notebook: Notebook;
+  _julynter: Julynter;
+
+  constructor(notebook: INotebookTracker, widget: Julynter) {
+    this._notebook = notebook.currentWidget.content;
+    this._julynter = widget;
+  }
+
+  create(module: string, index: number, type: 'code' | 'markdown' | 'header' | 'raw', text:string): INotebookHeading {
+    const cell = this._notebook.widgets[index];
+    const handler = this._julynter.handler;
+    const onClickFactory = (line: number) => {
+      return () => {
+        
+        showDialog({
+          'title': 'Add requirement',
+          body: `Add "${module}" to requirements?`,
+          buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'Add' })]
+        }).then(result => {
+          Promise.resolve(result.button.accept).then((ok: boolean) => {
+            if (ok) {
+              handler.addModule(module);
+            }
+          })
+        });
         this._notebook.activeCellIndex = index;
         cell.node.scrollIntoView();
       };
@@ -175,6 +215,7 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
     // Iterate through the cells in the notebook
     let executionCounts: { [key:number]: [number, Cell] } = {};
     let cellGenerator = new CellGenerator(tracker);
+    let moduleGenerator = new ModuleGenerator(tracker, this.widget);
     let nonExecutedTail = this._getNonExecutedTail();
     let emptyTail = this._getEmptyTail();
     let executed_code = this.update.executed_code;
@@ -193,13 +234,13 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
         
         if (this.hasKernel) {
           if (executionCountNumber != null) {
-            if (!executed_code.hasOwnProperty(executionCount)) {
+            if (!executed_code.hasOwnProperty(executionCountNumber)) {
               headings.push(cellGenerator.create(i, cell.model.type,
                 "Cell " + i + " has execution results, but it wasn't executed on this session. " + 
                 "Please consider re-executing it to guarantee the reproducibility."
               ))
             } else {
-              let history_code = executed_code[executionCount].replace("\\n", "\n");
+              let history_code = executed_code[executionCountNumber].replace("\\n", "\n");
               if (history_code != (cell as CodeCell).model.value.text) {
                 console.log(i, history_code, (cell as CodeCell).model.value.text);
                 headings.push(cellGenerator.create(i, cell.model.type,
@@ -245,15 +286,9 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
         ))
       }
     }
-    let has_imports = this.update.has_imports;
-    if (has_imports == null) {
-      has_imports = [];
-    }
-    let absolute_paths = this.update.absolute_paths;
-    if (absolute_paths == null) {
-      absolute_paths = {};
-    }
-    console.log(has_imports);
+    let has_imports = this.update.has_imports || [];
+    let absolute_paths = this.update.absolute_paths || {};
+    let missing_requirements = this.update.missing_requirements || {};
     lastExecutionCount = null;
     Object.keys(executionCounts)
       .sort((a, b) => Number(a) - Number(b))
@@ -274,6 +309,14 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
             absolute_paths[currentCount].map(x => "'" + x + "'").join(", ") + ". " +
             "Please consider using relative paths to guarantee the reproducibility."
           ))
+        }
+        if (missing_requirements.hasOwnProperty(currentCount)) {
+          Object.keys(missing_requirements[currentCount]).forEach(function(module, j) {
+            headings.push(moduleGenerator.create(module, index, cell.model.type,
+              "Module " + module + " was imported by Cell " + index + ", but it is not in the requirements file. " +
+              "Please consider adding them to guarantee the reproducibility."
+            ))
+          });
         }
 
         if ((lastExecutionCount === null) && (currentCount != 1)) {
@@ -307,6 +350,7 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
     return headings;
   }
   processKernelMessage(update: IJulynterKernel.IJulynterKernelUpdate): void {
+    console.log(update);
     if (update.status != ""){
       this.update = {};
       this.hasKernel = false;

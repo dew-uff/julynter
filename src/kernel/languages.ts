@@ -1,7 +1,8 @@
 export namespace Languages {
     export type LanguageModel = {
         initScript: string;
-        queryCommand: string;
+        queryCommand: (requirements: string) => string;
+        addModuleCommand: (module: string, requirements: string) => string;
     }
 }
 
@@ -114,6 +115,8 @@ def _julynter_check_package_version(module_name, requirements):
         return (status, msg)
     package = msg
     found = None
+    if not os.path.exists(requirements):
+        return (3, "requirements.txt doesn't exist")
     with open(requirements, "r") as f:
         for line in f:
             if line.strip().startswith(package):
@@ -198,17 +201,19 @@ def _jupyterlab_julynter_add_package_to_requirements(module_name, requirements):
         version = ""
     lines = []
     found = False
-    with open(requirements, "r") as f:
-        for line in f:
-            if line.strip().startswith(package):
-                lines.append("{}{}".format(package, version))
-                found = True
-            else:
-                lines.append(line)
+    if os.path.exists(requirements):
+        with open(requirements, "r") as f:
+            for line in f:
+                if line.strip().startswith(package):
+                    lines.append("{}{}".format(package, version))
+                    found = True
+                else:
+                    lines.append(line)
     if not found:
         lines.append("{}{}".format(package, version))
     with open(requirements, "w") as f:
         f.writelines(lines)
+    return _jupyterlab_julynter_query(requirements)
 print("ok-initialized")
 `;
 
@@ -216,15 +221,27 @@ print("ok-initialized")
     static scripts: { [index: string]: Languages.LanguageModel } = {
         "python3": {
             initScript: Languages.py_script,
-            queryCommand: "_jupyterlab_julynter_query()",
+            queryCommand: (requirements:string) => 
+                "_jupyterlab_julynter_query('" + requirements + "')",
+            addModuleCommand: (module: string, requirements: string) =>
+                "_jupyterlab_julynter_add_package_to_requirements('" +
+                module + "','" + requirements + "')",
         },
         "python2": {
             initScript: Languages.py_script,
-            queryCommand: "_jupyterlab_julynter_query()",
+            queryCommand: (requirements:string) => 
+                "_jupyterlab_julynter_query('" + requirements + "')",
+            addModuleCommand: (module: string, requirements: string) =>
+                "_jupyterlab_julynter_add_package_to_requirements('" +
+                module + "','" + requirements + "')",
         },
         "python": {
             initScript: Languages.py_script,
-            queryCommand: "_jupyterlab_julynter_query()",
+            queryCommand: (requirements:string) => 
+                "_jupyterlab_julynter_query('" + requirements + "')",
+            addModuleCommand: (module: string, requirements: string) =>
+                "_jupyterlab_julynter_add_package_to_requirements('" +
+                module + "','" + requirements + "')",
         },
     };
 

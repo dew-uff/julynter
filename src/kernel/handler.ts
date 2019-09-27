@@ -27,7 +27,9 @@ import { IClientSession } from "@jupyterlab/apputils";
 
 export class JulynterKernelHandler implements IDisposable, IJulynterKernel.IJulynterKernelHandler {
     private _connector: KernelConnector;
-    private _queryCommand: string;
+    private _requirements: string;
+    private _queryCommand: (requirements: string) => string;
+    private _addModuleCommand: (module: string, requirements: string) => string;
     private _initScript: string;
     private _disposed = new Signal<this, void>( this );
     private _inspected = new Signal<this, IJulynterKernel.IJulynterKernelUpdate>( this );
@@ -40,7 +42,9 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernel.IJuly
         this._connector = options.connector;
         this._id = options.id;
         this._queryCommand = options.queryCommand;
+        this._addModuleCommand = options.addModuleCommand;
         this._initScript = options.initScript;
+        this._requirements = "requirements.txt";
         this._attempts = 0;
         
         this._ready =  this._connector.ready.then(() => {
@@ -60,7 +64,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernel.IJuly
             this._ready = kernelReady.then(() => {
                 this._initOnKernel().then(( msg: KernelMessage.IExecuteReplyMsg ) => {
                     this._connector.iopubMessage.connect( this._queryCall );
-                    this.performInspection();
+                    this.performQuery();
                 } );         
             } );
         } );
@@ -93,13 +97,33 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernel.IJuly
         return this._inspected;
     }
 
+    get requirements(): string {
+        return this._requirements;
+    }
+
+    set requirements(req:string) {
+        this._requirements = req;
+    }
+
 
     /**
      * Performs an inspection by sending an execute request with the query command to the kernel.
      */
-    public performInspection(): void {
+    public performQuery(): void {
         let content: KernelMessage.IExecuteRequestMsg['content'] = {
-            code: this._queryCommand,
+            code: this._queryCommand(this._requirements),
+            stop_on_error: false,
+            store_history: false
+        };
+        this._connector.fetch( content, this._handleQueryResponse );
+    }
+
+    /**
+     * Performs an inspection by sending an execute request with the query command to the kernel.
+     */
+    public addModule(module:string): void {
+        let content: KernelMessage.IExecuteRequestMsg['content'] = {
+            code: this._addModuleCommand(module, this._requirements),
             stop_on_error: false,
             store_history: false
         };
@@ -138,6 +162,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernel.IJuly
      */
     private _handleQueryResponse = ( response: KernelMessage.IIOPubMessage ): void => {
         let msgType = response.header.msg_type;
+        console.log(msgType, response.content)
         switch ( msgType ) {
             case "execute_result":
                 let payload = response.content as nbformat.IExecuteResult;
@@ -180,7 +205,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernel.IJuly
                             });
                             this._initOnKernel().then(( msg: KernelMessage.IExecuteReplyMsg ) => {
                                 this._connector.iopubMessage.connect( this._queryCall );
-                                this.performInspection();
+                                this.performQuery();
                             } );         
                         }
                     }
@@ -198,8 +223,10 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernel.IJuly
         switch ( msgType ) {
             case 'execute_input':
                 let code = msg.content.code;
-                if ( !( code == this._queryCommand ) ) {
-                    this.performInspection();
+                console.log(code);
+                if (!code.startsWith("_jupyterlab_julynter")) {
+                    console.log("Perform Query")
+                    this.performQuery();
                 }
                 break;
             default:
@@ -220,7 +247,8 @@ namespace JulynterKernelHandler {
     export
         interface IOptions {
         connector: KernelConnector;
-        queryCommand: string;
+        queryCommand: (requirements: string) => string;
+        addModuleCommand: (module: string, requirements: string) => string;
         initScript: string;
         id : string;
     }
@@ -232,6 +260,7 @@ export
         private _disposed = new Signal<this,void>( this );
         private _inspected = new Signal<this, IJulynterKernel.IJulynterKernelUpdate>( this );
         private _connector : KernelConnector;
+        requirements: string;
         
         constructor(connector : KernelConnector) {
             this._connector = connector;
@@ -258,7 +287,7 @@ export
             Signal.clearData( this );
         }
        
-        public performInspection(): void{
+        public performQuery(): void{
             this._inspected.emit(<IJulynterKernel.IJulynterKernelUpdate>{
                 status: "Language currently not supported",
                 kernelName : this._connector.kernelName || "",
@@ -266,6 +295,12 @@ export
             });
         }
 
-        public performDelete(varName: string){}
+        public addModule(module:string): void{
+            this._inspected.emit(<IJulynterKernel.IJulynterKernelUpdate>{
+                status: "Language currently not supported",
+                kernelName : this._connector.kernelName || "",
+                languageName : this._connector.kernelType || ""
+            });
+        }
 }
 

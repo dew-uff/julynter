@@ -96,9 +96,11 @@ function activateJulynter(
         scripts.then(( result: Languages.LanguageModel ) => {
           let initScript = result.initScript;
           let queryCommand = result.queryCommand;
+          let addModuleCommand = result.addModuleCommand;
           
           const options: JulynterKernelHandler.IOptions = {
                   queryCommand: queryCommand,
+                  addModuleCommand: addModuleCommand,
                   connector: connector,
                   initScript: initScript,
                   id: session.path  //Using the sessions path as an identifier for now.
@@ -135,7 +137,7 @@ function activateJulynter(
     future.then((source: JulynterKernelHandler) => {
       if (source) {
         julynter.handler = source;
-        julynter.handler.performInspection();
+        julynter.handler.performQuery();
       }
     });
     let generator = registry.findGeneratorForWidget(widget);
