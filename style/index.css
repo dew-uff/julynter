@@ -112,7 +112,73 @@
   align-items: center;
 }
 
+.julynter-entry-holder {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  width: 100%;
+}
+
+.julynter-collapse-button {
+  padding-left: 3px;
+  cursor: default;
+  min-width: 11px;
+  position: absolute;
+}
+
+.julynter-arrow-img {
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  position: absolute;
+  background-repeat: no-repeat;
+}
+
+.julynter-downarrow-img {
+  width: 12px;
+  height: 6px;
+}
+
+[data-jp-theme-light='true'] .julynter-downarrow-img {
+  background-image: url('img/toggle_down.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-downarrow-img {
+  background-image: url('img/toggle_down_darktheme.svg');
+}
+
+.julynter-rightarrow-img {
+  width: 7px;
+  height: 12px;
+}
+
+[data-jp-theme-light='true'] .julynter-rightarrow-img {
+  background-image: url('img/toggle_right.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-rightarrow-img {
+  background-image: url('img/toggle_right_darktheme.svg');
+}
+
+.julynter-twist-placeholder {
+  max-width: 10px;
+  opacity: 0;
+  overflow: hidden;
+}
+
 .julynter-report-div {
   display: inline-flex;
   width: 100%;
+}
+
+.julynter-has-parent {
+  padding-left: 24px;
+}
+
+.julynter-normal-size {
+  font-size: var(--jp-ui-font-size1);
+}
+
+.julynter-title-size {
+  font-size: var(--jp-ui-font-size2);
 }

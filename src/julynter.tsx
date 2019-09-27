@@ -242,7 +242,10 @@ export interface IReport {
    * The text of the heading.
    */
   text: string;
-
+  report_type: string;
+  cell_id: string | number;
+  visible: boolean;
+  filtered_out: boolean;
   /**
    * A function to execute when clicking the Julynter
    * item. Typically this will be used to scroll
@@ -259,6 +262,9 @@ export interface IReport {
    * already-renderd-to-html markdown headings.
    */
   html?: string;
+  collapsed?: boolean;
+  has_parent?: boolean;
+
 }
 
 /**

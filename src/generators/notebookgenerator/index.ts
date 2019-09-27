@@ -21,6 +21,7 @@ import {
 } from '@jupyterlab/docmanager';
 import { Cell, CodeCell } from '@jupyterlab/cells';
 import { IJulynterKernel } from '../../kernel/julynterkernel';
+import { IObservableJSON } from '@jupyterlab/observables';
 
 
 export class TitleGenerator {
@@ -36,6 +37,10 @@ export class TitleGenerator {
     const onClick = this._renameAction(0);
     return {
       text: text,
+      report_type: "Invalid Title",
+      cell_id: "Title",
+      visible: true,
+      filtered_out: false,
       type: 'title',
       onClick: onClick
     }
@@ -49,7 +54,7 @@ export class CellGenerator {
     this._notebook = notebook.currentWidget.content;
   }
 
-  create(index: number, type: 'code' | 'markdown' | 'header' | 'raw', text:string): INotebookHeading {
+  create(index: number, type: 'code' | 'markdown' | 'header' | 'raw', report_type: string, text:string): INotebookHeading {
     const cell = this._notebook.widgets[index];
     const onClickFactory = (line: number) => {
       return () => {
@@ -60,6 +65,10 @@ export class CellGenerator {
     const onClick = onClickFactory(0);
     return {
       text: text,
+      report_type: report_type,
+      cell_id: index,
+      visible: true,
+      filtered_out: false,
       type: type,
       onClick: onClick
     }
@@ -75,7 +84,7 @@ export class ModuleGenerator {
     this._julynter = widget;
   }
 
-  create(module: string, index: number, type: 'code' | 'markdown' | 'header' | 'raw', text:string): INotebookHeading {
+  create(module: string, index: number, type: 'code' | 'markdown' | 'header' | 'raw', report_type: string, text:string): INotebookHeading {
     const cell = this._notebook.widgets[index];
     const handler = this._julynter.handler;
     const onClickFactory = (line: number) => {
@@ -99,9 +108,80 @@ export class ModuleGenerator {
     const onClick = onClickFactory(0);
     return {
       text: text,
+      report_type: report_type,
+      cell_id: index,
+      visible: true,
+      filtered_out: false,
       type: type,
       onClick: onClick
     }
+  }
+}
+
+
+
+function isNumber(value: string | number): boolean
+{
+   return ((value != null) && !isNaN(Number(value.toString())));
+}
+
+
+
+export class GroupGenerator {
+
+  _julynter: Julynter;
+  _tracker: INotebookTracker;
+
+  constructor(tracker: INotebookTracker, widget: Julynter) {
+    this._tracker = tracker;
+    this._julynter = widget;
+  }
+
+
+  create(title: string | number, elements: IReport[]): INotebookHeading {
+    let str_title = isNumber(title)? "Cell " + title : String(title);
+    let metavar: IObservableJSON;
+    let metaname: string;
+    if (isNumber(title)){
+      str_title = "Cell " + title;
+      let cell: Cell = this._tracker.currentWidget.content.widgets[Number(title)];
+      metavar = cell.model.metadata;
+      metaname = 'julynter-cellgroup-collapsed';
+    } else {
+      str_title = String(title);
+      metavar = this._tracker.currentWidget.model.metadata;
+      metaname = 'julynter-cellgroup-' + str_title.replace(' ', '-').toLowerCase() + '-collapsed';
+    }
+    let collapsed = metavar.get(metaname) as boolean;
+    collapsed = collapsed != undefined ? collapsed : false;
+    elements.forEach(element => {
+      element.visible = !collapsed;
+      element.has_parent = true;
+    });
+
+    let result: INotebookHeading = {
+      text: str_title,
+      report_type: "group",
+      cell_id: "group",
+      visible: true,
+      filtered_out: false,
+      collapsed: collapsed,
+      type: "group",
+      has_parent: true,
+      onClick: null
+    }
+    const onClickFactory = (line: number) => {
+      return () => {
+        elements.forEach(element => {
+          element.visible = result["collapsed"];
+        });
+        result["collapsed"] = !result["collapsed"];
+        metavar.set(metaname, !collapsed);
+        this._julynter.update();
+      };
+    };
+    result["onClick"] = onClickFactory(0);
+    return result;
   }
 }
 
@@ -141,6 +221,7 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
   widget: Julynter;
   update: IJulynterKernel.IQueryResult | null;
   hasKernel: boolean;
+  cellGroupGenerator: GroupGenerator;
 
   constructor(tracker: INotebookTracker, widget: Julynter) {
     this.tracker = tracker;
@@ -150,6 +231,7 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
     });
     this.update = {};
     this.hasKernel = false;
+    this.cellGroupGenerator = new GroupGenerator(tracker, widget);
   }
   
 
@@ -235,15 +317,14 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
         if (this.hasKernel) {
           if (executionCountNumber != null) {
             if (!executed_code.hasOwnProperty(executionCountNumber)) {
-              headings.push(cellGenerator.create(i, cell.model.type,
+              headings.push(cellGenerator.create(i, cell.model.type, "Hidden State",
                 "Cell " + i + " has execution results, but it wasn't executed on this session. " + 
                 "Please consider re-executing it to guarantee the reproducibility."
               ))
             } else {
               let history_code = executed_code[executionCountNumber].replace("\\n", "\n");
               if (history_code != (cell as CodeCell).model.value.text) {
-                console.log(i, history_code, (cell as CodeCell).model.value.text);
-                headings.push(cellGenerator.create(i, cell.model.type,
+                headings.push(cellGenerator.create(i, cell.model.type, "Hidden State",
                   "Cell " + i + " has changed since its execution, but it wasn't executed after the changes. " + 
                   "Please consider re-executing it to guarantee the reproducibility."
                 ))
@@ -255,20 +336,20 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
 
         if (executionCountNumber === null) {
           if ((i < nonExecutedTail) && (model.value.text.trim() != "")) {
-            headings.push(cellGenerator.create(i, cell.model.type,
+            headings.push(cellGenerator.create(i, cell.model.type, "Confuse Notebook",
               "Cell " + i + " is a non-executed cell among executed ones. " + 
               "Please consider cleaning it to guarantee the reproducibility."
             ))
           }
         } else {
           if (executionCountNumber < lastExecutionCount) {
-            headings.push(cellGenerator.create(i, cell.model.type,
+            headings.push(cellGenerator.create(i, cell.model.type, "Hidden State",
               "Cell " + i + " has the execution count " + executionCountNumber +" in the wrong order. " + 
               "Please consider re-running the notebook to guarantee the reproducibility."
             ))
           }
           if (executionCounts.hasOwnProperty(executionCountNumber)) {
-            headings.push(cellGenerator.create(i, cell.model.type,
+            headings.push(cellGenerator.create(i, cell.model.type, "Hidden State",
               "Cell " + i + " repeats the execution count " + executionCountNumber +". " + 
               "Please consider re-running the notebook to guarantee the reproducibility."
             ))
@@ -280,7 +361,7 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
       let text = model.value.text;
       
       if (text.trim() == '' && i < emptyTail) {
-        headings.push(cellGenerator.create(i, cell.model.type,
+        headings.push(cellGenerator.create(i, cell.model.type, "Confuse Notebook",
           "Cell " + i + " is empty in the middle of the notebook. " + 
           "Please consider removing it to improve the readability."
         ))
@@ -298,13 +379,13 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
         let cell = tuple[1];
         let index = tuple[0];
         if (has_imports.includes(currentCount) && index != firstCodeCell) {
-          headings.push(cellGenerator.create(index, cell.model.type,
+          headings.push(cellGenerator.create(index, cell.model.type, "Imports",
             "Cell " + index + " has imports but it is not the first cell. " + 
             "Please consider moving the import to the first cell of the notebook."
           ))
         }
         if (absolute_paths.hasOwnProperty(currentCount)) {
-          headings.push(cellGenerator.create(index, cell.model.type,
+          headings.push(cellGenerator.create(index, cell.model.type, "Absolute Path",
             "Cell " + index + " has the following absolute paths: " +
             absolute_paths[currentCount].map(x => "'" + x + "'").join(", ") + ". " +
             "Please consider using relative paths to guarantee the reproducibility."
@@ -312,7 +393,7 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
         }
         if (missing_requirements.hasOwnProperty(currentCount)) {
           Object.keys(missing_requirements[currentCount]).forEach(function(module, j) {
-            headings.push(moduleGenerator.create(module, index, cell.model.type,
+            headings.push(moduleGenerator.create(module, index, cell.model.type, "Imports",
               "Module " + module + " was imported by Cell " + index + ", but it is not in the requirements file. " +
               "Please consider adding them to guarantee the reproducibility."
             ))
@@ -320,12 +401,12 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
         }
 
         if ((lastExecutionCount === null) && (currentCount != 1)) {
-          headings.push(cellGenerator.create(index, cell.model.type,
+          headings.push(cellGenerator.create(index, cell.model.type, "Hidden State",
             "Cell " + index + " skips the execution count. " + 
             "Please consider re-running the notebook to guarantee the reproducibility."
           ))
         } else if ((lastExecutionCount !== null) && (lastExecutionCount !== currentCount - 1)) {
-          headings.push(cellGenerator.create(index, cell.model.type,
+          headings.push(cellGenerator.create(index, cell.model.type, "Hidden State",
             "Cell " + index + " skips the execution count. " + 
             "Please consider re-running the notebook to guarantee the reproducibility."
           ))
@@ -341,22 +422,68 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
     this._checkTitle(headings);
     this._checkCellDefinitions(headings);
 
-    // ToDo: check imports on requirements
     // ToDo: check variable definitions
     // ToDo: check test
     // ToDo: check first cell is markdown. Check last cell is markdown
     // ToDo: check title size
     // ToDo: check cyclomatic complexity
-    return headings;
+
+    
+
+
+    return this._group_by_report_type(headings);
   }
+
+  _group_by_cell(headings: IReport[]) {
+    let group_generator = this.cellGroupGenerator;
+    let groups: { [id:string]: IReport[]} = {};
+    headings.forEach(element => {
+      if (element.cell_id in groups){
+        groups[element.cell_id].push(element);
+      } else {
+        groups[element.cell_id] = [element];
+      }
+    });
+
+    let new_headings: IReport[] = [];
+    for (let key in groups) {
+      let elements = groups[key];
+      new_headings.push(group_generator.create(key, elements));
+      new_headings.push(...elements);
+    }
+
+    return new_headings;
+  }
+
+  _group_by_report_type(headings: IReport[]) {
+    let group_generator = this.cellGroupGenerator;
+    let groups: { [id:string]: IReport[]} = {};
+    headings.forEach(element => {
+      if (element.report_type in groups){
+        groups[element.report_type].push(element);
+      } else {
+        groups[element.report_type] = [element];
+      }
+    });
+
+    let new_headings: IReport[] = [];
+    for (let key in groups) {
+      let elements = groups[key];
+      new_headings.push(group_generator.create(key, elements));
+      new_headings.push(...elements);
+    }
+
+    return new_headings;
+  }
+
+
+
   processKernelMessage(update: IJulynterKernel.IJulynterKernelUpdate): void {
-    console.log(update);
     if (update.status != ""){
       this.update = {};
       this.hasKernel = false;
       //this.fromKernel.push(createHeading(update.status, "header", (line:number) => () => {}));
     } else {
-      console.log(update);
       this.hasKernel = true;
       this.update = update.result;
     }
@@ -378,17 +505,4 @@ export function createNotebookGenerator(
   widget: Julynter
 ): JulynterRegistry.IGenerator<Widget> {
   return new NotebookGenerator(tracker, widget);
-}
-
-export function createHeading(
-  text: string,
-  type: 'header' | 'markdown' | 'code' | 'title',
-  onClickFactory: (line: number) => (() => void),
-): INotebookHeading {
-  const onClick = onClickFactory(0);
-  return {
-    text: text,
-    type: type,
-    onClick: onClick
-  }
 }
