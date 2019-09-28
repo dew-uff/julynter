@@ -1,4 +1,4 @@
-import { IReport } from '../../julynter';
+import { IReport } from '../julynter';
 
 /**
  * A heading for a notebook cell.

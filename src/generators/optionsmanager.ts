@@ -2,21 +2,20 @@ import { ISanitizer } from '@jupyterlab/apputils';
 
 import { INotebookTracker } from '@jupyterlab/notebook';
 
-import { JulynterRegistry } from '../../registry';
+import { JulynterRegistry } from '../registry';
 
-import { Julynter } from '../../julynter';
+import { Julynter } from '../julynter';
 
 
 export class NotebookGeneratorOptionsManager extends JulynterRegistry.IGeneratorOptionsManager {
-  constructor(
-    widget: Julynter,
-    notebook: INotebookTracker,
-    options: {
-      checkTitle: boolean;
-    }
-  ) {
+  private _preRenderedToolbar: any = null;
+  private _notebook: INotebookTracker;
+  private _widget: Julynter;
+  private _checks: { [id: string]: boolean};
+  
+  constructor(widget: Julynter, notebook: INotebookTracker) {
     super();
-    this._checkTitle = options.checkTitle;
+    this._checks = {};
     this._widget = widget;
     this._notebook = notebook;
   }
@@ -29,14 +28,21 @@ export class NotebookGeneratorOptionsManager extends JulynterRegistry.IGenerator
     }
   }
 
-  set checkTitle(value: boolean) {
-    this._checkTitle = value;
+  setCheck(key: string, value: boolean){
+    key = key.replace(' ', '-').toLowerCase();
+    this._checks[key] = value;
+    this.notebookMetadata = ['julynter-check-' + key, value];
     this._widget.update();
-    this.notebookMetadata = ['julynter-checktitle', this._checkTitle];
+
   }
 
-  get checkTitle() {
-    return this._checkTitle;
+  check(key: string) {
+    key = key.replace(' ', '-').toLowerCase();
+    return this._checks[key];
+  }
+
+  get checks() {
+    return this._checks;
   }
 
   set preRenderedToolbar(value: any) {
@@ -54,15 +60,11 @@ export class NotebookGeneratorOptionsManager extends JulynterRegistry.IGenerator
 
   // initialize options, will NOT change notebook metadata
   initializeOptions(
-    checkTitle: boolean,
+    checks: { [id: string]: boolean},
   ) {
-    this._checkTitle = checkTitle;
+    this._checks = checks;
     this._widget.update();
   }
 
-  private _preRenderedToolbar: any = null;
-  private _checkTitle: boolean = true;
-  private _notebook: INotebookTracker;
-  private _widget: Julynter;
-  public storeTags: string[];
+  
 }
