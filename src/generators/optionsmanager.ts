@@ -7,15 +7,34 @@ import { JulynterRegistry } from '../registry';
 import { Julynter } from '../julynter';
 
 
+export interface IJulynterLintOptions {
+  "invalid-title": boolean;
+  "hidden-state": boolean;
+  "confuse-notebook": boolean;
+  "import": boolean;
+  "absolute-path": boolean;
+  "mode": "list" | "cell" | "type";
+  "requirements": string;
+}
+
+
 export class NotebookGeneratorOptionsManager extends JulynterRegistry.IGeneratorOptionsManager {
   private _preRenderedToolbar: any = null;
   private _notebook: INotebookTracker;
   private _widget: Julynter;
-  private _checks: { [id: string]: boolean};
+  private _checks: IJulynterLintOptions;
   
   constructor(widget: Julynter, notebook: INotebookTracker) {
     super();
-    this._checks = {};
+    this._checks = {
+      "invalid-title": true,
+      "hidden-state": true,
+      "confuse-notebook": true,
+      "import": true,
+      "absolute-path": true,
+      "mode": "list",
+      "requirements": "requirements.txt"
+    };
     this._widget = widget;
     this._notebook = notebook;
   }
@@ -29,16 +48,34 @@ export class NotebookGeneratorOptionsManager extends JulynterRegistry.IGenerator
   }
 
   setCheck(key: string, value: boolean){
-    key = key.replace(' ', '-').toLowerCase();
-    this._checks[key] = value;
+    (this._checks as any)[key] = value;
     this.notebookMetadata = ['julynter-check-' + key, value];
     this._widget.update();
-
   }
 
   check(key: string) {
-    key = key.replace(' ', '-').toLowerCase();
-    return this._checks[key];
+    return (this._checks as any)[key];
+  }
+
+  checkMode() {
+    return this._checks["mode"]
+  }
+
+  setCheckMode(mode: "list" | "cell" | "type") {
+    this._checks["mode"] = mode;
+    this.notebookMetadata = ['julynter-check-mode', mode];
+    this._widget.update();
+  }
+
+
+  checkRequirements() {
+    return this._checks["requirements"]
+  }
+
+  setCheckRequirements(req: string) {
+    this._checks["requirements"] = req;
+    this.notebookMetadata = ['julynter-check-requirements', req];
+    this._widget.update();
   }
 
   get checks() {
@@ -59,9 +96,7 @@ export class NotebookGeneratorOptionsManager extends JulynterRegistry.IGenerator
 
 
   // initialize options, will NOT change notebook metadata
-  initializeOptions(
-    checks: { [id: string]: boolean},
-  ) {
+  initializeOptions(checks: IJulynterLintOptions) {
     this._checks = checks;
     this._widget.update();
   }

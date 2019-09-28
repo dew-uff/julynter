@@ -1,40 +1,31 @@
 import { INotebookTracker } from '@jupyterlab/notebook';
 
-import { NotebookGeneratorOptionsManager } from './optionsmanager';
+import { NotebookGeneratorOptionsManager, IJulynterLintOptions } from './optionsmanager';
+
+import { ERROR_TYPES, ErrorTypeKey } from './errors';
 
 import * as React from 'react';
 
-interface INotebookGeneratorToolbarProps {}
+interface IToolbarProps {}
 
-interface INotebookGeneratorToolbarState {
-  [id: string]: boolean;
-}
-
-const CONFIG = [
-  {
-    label: "Togle Title Checking",
-    key: "Invalid Title",
-    icon: "julynter-toolbar-title-icon",
-    button: "julynter-toolbar-title-button",
-  }
-]
 
 export function notebookGeneratorToolbar(
   options: NotebookGeneratorOptionsManager,
   tracker: INotebookTracker
 ) {
   // Render the toolbar
-  return class extends React.Component<INotebookGeneratorToolbarProps,INotebookGeneratorToolbarState> {
-    constructor(props: INotebookGeneratorToolbarProps) {
+  return class extends React.Component<IToolbarProps,IJulynterLintOptions> {
+    constructor(props: IToolbarProps) {
       super(props);
-      let checks: { [id: string]: boolean} = {};
-      // ToDo: fix initial state
-      this.state = {};
-      CONFIG.forEach(element => {
-        let key = element.key.replace(' ', '-').toLowerCase();
-        checks[key] = true;
-        this.setState({ [key]: true });
-      });
+      let checks: IJulynterLintOptions = this.state = {
+        "invalid-title": true,
+        "hidden-state": true,
+        "confuse-notebook": true,
+        "import": true,
+        "absolute-path": true,
+        "mode": "list",
+        "requirements": "requirements.txt"
+      };
       if (tracker.currentWidget) {
         // Read saved user settings in notebook metadata
         tracker.currentWidget.context.ready.then(() => {
@@ -42,15 +33,31 @@ export function notebookGeneratorToolbar(
             tracker.currentWidget.content.activeCellChanged.connect(() => {
               options.updateWidget();
             });
-            CONFIG.forEach(element => {
-              let key = element.key.replace(' ', '-').toLowerCase();
+
+            ERROR_TYPES.forEach(element => {
+              let key = element.key as ErrorTypeKey;
               let _check = tracker.currentWidget.model.metadata.get(
                 'julynter-check-' + key
               ) as boolean;
-              _check = _check != undefined ? _check : options.check(key);
-              checks[key] = _check;
-              this.setState({ [key]:_check});
+              checks[key] = _check = _check != undefined ? _check : options.check(key);
+              this.setState<never>({ [key]: _check });
             });
+            let key: string;
+
+            key = "mode";
+            let _check_mode = tracker.currentWidget.model.metadata.get(
+              'julynter-check-' + key
+            ) as "list" | "cell" | "type";
+            checks["mode"] = _check_mode = _check_mode != undefined ? _check_mode : options.checkMode();
+            this.setState({ "mode": _check_mode });
+
+            key = "requirements";
+            let _check_requirements = tracker.currentWidget.model.metadata.get(
+              'julynter-check-' + key
+            ) as string;
+            checks["requirements"] = _check_requirements = _check_requirements != undefined ? _check_requirements : options.checkRequirements();
+            this.setState<never>({ [key]: _check_requirements });
+            
             options.initializeOptions(
               checks,
             );
@@ -61,20 +68,34 @@ export function notebookGeneratorToolbar(
     }
 
     toggle = (key: string) => {
-      key = key.replace(' ', '-').toLowerCase();
       return (component: React.Component) => {
         options.setCheck(key, !options.check(key));
-        this.setState({ [key]: options.check(key) });
+        this.setState<never>({ [key]: options.check(key) });
+      };
+    }
+
+    toggleMode = () => {
+      return (component: React.Component) => {
+        let mode = options.checkMode()
+        if (mode == "list") {
+          mode = "cell";
+        } else if (mode == "cell") {
+          mode = "type"
+        } else {
+          mode = "list"
+        }
+        options.setCheckMode(mode);
+        this.setState({ "mode": options.checkMode() });
       };
     };
 
     render() {
-      let listing: JSX.Element[] = CONFIG.map(element => {
+      let listing: JSX.Element[] = ERROR_TYPES.map(element => {
         let key = element.key.replace(' ', '-').toLowerCase();
         let toggle_class = element.icon + " " + (
-          this.state[key] ? "julynter-toolbar-icon-selected" : "julynter-toolbar-icon"
+          (this.state as any)[key] ? "julynter-toolbar-icon-selected" : "julynter-toolbar-icon"
         )
-        let button_class = element.button + " julynter-toolbar-button";
+        let button_class = "julynter-toolbar-button";
         let label = element.label;
         return <div
           className={button_class}

@@ -8,6 +8,13 @@ export interface IItemGenerator {
     add_module(index: number, module: string): void;
 }
 
+export interface IErrorType {
+    key: string;
+    label: string;
+    toggle: string;
+    icon: string;
+}
+
 export interface IErrorMessage {
     label: (...args: any[]) => string;
     suggestion: string;
@@ -15,23 +22,42 @@ export interface IErrorMessage {
     action: (itemgenerator: IItemGenerator, ...args: any[]) => () => void;
 }
 
-export const ERROR_TYPES = {
-    "invalid-title": {
-        label: "Invalid Title" 
+export type ErrorTypeKey = "invalid-title" | "hidden-state" | "confuse-notebook" | "import" | "absolute-path";
+
+
+export const ERROR_TYPES: IErrorType[] = [
+    {
+        key: "invalid-title",
+        label: "Invalid Title",
+        toggle: "Toggle Title Checking",
+        icon: "julynter-toolbar-title-icon"
+        
     },
-    "hidden-state": {
-        label: "Hidden State" 
+    {
+        key: "hidden-state",
+        label: "Hidden State",
+        toggle: "Toggle Hidden State Checking",
+        icon: "julynter-toolbar-title-icon"
     },
-    "confuse-notebook": {
-        label: "Confuse Notebook" 
+    {
+        key: "confuse-notebook",
+        label: "Confuse Notebook",
+        toggle: "Toggle Confuse Notebook Checking",
+        icon: "julynter-toolbar-title-icon"
     },
-    "import": {
-        label: "Import"
+    {
+        key: "import",
+        label: "Import",
+        toggle: "Toggle Import Checking",
+        icon: "julynter-toolbar-title-icon"
     },
-    "absolute-path": {
-        label: "Absolute Path"
+    {
+        key: "absolute-path",
+        label: "Absolute Path",
+        toggle: "Toggle Absolute Path Checking",
+        icon: "julynter-toolbar-title-icon"
     }
-}
+]
 
 function go_to_cell(itemgenerator: IItemGenerator, index: number, ...others:any[]) {
     return () => {
@@ -116,7 +142,7 @@ export const ERRORS: { [id: string]: IErrorMessage } = {
     p1: {
         label: (i: Number, paths:String) => `Cell ${i} has the following absolute paths: ${paths}`,
         suggestion: "Please consider using relative paths to guarantee the reproducibility.",
-        type: "absoule-path",
+        type: "absolute-path",
         action: go_to_cell
     },
 

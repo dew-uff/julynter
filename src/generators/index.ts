@@ -217,9 +217,9 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
     // ToDo: check cyclomatic complexity
 
     
+    //return headings;
 
-
-    return headings;
+    return this._filter_by_report_type(headings);
   }
 
   _filter_by_report_type(headings: IReport[]) {
