@@ -2,30 +2,18 @@ import { ISanitizer } from '@jupyterlab/apputils';
 
 import { INotebookTracker } from '@jupyterlab/notebook';
 
-import { JulynterRegistry } from '../registry';
+import { IJulynterLintOptions, ILintOptionsManager, ViewModes } from "../../linter/interfaces"
 
 import { Julynter } from '../julynter';
 
 
-export interface IJulynterLintOptions {
-  "invalid-title": boolean;
-  "hidden-state": boolean;
-  "confuse-notebook": boolean;
-  "import": boolean;
-  "absolute-path": boolean;
-  "mode": "list" | "cell" | "type";
-  "requirements": string;
-}
-
-
-export class NotebookGeneratorOptionsManager extends JulynterRegistry.IGeneratorOptionsManager {
+export class OptionsManager implements ILintOptionsManager {
   private _preRenderedToolbar: any = null;
   private _notebook: INotebookTracker;
   private _widget: Julynter;
   private _checks: IJulynterLintOptions;
   
   constructor(widget: Julynter, notebook: INotebookTracker) {
-    super();
     this._checks = {
       "invalid-title": true,
       "hidden-state": true,
@@ -47,7 +35,7 @@ export class NotebookGeneratorOptionsManager extends JulynterRegistry.IGenerator
     }
   }
 
-  setCheck(key: string, value: boolean){
+  update(key: string, value: boolean){
     (this._checks as any)[key] = value;
     this.notebookMetadata = ['julynter-check-' + key, value];
     this._widget.update();
@@ -61,18 +49,17 @@ export class NotebookGeneratorOptionsManager extends JulynterRegistry.IGenerator
     return this._checks["mode"]
   }
 
-  setCheckMode(mode: "list" | "cell" | "type") {
+  checkRequirements() {
+    return this._checks["requirements"]
+  }
+
+  updateMode(mode: ViewModes) {
     this._checks["mode"] = mode;
     this.notebookMetadata = ['julynter-check-mode', mode];
     this._widget.update();
   }
 
-
-  checkRequirements() {
-    return this._checks["requirements"]
-  }
-
-  setCheckRequirements(req: string) {
+  updateRequirements(req: string) {
     this._checks["requirements"] = req;
     this.notebookMetadata = ['julynter-check-requirements', req];
     this._widget.update();
@@ -100,6 +87,5 @@ export class NotebookGeneratorOptionsManager extends JulynterRegistry.IGenerator
     this._checks = checks;
     this._widget.update();
   }
-
   
 }

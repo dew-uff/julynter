@@ -2,13 +2,14 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
+import { Token } from '@phosphor/coreutils';
+import { Widget } from '@phosphor/widgets';
+
 import { IWidgetTracker } from '@jupyterlab/apputils';
 
-import { Token } from '@phosphor/coreutils';
+import { IReport } from '../linter/interfaces';
+import { IJulynterKernelUpdate } from './kernel/interfaces';
 
-import { IReport } from './julynter';
-import { Widget } from '@phosphor/widgets';
-import { IJulynterKernel } from './kernel/julynterkernel';
 
 /**
  * An interface for a JulynterRegistry.
@@ -67,8 +68,6 @@ export namespace JulynterRegistry {
    * for a type of widget.
    */
 
-  export abstract class IGeneratorOptionsManager {}
-
   export interface IGenerator<W extends Widget = Widget> {
     /**
      * An instance tracker for the widget.
@@ -85,13 +84,6 @@ export namespace JulynterRegistry {
      * a ToC for text files only if they have a given mimeType.
      */
     isEnabled?: (widget: W) => boolean;
-
-    /**
-     * An object that manage user settings for the generator.
-     *
-     * Defaults to `undefined`.
-     */
-    options?: IGeneratorOptionsManager;
 
     /**
      * A function that generates JSX element for each heading
@@ -113,6 +105,6 @@ export namespace JulynterRegistry {
      */
     generate(widget: W): IReport[];
 
-    processKernelMessage(allArgs: IJulynterKernel.IJulynterKernelUpdate): void;
+    processKernelMessage(allArgs: IJulynterKernelUpdate): void;
   }
 }

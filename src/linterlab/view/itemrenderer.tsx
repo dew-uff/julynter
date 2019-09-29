@@ -1,11 +1,8 @@
-import { NotebookGeneratorOptionsManager } from './optionsmanager';
-
 import * as React from 'react';
-import { IReport } from '../julynter';
 
-export function notebookItemRenderer(
-{ options, item }: { options: NotebookGeneratorOptionsManager; item: IReport; }) {
-  console.log(item, item.visible)
+import { IReport } from '../../linter/interfaces';
+
+export function notebookItemRenderer(item: IReport) {
   if (!item.visible || item.filtered_out) {
     return null;
   }

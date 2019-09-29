@@ -9,24 +9,17 @@ import {
 
 import { IDocumentManager } from '@jupyterlab/docmanager';
 
-import { IJulynterRegistry, JulynterRegistry } from './registry';
-import { Julynter } from './julynter';
+import { IJulynterRegistry, JulynterRegistry } from './linterlab/registry';
 
-import {
-  createNotebookGenerator,
-} from './generators';
+import { Julynter } from './linterlab/julynter';
 
-import {
-  JulynterKernelHandler,
-} from './kernel/handler';
+import { createNotebookGenerator } from './linterlab/view/notebookgenerator';
 
-import {
-  KernelConnector,
-} from './kernel/kernelconnector';
+import { JulynterKernelHandler } from './linterlab/kernel/handler';
 
-import {
-  Languages,
-} from './kernel/languages';
+import { KernelConnector } from './linterlab/kernel/kernelconnector';
+
+import { Languages } from './linter/languages';
 
 import '../style/index.css';
 

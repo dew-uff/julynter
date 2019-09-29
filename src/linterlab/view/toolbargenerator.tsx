@@ -1,18 +1,17 @@
 import { INotebookTracker } from '@jupyterlab/notebook';
 
-import { NotebookGeneratorOptionsManager, IJulynterLintOptions } from './optionsmanager';
+import { ERROR_TYPES, ErrorTypeKey } from '../../linter/errors';
 
-import { ERROR_TYPES, ErrorTypeKey } from './errors';
+import { IJulynterLintOptions } from '../../linter/interfaces'
+
+import { OptionsManager } from './optionsmanager';
 
 import * as React from 'react';
 
 interface IToolbarProps {}
 
 
-export function notebookGeneratorToolbar(
-  options: NotebookGeneratorOptionsManager,
-  tracker: INotebookTracker
-) {
+export function notebookGeneratorToolbar(options: OptionsManager, tracker: INotebookTracker) {
   // Render the toolbar
   return class extends React.Component<IToolbarProps,IJulynterLintOptions> {
     constructor(props: IToolbarProps) {
@@ -56,7 +55,7 @@ export function notebookGeneratorToolbar(
               'julynter-check-' + key
             ) as string;
             checks["requirements"] = _check_requirements = _check_requirements != undefined ? _check_requirements : options.checkRequirements();
-            this.setState<never>({ [key]: _check_requirements });
+            this.setState({ "requirements": _check_requirements });
             
             options.initializeOptions(
               checks,
@@ -69,7 +68,7 @@ export function notebookGeneratorToolbar(
 
     toggle = (key: string) => {
       return (component: React.Component) => {
-        options.setCheck(key, !options.check(key));
+        options.update(key, !options.check(key));
         this.setState<never>({ [key]: options.check(key) });
       };
     }
@@ -84,7 +83,7 @@ export function notebookGeneratorToolbar(
         } else {
           mode = "list"
         }
-        options.setCheckMode(mode);
+        options.updateMode(mode);
         this.setState({ "mode": options.checkMode() });
       };
     };

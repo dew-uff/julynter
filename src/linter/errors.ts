@@ -1,26 +1,7 @@
-import { INotebookHeading } from './heading';
+import {
+    IErrorType, IItemGenerator, IErrorMessage
+} from "./interfaces"
 
-
-export interface IItemGenerator {
-    create(cell_id: number | string, type: 'code' | 'markdown' | 'header' | 'raw' | 'title', message:IErrorMessage, args:any[]): INotebookHeading;
-    rename_notebook(): void;
-    go_to_cell(index: number): void;
-    add_module(index: number, module: string): void;
-}
-
-export interface IErrorType {
-    key: string;
-    label: string;
-    toggle: string;
-    icon: string;
-}
-
-export interface IErrorMessage {
-    label: (...args: any[]) => string;
-    suggestion: string;
-    type: string;
-    action: (itemgenerator: IItemGenerator, ...args: any[]) => () => void;
-}
 
 export type ErrorTypeKey = "invalid-title" | "hidden-state" | "confuse-notebook" | "import" | "absolute-path";
 

@@ -1,17 +1,10 @@
 // Code from https://github.com/lckr/jupyterlab-variableInspector
 
+import { ISignal, Signal } from "@phosphor/signaling";
 
-import {
-    IClientSession
-} from "@jupyterlab/apputils";
+import { IClientSession } from "@jupyterlab/apputils";
 
-import {
-    KernelMessage, Kernel
-} from "@jupyterlab/services";
-
-import {
-    ISignal, Signal
-} from "@phosphor/signaling";
+import { KernelMessage, Kernel } from "@jupyterlab/services";
 
 
 /**

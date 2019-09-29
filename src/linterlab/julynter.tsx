@@ -9,11 +9,12 @@ import { Widget } from '@phosphor/widgets';
 
 import { JulynterRegistry } from './registry';
 
-import { IJulynterKernel } from './kernel/julynterkernel';
+import { IReport } from '../linter/interfaces';
 
 
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import { IJulynterKernelUpdate, IJulynterKernelHandler } from './kernel/interfaces';
 
 /**
  * Timeout for throttling Julynter rendering.
@@ -151,11 +152,11 @@ export class Julynter extends Widget {
     this.update();
   }
 
-  get handler(): IJulynterKernel.IJulynterKernelHandler | null {
+  get handler(): IJulynterKernelHandler | null {
     return this._handler;
   }
 
-  set handler(handler: IJulynterKernel.IJulynterKernelHandler | null) {
+  set handler(handler: IJulynterKernelHandler | null) {
     if (this._handler === handler) {
       return;
     }
@@ -182,7 +183,7 @@ export class Julynter extends Widget {
     super.dispose();
   }
 
-  protected onInspectorUpdate( sender: any, allArgs: IJulynterKernel.IJulynterKernelUpdate): void {
+  protected onInspectorUpdate( sender: any, allArgs: IJulynterKernelUpdate): void {
     let generator = this.generator;
     if (generator !== null) {
       generator.processKernelMessage(allArgs);
@@ -202,7 +203,7 @@ export class Julynter extends Widget {
   private _docmanager: IDocumentManager;
   private _current: Julynter.ICurrentWidget | null;
   private _monitor: ActivityMonitor<any, any> | null;
-  private _handler: IJulynterKernel.IJulynterKernelHandler | null;
+  private _handler: IJulynterKernelHandler | null;
 
 }
 
@@ -232,39 +233,6 @@ export namespace Julynter {
     widget: W;
     generator: JulynterRegistry.IGenerator<W>;
   }
-}
-
-/**
- * An object that represents a report.
- */
-export interface IReport {
-  /**
-   * The text of the heading.
-   */
-  text: string;
-  report_type: string;
-  cell_id: string | number;
-  visible: boolean;
-  filtered_out: boolean;
-  /**
-   * A function to execute when clicking the Julynter
-   * item. Typically this will be used to scroll
-   * the parent widget to this item.
-   */
-  onClick: () => void;
-
-  /**
-   * If there is special markup, we can instead
-   * render the heading using a raw HTML string. This
-   * HTML *should be properly sanitized!*
-   *
-   * For instance, this can be used to render
-   * already-renderd-to-html markdown headings.
-   */
-  html?: string;
-  collapsed?: boolean;
-  has_parent?: boolean;
-
 }
 
 /**

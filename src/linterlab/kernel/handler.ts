@@ -1,38 +1,29 @@
-import { 
-    IDisposable
-} from "@phosphor/disposable";
+import { IDisposable } from "@phosphor/disposable";
 
-import {
-    Signal, ISignal
-} from "@phosphor/signaling"
+import { Signal, ISignal } from "@phosphor/signaling"
 
-import {
-    KernelMessage
-} from "@jupyterlab/services";
+import { KernelMessage } from "@jupyterlab/services";
 
-import {
-    nbformat
-} from "@jupyterlab/coreutils"
-
-import {
-    KernelConnector
-} from "./kernelconnector";
-
-import {
-    IJulynterKernel, 
-} from "./julynterkernel";
+import { nbformat } from "@jupyterlab/coreutils"
 
 import { IClientSession } from "@jupyterlab/apputils";
 
+import { KernelConnector } from "./kernelconnector";
 
-export class JulynterKernelHandler implements IDisposable, IJulynterKernel.IJulynterKernelHandler {
+import { IQueryResult } from "../../linter/interfaces";
+
+import { IJulynterKernelHandler, IJulynterKernelUpdate } from "./interfaces";
+
+
+
+export class JulynterKernelHandler implements IDisposable, IJulynterKernelHandler {
     private _connector: KernelConnector;
     private _requirements: string;
     private _queryCommand: (requirements: string) => string;
     private _addModuleCommand: (module: string, requirements: string) => string;
     private _initScript: string;
     private _disposed = new Signal<this, void>( this );
-    private _inspected = new Signal<this, IJulynterKernel.IJulynterKernelUpdate>( this );
+    private _inspected = new Signal<this, IJulynterKernelUpdate>( this );
     private _isDisposed = false;
     private _ready : Promise<void>;
     private _id : string;
@@ -56,7 +47,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernel.IJuly
         } );
         
         this._connector.kernelRestarted.connect(( sender: any, kernelReady: Promise<void> ) => {
-            this._inspected.emit(<IJulynterKernel.IJulynterKernelUpdate>{
+            this._inspected.emit(<IJulynterKernelUpdate>{
                 status: "Restarting Kernel...",
             });
             // Emit restarting
@@ -93,7 +84,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernel.IJuly
     /**
      * A signal emitted when an inspector value is generated.
      */
-    get inspected(): ISignal<JulynterKernelHandler, IJulynterKernel.IJulynterKernelUpdate> {
+    get inspected(): ISignal<JulynterKernelHandler, IJulynterKernelUpdate> {
         return this._inspected;
     }
 
@@ -176,7 +167,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernel.IJuly
                     status: "",
                     kernelName : this._connector.kernelName || "",
                     languageName : this._connector.kernelType || "",
-                    result:  <IJulynterKernel.IQueryResult>JSON.parse(content)
+                    result:  <IQueryResult>JSON.parse(content)
                 });
                 break;
             case "display_data":
@@ -191,7 +182,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernel.IJuly
                     status: "",
                     kernelName : this._connector.kernelName || "",
                     languageName : this._connector.kernelType || "",
-                    result:  <IJulynterKernel.IQueryResult>JSON.parse(content_display)
+                    result:  <IQueryResult>JSON.parse(content_display)
                 });
                 break;
             case "error":
@@ -200,7 +191,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernel.IJuly
                         this._attempts += 1;
                         console.log("Failed to initialize scripts. Retrying " + this._attempts + "/3");
                         if (this._attempts <= 3) {
-                            this._inspected.emit(<IJulynterKernel.IJulynterKernelUpdate>{
+                            this._inspected.emit(<IJulynterKernelUpdate>{
                                 status: "Retrying to init",
                             });
                             this._initOnKernel().then(( msg: KernelMessage.IExecuteReplyMsg ) => {
@@ -255,10 +246,10 @@ namespace JulynterKernelHandler {
 }
 
 export
-    class DummyHandler implements IDisposable,IJulynterKernel.IJulynterKernelHandler{
+    class DummyHandler implements IDisposable, IJulynterKernelHandler{
         private _isDisposed = false;
         private _disposed = new Signal<this,void>( this );
-        private _inspected = new Signal<this, IJulynterKernel.IJulynterKernelUpdate>( this );
+        private _inspected = new Signal<this, IJulynterKernelUpdate>( this );
         private _connector : KernelConnector;
         requirements: string;
         
@@ -274,7 +265,7 @@ export
             return this._isDisposed;
         }
        
-        get inspected() : ISignal<DummyHandler, IJulynterKernel.IJulynterKernelUpdate>{
+        get inspected() : ISignal<DummyHandler, IJulynterKernelUpdate>{
             return this._inspected;
         }
        
@@ -288,7 +279,7 @@ export
         }
        
         public performQuery(): void{
-            this._inspected.emit(<IJulynterKernel.IJulynterKernelUpdate>{
+            this._inspected.emit(<IJulynterKernelUpdate>{
                 status: "Language currently not supported",
                 kernelName : this._connector.kernelName || "",
                 languageName : this._connector.kernelType || ""
@@ -296,7 +287,7 @@ export
         }
 
         public addModule(module:string): void{
-            this._inspected.emit(<IJulynterKernel.IJulynterKernelUpdate>{
+            this._inspected.emit(<IJulynterKernelUpdate>{
                 status: "Language currently not supported",
                 kernelName : this._connector.kernelName || "",
                 languageName : this._connector.kernelType || ""

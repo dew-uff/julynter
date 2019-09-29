@@ -1,16 +1,16 @@
-
-
 import { showDialog, Dialog } from '@jupyterlab/apputils';
+
 import { Cell } from '@jupyterlab/cells';
+
 import { renameDialog, IDocumentManager } from '@jupyterlab/docmanager';
+
 import { INotebookTracker, Notebook } from '@jupyterlab/notebook';
+
 import { IObservableJSON } from '@jupyterlab/observables';
 
-import { Julynter, IReport } from '../julynter';
+import { IReport, IErrorMessage, IItemGenerator, IGroupGenerator, ReportType } from '../../linter/interfaces';
 
-import { INotebookHeading } from './heading';
-import { IErrorMessage, IItemGenerator } from './errors';
-
+import { Julynter } from '../julynter';
 
 
 function isNumber(value: string | number): boolean
@@ -32,7 +32,7 @@ export class ItemGenerator implements IItemGenerator {
     this._julynter = julynter;
   }
 
-  create(cell_id: number | string, type: 'code' | 'markdown' | 'header' | 'raw' | 'title', message:IErrorMessage, args:any[]): INotebookHeading {
+  create(cell_id: number | string, type: ReportType, message:IErrorMessage, args:any[]): IReport {
     return {
       text: message.label(...args),
       report_type: message.type,
@@ -71,7 +71,7 @@ export class ItemGenerator implements IItemGenerator {
   }
 }
 
-export class GroupGenerator {
+export class GroupGenerator implements IGroupGenerator {
 
   _julynter: Julynter;
   _tracker: INotebookTracker;
@@ -82,7 +82,7 @@ export class GroupGenerator {
   }
 
 
-  create(title: string | number, elements: IReport[]): INotebookHeading {
+  create(title: string | number, elements: IReport[]): IReport {
     let str_title: string;
     let metavar: IObservableJSON;
     let metaname: string;
@@ -103,7 +103,7 @@ export class GroupGenerator {
       element.has_parent = true;
     });
 
-    let result: INotebookHeading = {
+    let result: IReport = {
       text: str_title,
       report_type: "group",
       cell_id: "group",
