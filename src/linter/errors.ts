@@ -87,6 +87,18 @@ export const ERRORS: { [id: string]: IErrorMessage } = {
         type: "confuse-notebook",
         action: go_to_cell
     },
+    c4: {
+        label: (i: Number) => `The first cell of the notebook is not a markdown cell`,
+        suggestion: "Please consider adding a markdown cell to describe the notebook.",
+        type: "confuse-notebook",
+        action: go_to_cell
+    },
+    c5: {
+        label: (i: Number) => `The last cell of the notebook is not a markdown cell`,
+        suggestion: "Please consider adding a markdown cell to conclude the notebook.",
+        type: "confuse-notebook",
+        action: go_to_cell
+    },
 
 
     h1: {
@@ -166,6 +178,17 @@ export const ERRORS: { [id: string]: IErrorMessage } = {
         type: "invalid-title",
         action: rename_notebook
     },
-
+    t6: {
+        label: () => 'Title is too big',
+        suggestion: "Please consider renaming it a smaller name and using a markdown cell for the full name.",
+        type: "invalid-title",
+        action: rename_notebook
+    },
+    t7: {
+        label: () => 'Title is too small',
+        suggestion: "Please consider renaming it a meaningful name.",
+        type: "invalid-title",
+        action: rename_notebook
+    },
 
 }

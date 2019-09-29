@@ -18,6 +18,10 @@ function isNumber(value: string | number): boolean
   return ((value != null) && !isNaN(Number(value.toString())));
 }
 
+function capitalizeFirstLetter(string: string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 export class ItemGenerator implements IItemGenerator {
   _docManager: IDocumentManager;
   _tracker: INotebookTracker;
@@ -92,7 +96,7 @@ export class GroupGenerator implements IGroupGenerator {
       metavar = cell.model.metadata;
       metaname = 'julynter-cellgroup-collapsed';
     } else {
-      str_title = String(title);
+      str_title = capitalizeFirstLetter(String(title));
       metavar = this._tracker.currentWidget.model.metadata;
       metaname = 'julynter-cellgroup-' + str_title.replace(' ', '-').toLowerCase() + '-collapsed';
     }

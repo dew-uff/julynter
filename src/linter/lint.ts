@@ -24,9 +24,6 @@ export class Linter {
     
     // ToDo: check variable definitions
     // ToDo: check test
-    // ToDo: check first cell is markdown. Check last cell is markdown
-    // ToDo: check title size
-    // ToDo: check cyclomatic complexity
     
     headings = this.filter_by_report_type(headings);
     if (this.options.checkMode() == 'cell'){
@@ -53,6 +50,12 @@ export class Linter {
     }
     if (!/^([a-z]|[0-9]|_|-| |\.)*$/.test(title)) {
       headings.push(generator.create("title", "title", ERRORS.t5, []))
+    }
+    if (title.length > 100) {
+      headings.push(generator.create("title", "title", ERRORS.t6, []))
+    }
+    if (title.length < 8) {
+      headings.push(generator.create("title", "title", ERRORS.t7, []))
     }
   }
   
@@ -142,6 +145,20 @@ export class Linter {
         }
         lastExecutionCount = currentCount;
       });
+    if (notebookMetadata.cells.length > 0) {
+      let cell = notebookMetadata.cells[0];
+      let model = cell.model;
+      if (model.type !== 'markdown') {
+        headings.push(itemGenerator.create(0, cell.model.type, ERRORS.c4, [0]))
+      }
+    }
+    if (emptyTail > 1) {
+      let cell = notebookMetadata.cells[emptyTail - 1];
+      let model = cell.model;
+      if (model.type !== 'markdown') {
+        headings.push(itemGenerator.create(emptyTail - 1, cell.model.type, ERRORS.c5, [emptyTail - 1]))
+      }
+    }
   }
 
   private getNonExecutedTail(notebookMetadata: IGenericNotebookMetadata): number {
