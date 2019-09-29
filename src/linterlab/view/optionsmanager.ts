@@ -13,18 +13,18 @@ export class OptionsManager implements ILintOptionsManager {
   private _widget: Julynter;
   private _checks: IJulynterLintOptions;
   
-  constructor(widget: Julynter, notebook: INotebookTracker) {
+  constructor(widget: Julynter) {
     this._checks = {
       "invalid-title": true,
       "hidden-state": true,
       "confuse-notebook": true,
       "import": true,
       "absolute-path": true,
-      "mode": "list",
+      "mode": "type",
       "requirements": "requirements.txt"
     };
     this._widget = widget;
-    this._notebook = notebook;
+    this._notebook = widget.tracker;
   }
 
   readonly sanitizer: ISanitizer;

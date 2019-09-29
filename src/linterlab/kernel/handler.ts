@@ -10,7 +10,7 @@ import { IClientSession } from "@jupyterlab/apputils";
 
 import { KernelConnector } from "./kernelconnector";
 
-import { IQueryResult } from "../../linter/interfaces";
+import { IQueryResult, ILintOptionsManager } from "../../linter/interfaces";
 
 import { IJulynterKernelHandler, IJulynterKernelUpdate } from "./interfaces";
 
@@ -18,7 +18,6 @@ import { IJulynterKernelHandler, IJulynterKernelUpdate } from "./interfaces";
 
 export class JulynterKernelHandler implements IDisposable, IJulynterKernelHandler {
     private _connector: KernelConnector;
-    private _requirements: string;
     private _queryCommand: (requirements: string) => string;
     private _addModuleCommand: (module: string, requirements: string) => string;
     private _initScript: string;
@@ -28,6 +27,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernelHandle
     private _ready : Promise<void>;
     private _id : string;
     private _attempts: number;
+    private _options: ILintOptionsManager;
 
     constructor( options: JulynterKernelHandler.IOptions ) {
         this._connector = options.connector;
@@ -35,7 +35,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernelHandle
         this._queryCommand = options.queryCommand;
         this._addModuleCommand = options.addModuleCommand;
         this._initScript = options.initScript;
-        this._requirements = "requirements.txt";
+        this._options = options.options;
         this._attempts = 0;
         
         this._ready =  this._connector.ready.then(() => {
@@ -88,21 +88,12 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernelHandle
         return this._inspected;
     }
 
-    get requirements(): string {
-        return this._requirements;
-    }
-
-    set requirements(req:string) {
-        this._requirements = req;
-    }
-
-
     /**
      * Performs an inspection by sending an execute request with the query command to the kernel.
      */
     public performQuery(): void {
         let content: KernelMessage.IExecuteRequestMsg['content'] = {
-            code: this._queryCommand(this._requirements),
+            code: this._queryCommand(this._options.checkRequirements()),
             stop_on_error: false,
             store_history: false
         };
@@ -114,7 +105,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernelHandle
      */
     public addModule(module:string): void {
         let content: KernelMessage.IExecuteRequestMsg['content'] = {
-            code: this._addModuleCommand(module, this._requirements),
+            code: this._addModuleCommand(module, this._options.checkRequirements()),
             stop_on_error: false,
             store_history: false
         };
@@ -235,13 +226,13 @@ namespace JulynterKernelHandler {
     /**
      * The instantiation options for an inspection handler.
      */
-    export
-        interface IOptions {
+    export interface IOptions {
         connector: KernelConnector;
         queryCommand: (requirements: string) => string;
         addModuleCommand: (module: string, requirements: string) => string;
         initScript: string;
         id : string;
+        options: ILintOptionsManager;
     }
 }
 

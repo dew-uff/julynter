@@ -25,10 +25,10 @@ export class ItemGenerator implements IItemGenerator {
   _julynter: Julynter;
 
 
-  constructor(tracker: INotebookTracker, julynter: Julynter){
+  constructor(julynter: Julynter){
     this._docManager = julynter.docManager;
-    this._tracker = tracker;
-    this._notebook = tracker.currentWidget.content
+    this._tracker = julynter.tracker;
+    this._notebook = julynter.tracker.currentWidget.content
     this._julynter = julynter;
   }
 
@@ -76,13 +76,13 @@ export class GroupGenerator implements IGroupGenerator {
   _julynter: Julynter;
   _tracker: INotebookTracker;
 
-  constructor(tracker: INotebookTracker, widget: Julynter) {
-    this._tracker = tracker;
-    this._julynter = widget;
+  constructor(julynter: Julynter) {
+    this._tracker = julynter.tracker;
+    this._julynter = julynter;
   }
 
 
-  create(title: string | number, elements: IReport[]): IReport {
+  create(title: string | number, report_type: string, elements: IReport[]): IReport {
     let str_title: string;
     let metavar: IObservableJSON;
     let metaname: string;
@@ -105,7 +105,7 @@ export class GroupGenerator implements IGroupGenerator {
 
     let result: IReport = {
       text: str_title,
-      report_type: "group",
+      report_type: report_type,
       cell_id: "group",
       visible: true,
       filtered_out: false,

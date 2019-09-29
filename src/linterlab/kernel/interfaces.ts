@@ -15,5 +15,4 @@ export interface IJulynterKernelHandler {
   inspected: ISignal<any, IJulynterKernelUpdate>;
   performQuery(): void;
   addModule(module:string): void;
-  requirements:string; // TODO: Remove
 }

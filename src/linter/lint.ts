@@ -2,7 +2,7 @@ import {
   IQueryResult, IReport, ILintOptionsManager, IItemGenerator, IGroupGenerator,
   IGenericNotebookMetadata, IGenericCellMetadata, IGenericCodeCellMetadata
 } from "./interfaces";
-import { ERRORS } from "./errors"
+import { ERRORS, ERROR_TYPES_MAP } from "./errors"
 
 
 export class Linter {
@@ -202,7 +202,7 @@ export class Linter {
     let new_headings: IReport[] = [];
     for (let key in groups) {
       let elements = groups[key];
-      new_headings.push(groupGenerator.create(key, elements));
+      new_headings.push(groupGenerator.create(key, "group", elements));
       new_headings.push(...elements);
     }
 
@@ -222,7 +222,8 @@ export class Linter {
     let new_headings: IReport[] = [];
     for (let key in groups) {
       let elements = groups[key];
-      new_headings.push(groupGenerator.create(key, elements));
+      let groupText = ERROR_TYPES_MAP[key].label;
+      new_headings.push(groupGenerator.create(groupText, key, elements));
       new_headings.push(...elements);
     }
 

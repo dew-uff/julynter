@@ -6,38 +6,46 @@ import {
 export type ErrorTypeKey = "invalid-title" | "hidden-state" | "confuse-notebook" | "import" | "absolute-path";
 
 
-export const ERROR_TYPES: IErrorType[] = [
-    {
+export const ERROR_TYPES_MAP: { [id:string]: IErrorType} = {
+    "invalid-title": {
         key: "invalid-title",
         label: "Invalid Title",
         toggle: "Toggle Title Checking",
         icon: "julynter-toolbar-title-icon"
         
     },
-    {
+    "hidden-state": {
         key: "hidden-state",
         label: "Hidden State",
         toggle: "Toggle Hidden State Checking",
         icon: "julynter-toolbar-hidden-state-icon"
     },
-    {
+    "confuse-notebook": {
         key: "confuse-notebook",
         label: "Confuse Notebook",
         toggle: "Toggle Confuse Notebook Checking",
         icon: "julynter-toolbar-confuse-notebook-icon"
     },
-    {
+    "import": {
         key: "import",
         label: "Import",
         toggle: "Toggle Import Checking",
         icon: "julynter-toolbar-import-icon"
     },
-    {
+    "absolute-path": {
         key: "absolute-path",
         label: "Absolute Path",
         toggle: "Toggle Absolute Path Checking",
         icon: "julynter-toolbar-absolute-path-icon"
     }
+}
+
+export const ERROR_TYPES: IErrorType[] = [
+    ERROR_TYPES_MAP["invalid-title"],
+    ERROR_TYPES_MAP["hidden-state"],
+    ERROR_TYPES_MAP["confuse-notebook"],
+    ERROR_TYPES_MAP["import"],
+    ERROR_TYPES_MAP["absolute-path"],
 ]
 
 function go_to_cell(itemgenerator: IItemGenerator, index: number, ...others:any[]) {

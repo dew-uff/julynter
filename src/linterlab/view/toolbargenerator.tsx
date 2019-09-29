@@ -2,16 +2,17 @@ import { INotebookTracker } from '@jupyterlab/notebook';
 
 import { ERROR_TYPES, ErrorTypeKey } from '../../linter/errors';
 
-import { IJulynterLintOptions } from '../../linter/interfaces'
-
-import { OptionsManager } from './optionsmanager';
+import { IJulynterLintOptions, ILintOptionsManager } from '../../linter/interfaces'
 
 import * as React from 'react';
+import { showDialog, Dialog, showErrorMessage } from '@jupyterlab/apputils';
+import { Widget } from '@phosphor/widgets';
+import { PathExt } from '@jupyterlab/coreutils';
 
 interface IToolbarProps {}
 
 
-export function notebookGeneratorToolbar(options: OptionsManager, tracker: INotebookTracker) {
+export function notebookGeneratorToolbar(options: ILintOptionsManager, tracker: INotebookTracker) {
   // Render the toolbar
   return class extends React.Component<IToolbarProps,IJulynterLintOptions> {
     constructor(props: IToolbarProps) {
@@ -22,7 +23,7 @@ export function notebookGeneratorToolbar(options: OptionsManager, tracker: INote
         "confuse-notebook": true,
         "import": true,
         "absolute-path": true,
-        "mode": "list",
+        "mode": "type",
         "requirements": "requirements.txt"
       };
       if (tracker.currentWidget) {
@@ -88,6 +89,35 @@ export function notebookGeneratorToolbar(options: OptionsManager, tracker: INote
       };
     };
 
+    changeRequirements = () => {
+      return (component: React.Component) => {
+        return showDialog({
+          title: 'Set requirements file',
+          body: new RequirementsHandler(options.checkRequirements()),
+          focusNodeSelector: 'input',
+          buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'Set' })]
+        }).then(result => {
+          if (!result.value) {
+            return;
+          }
+          let name: string = result.value as string; 
+          if ((name.length == 0) || (name.includes(":"))) {
+            void showErrorMessage(
+              'Set Requirements Error',
+              Error(
+                `"${result.value}" is not a valid name for a file. ` +
+                  `Names must have nonzero length, ` +
+                  `and cannot include ":"`
+              )
+            );
+            return null;
+          }
+          options.updateRequirements(name);
+        });
+
+      };
+    }
+
     render() {
       let listing: JSX.Element[] = ERROR_TYPES.map(element => {
         let key = element.key.replace(' ', '-').toLowerCase();
@@ -130,14 +160,74 @@ export function notebookGeneratorToolbar(options: OptionsManager, tracker: INote
         />
       </div>
 
+      let reqConfig = <div
+      className="julynter-toolbar-button"
+      onClick={event => this.changeRequirements().bind(this)(this)}
+    >
+      <div
+        role="text"
+        aria-label="Change requirements location"
+        title="Change requirements location"
+        className="julynter-toolbar-icon julynter-toolbar-rename-icon"
+      />
+    </div>
+
       return (
         <div>
           <div className={'julynter-toolbar'}>
             {listing}
             {modeToggle}
+            {reqConfig}
           </div>
         </div>
       );
     }
   };
+}
+
+
+/**
+ * A widget used to rename a file.
+ */
+class RequirementsHandler extends Widget {
+  /**
+   * Construct a new "rename" dialog.
+   */
+  constructor(oldPath: string) {
+    let body = document.createElement('div');
+    let existingLabel = document.createElement('label');
+    existingLabel.textContent = 'Requirements file';
+    let existingPath = document.createElement('span');
+    existingPath.textContent = oldPath;
+
+    let nameTitle = document.createElement('label');
+    nameTitle.textContent = 'New Name';
+    nameTitle.className = "jp-new-name-title";
+    let name = document.createElement('input');
+
+    body.appendChild(existingLabel);
+    body.appendChild(existingPath);
+    body.appendChild(nameTitle);
+    body.appendChild(name);
+  
+    super({ node: body });
+    this.addClass('jp-FileDialog');
+    let ext = PathExt.extname(oldPath);
+    let value = (this.inputNode.value = PathExt.basename(oldPath));
+    this.inputNode.setSelectionRange(0, value.length - ext.length);
+  }
+
+  /**
+   * Get the input text node.
+   */
+  get inputNode(): HTMLInputElement {
+    return this.node.getElementsByTagName('input')[0] as HTMLInputElement;
+  }
+
+  /**
+   * Get the value of the widget.
+   */
+  getValue(): string {
+    return this.inputNode.value;
+  }
 }

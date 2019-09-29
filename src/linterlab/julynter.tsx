@@ -15,6 +15,7 @@ import { IReport } from '../linter/interfaces';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { IJulynterKernelUpdate, IJulynterKernelHandler } from './kernel/interfaces';
+import { INotebookTracker } from '@jupyterlab/notebook';
 
 /**
  * Timeout for throttling Julynter rendering.
@@ -27,13 +28,22 @@ const RENDER_TIMEOUT = 1000;
  * A widget for hosting a notebook julynter.
  */
 export class Julynter extends Widget {
+
+  private _toolbar: any;
+  private _docmanager: IDocumentManager;
+  private _current: Julynter.ICurrentWidget | null;
+  private _monitor: ActivityMonitor<any, any> | null;
+  private _handler: IJulynterKernelHandler | null;
+  private _tracker: INotebookTracker | null;
+
   /**
    * Create a new table of contents.
    */
-  constructor(options: Julynter.IOptions) {
+  constructor(docmanager: IDocumentManager, tracker: INotebookTracker) {
     super();
     this._handler = null;
-    this._docmanager = options.docmanager;
+    this._docmanager = docmanager;
+    this._tracker = tracker;
   }
 
   /**
@@ -145,6 +155,10 @@ export class Julynter extends Widget {
     return this._docmanager;
   }
 
+  get tracker() {
+    return this._tracker;
+  }
+
   /**
    * Rerender after showing.
    */
@@ -199,12 +213,7 @@ export class Julynter extends Widget {
 
 
 
-  private _toolbar: any;
-  private _docmanager: IDocumentManager;
-  private _current: Julynter.ICurrentWidget | null;
-  private _monitor: ActivityMonitor<any, any> | null;
-  private _handler: IJulynterKernelHandler | null;
-
+  
 }
 
 
@@ -212,17 +221,6 @@ export class Julynter extends Widget {
  * A namespace for Julynter statics.
  */
 export namespace Julynter {
-
-
-  /**
-   * Options for the constructor.
-   */
-  export interface IOptions {
-    /**
-     * The document manager for the application.
-     */
-    docmanager: IDocumentManager;
-  }
 
   /**
    * A type representing a tuple of a widget,

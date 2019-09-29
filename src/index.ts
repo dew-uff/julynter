@@ -22,6 +22,7 @@ import { KernelConnector } from './linterlab/kernel/kernelconnector';
 import { Languages } from './linter/languages';
 
 import '../style/index.css';
+import { OptionsManager } from './linterlab/view/optionsmanager';
 
 /**
  * Initialization data for the julynter extension.
@@ -49,7 +50,7 @@ function activateJulynter(
   notebookTracker: INotebookTracker
 ): IJulynterRegistry {
   // Create the widget.
-  const julynter = new Julynter({ docmanager });
+  const julynter = new Julynter(docmanager, notebookTracker)
   // Create the registry.
   const registry = new JulynterRegistry();
   // Add the julynter to the left area.
@@ -61,12 +62,11 @@ function activateJulynter(
   // Add the julynter widget to the application restorer.
   restorer.add(julynter, 'juputerlab-julynter');
  
+  // Create options manager
+  const options = new OptionsManager(julynter);
+
   // Create a notebook JulynterRegistry.IGenerator
-  const notebookGenerator = createNotebookGenerator(
-    notebookTracker,
-    julynter
-  );
-  registry.addGenerator(notebookGenerator);
+  registry.addGenerator(createNotebookGenerator(julynter, options));
 
 
   const handlers: { [id: string]: Promise<JulynterKernelHandler> } = {};
@@ -91,14 +91,15 @@ function activateJulynter(
           let queryCommand = result.queryCommand;
           let addModuleCommand = result.addModuleCommand;
           
-          const options: JulynterKernelHandler.IOptions = {
-                  queryCommand: queryCommand,
-                  addModuleCommand: addModuleCommand,
-                  connector: connector,
-                  initScript: initScript,
-                  id: session.path  //Using the sessions path as an identifier for now.
+          const koptions: JulynterKernelHandler.IOptions = {
+            queryCommand: queryCommand,
+            addModuleCommand: addModuleCommand,
+            connector: connector,
+            initScript: initScript,
+            id: session.path,  //Using the sessions path as an identifier for now.
+            options: options
           };
-          const handler = new JulynterKernelHandler( options );
+          const handler = new JulynterKernelHandler( koptions );
           nbPanel.disposed.connect(() => {
               delete handlers[nbPanel.id];
               handler.dispose();

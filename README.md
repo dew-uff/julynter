@@ -1,4 +1,4 @@
-# julint
+# julynter
 
 A quality checker for Jupyter
 
@@ -10,7 +10,7 @@ A quality checker for Jupyter
 ## Install
 
 ```bash
-jupyter labextension install julint
+jupyter labextension install julynter
 ```
 
 ## Contributing
@@ -23,7 +23,7 @@ The `jlpm` command is JupyterLab's pinned version of
 
 ```bash
 # Clone the repo to your local environment
-# Move to julint directory
+# Move to julynter directory
 # Install dependencies
 jlpm
 # Build Typescript source
@@ -48,6 +48,6 @@ jupyter lab --watch
 ### Uninstall
 
 ```bash
-jupyter labextension uninstall julint
+jupyter labextension uninstall julynter
 ```
 

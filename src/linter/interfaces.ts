@@ -74,7 +74,7 @@ export interface IItemGenerator {
  * An object that generates grouped error reports
  */
 export interface IGroupGenerator {
-  create(key: string, elements: IReport[]): IReport;
+  create(key: string, report_type: string, elements: IReport[]): IReport;
 }
 
 
@@ -101,6 +101,7 @@ export interface ILintOptionsManager {
   update(key: string, value:boolean): void;
   updateMode(mode: ViewModes): void;
   updateRequirements(req: string): void;
+  updateWidget(): void;
   initializeOptions(checks: IJulynterLintOptions): void;
 }
 

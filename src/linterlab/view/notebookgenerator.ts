@@ -10,11 +10,9 @@ import { IGenericNotebookMetadata, IGenericCellMetadata, IReport } from '../../l
 
 import { Linter } from '../../linter/lint';
 
-import { IQueryResult } from '../../linter/interfaces';
+import { IQueryResult, ILintOptionsManager } from '../../linter/interfaces';
 
 import { ItemGenerator, GroupGenerator } from './itemgenerator';
-
-import { OptionsManager } from './optionsmanager';
 
 import { notebookItemRenderer } from './itemrenderer';
 
@@ -25,15 +23,15 @@ import { IJulynterKernelUpdate } from '../kernel/interfaces';
 class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
   tracker: INotebookTracker;  
   isEnabled?: (widget: Widget) => boolean;
-  options: OptionsManager;
+  options: ILintOptionsManager;
   widget: Julynter;
   update: IQueryResult | null;
   hasKernel: boolean;
 
-  constructor(tracker: INotebookTracker, widget: Julynter) {
-    this.tracker = tracker;
+  constructor(widget: Julynter, options: ILintOptionsManager) {
+    this.tracker = widget.tracker;
     this.widget = widget;
-    this.options = new OptionsManager(widget, tracker);
+    this.options = options;
     this.update = {};
     this.hasKernel = false;
   }
@@ -49,8 +47,8 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
   generate(panel: Widget): IReport[] {
     let tracker = this.tracker;
     let widget = this.widget;
-    let groupGenerator = new GroupGenerator(tracker, widget);
-    let itemGenerator = new ItemGenerator(tracker, widget);
+    let groupGenerator = new GroupGenerator(widget);
+    let itemGenerator = new ItemGenerator(widget);
     let notebookMetadata: IGenericNotebookMetadata = {
       title: this.tracker.currentWidget.title.label,
       cells: tracker.currentWidget.content.widgets as unknown as IGenericCellMetadata[],
@@ -76,8 +74,8 @@ class NotebookGenerator implements JulynterRegistry.IGenerator<Widget> {
  * Create a julynter generator for notebooks.
  */
 export function createNotebookGenerator(
-  tracker: INotebookTracker,
-  widget: Julynter
+  widget: Julynter,
+  options: ILintOptionsManager
 ): JulynterRegistry.IGenerator<Widget> {
-  return new NotebookGenerator(tracker, widget);
+  return new NotebookGenerator(widget, options);
 }
