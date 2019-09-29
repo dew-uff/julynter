@@ -109,11 +109,32 @@ export function notebookGeneratorToolbar(options: OptionsManager, tracker: INote
         </div>
       })
       
+      let toggle_class = "julynter-toolbar-icon";
+      let mode = options.checkMode();
+      if (mode == "list") {
+        toggle_class += " julynter-toolbar-list-icon";
+      } else if (mode == "cell") {
+        toggle_class += " julynter-toolbar-cell-icon";
+      } else if (mode == "type") {
+        toggle_class += " julynter-toolbar-type-icon";
+      }
+      let modeToggle = <div
+        className="julynter-toolbar-button"
+        onClick={event => this.toggleMode().bind(this)(this)}
+      >
+        <div
+          role="text"
+          aria-label="Alternate Mode"
+          title="Alternate Mode"
+          className={toggle_class}
+        />
+      </div>
 
       return (
         <div>
           <div className={'julynter-toolbar'}>
             {listing}
+            {modeToggle}
           </div>
         </div>
       );

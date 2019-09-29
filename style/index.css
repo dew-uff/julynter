@@ -77,6 +77,70 @@
   background-image: url('img/title_darktheme.svg');
 }
 
+[data-jp-theme-light='true'] .julynter-toolbar-hidden-state-icon {
+  background-image: url('img/hidden_state.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-toolbar-hidden-state-icon {
+  background-image: url('img/hidden_state_darktheme.svg');
+}
+
+[data-jp-theme-light='true'] .julynter-toolbar-confuse-notebook-icon {
+  background-image: url('img/confuse_notebook.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-toolbar-confuse-notebook-icon {
+  background-image: url('img/confuse_notebook_darktheme.svg');
+}
+
+[data-jp-theme-light='true'] .julynter-toolbar-import-icon {
+  background-image: url('img/import.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-toolbar-import-icon {
+  background-image: url('img/import_darktheme.svg');
+}
+
+[data-jp-theme-light='true'] .julynter-toolbar-absolute-path-icon {
+  background-image: url('img/absolute_path.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-toolbar-absolute-path-icon {
+  background-image: url('img/absolute_path_darktheme.svg');
+}
+
+[data-jp-theme-light='true'] .julynter-toolbar-cell-icon {
+  background-image: url('img/cell.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-toolbar-cell-icon {
+  background-image: url('img/cell_darktheme.svg');
+}
+
+[data-jp-theme-light='true'] .julynter-toolbar-type-icon {
+  background-image: url('img/type.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-toolbar-type-icon {
+  background-image: url('img/type_darktheme.svg');
+}
+
+[data-jp-theme-light='true'] .julynter-toolbar-list-icon {
+  background-image: url('img/list.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-toolbar-list-icon {
+  background-image: url('img/list_darktheme.svg');
+}
+
+[data-jp-theme-light='true'] .julynter-toolbar-rename-icon {
+  background-image: url('img/rename.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-toolbar-rename-icon {
+  background-image: url('img/rename_darktheme.svg');
+}
+
 [data-jp-theme-light='true'] .julynter-toolbar-icon:hover {
   background-color: var(--jp-input-background);
 }
@@ -93,13 +157,13 @@
   background-color: #565656;
 }
 
-
+/*
 .julynter-toolbar-title-icon {
   width: 30px;
   height: 22px;
   margin: 4px 9px 4px 4px;
   content: "T";
-}
+}*/
 
 .julynter-toolbar {
   position: relative;

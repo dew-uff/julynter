@@ -18,25 +18,25 @@ export const ERROR_TYPES: IErrorType[] = [
         key: "hidden-state",
         label: "Hidden State",
         toggle: "Toggle Hidden State Checking",
-        icon: "julynter-toolbar-title-icon"
+        icon: "julynter-toolbar-hidden-state-icon"
     },
     {
         key: "confuse-notebook",
         label: "Confuse Notebook",
         toggle: "Toggle Confuse Notebook Checking",
-        icon: "julynter-toolbar-title-icon"
+        icon: "julynter-toolbar-confuse-notebook-icon"
     },
     {
         key: "import",
         label: "Import",
         toggle: "Toggle Import Checking",
-        icon: "julynter-toolbar-title-icon"
+        icon: "julynter-toolbar-import-icon"
     },
     {
         key: "absolute-path",
         label: "Absolute Path",
         toggle: "Toggle Absolute Path Checking",
-        icon: "julynter-toolbar-title-icon"
+        icon: "julynter-toolbar-absolute-path-icon"
     }
 ]
 
