@@ -302,6 +302,7 @@ export class JulynterTree extends React.Component<IJulynterTreeProps, IJulynterT
     let i = 0;
     const Toolbar = this.props.toolbar;
     let listing: JSX.Element[] = this.props.julynter.map(el => {
+      console.log(el)
       return (
         <JulynterItem
           heading={el}

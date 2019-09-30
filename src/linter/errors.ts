@@ -2,7 +2,6 @@ import {
     IErrorType, IItemGenerator, IErrorMessage
 } from "./interfaces"
 
-
 export type ErrorTypeKey = "invalid-title" | "hidden-state" | "confuse-notebook" | "import" | "absolute-path";
 
 
@@ -66,6 +65,12 @@ function add_module(itemgenerator: IItemGenerator, index: number, module:string,
     }
 }
 
+function restore_cell(itemgenerator: IItemGenerator, index: number, execCount: number, code:string, ...others:any[]) {
+    return () => {
+        itemgenerator.restore_cell(index, execCount, code);
+    }
+}
+
 export const ERRORS: { [id: string]: IErrorMessage } = {
 
 
@@ -122,6 +127,18 @@ export const ERRORS: { [id: string]: IErrorMessage } = {
     h4: {
         label: (i: Number) =>`Cell ${i} skips the execution count`,
         suggestion: "Please consider re-running the notebook to guarantee the reproducibility.",
+        type: "hidden-state",
+        action: go_to_cell
+    },
+    h5: {
+        label: (i: Number, dep: Number, code:String, variable: String) =>`Cell ${i} uses name "${variable}" that was defined on In[${dep}], but it does not exist anymore`,
+        suggestion: "Please consider restoring the cell and re-running the notebook to guarantee the reproducibility.",
+        type: "hidden-state",
+        action: restore_cell
+    },
+    h6: {
+        label: (i: Number, missing:String) =>`Cell ${i} has the following undefined names: ${missing}`,
+        suggestion: "Please consider definint them to guarantee the reproducibility.",
         type: "hidden-state",
         action: go_to_cell
     },

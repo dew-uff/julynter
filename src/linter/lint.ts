@@ -64,7 +64,10 @@ export class Linter {
     let executionCounts: { [key:number]: [number, IGenericCellMetadata] } = {};
     let nonExecutedTail = this.getNonExecutedTail(notebookMetadata);
     let emptyTail = this.getEmptyTail(notebookMetadata);
-    let executed_code = this.update.executed_code;
+    let executedCode = this.update.executed_code;
+    let cellDependencies = this.update.cell_dependencies || {};
+    let missingDependencies = this.update.missing_dependencies || {};
+    let missingRequirements = this.update.missing_requirements || {};
   
     let lastExecutionCount = -1;
     let firstCodeCell = -1;
@@ -80,10 +83,10 @@ export class Linter {
         
         if (this.hasKernel) {
           if (executionCountNumber != null) {
-            if (!executed_code.hasOwnProperty(executionCountNumber)) {
+            if (!executedCode.hasOwnProperty(executionCountNumber)) {
               headings.push(itemGenerator.create(i, cell.model.type, ERRORS.h1, [i]))
             } else {
-              let history_code = executed_code[executionCountNumber].replace("\\n", "\n");
+              let history_code = executedCode[executionCountNumber].replace("\\n", "\n");
               if (history_code != (cell as IGenericCodeCellMetadata).model.value.text) {
                 headings.push(itemGenerator.create(i, cell.model.type, ERRORS.h2, [i]))
               }
@@ -113,9 +116,9 @@ export class Linter {
         headings.push(itemGenerator.create(i, cell.model.type, ERRORS.c3, [i]))
       }
     }
-    let has_imports = this.update.has_imports || [];
+    let hasImports = this.update.has_imports || [];
     let absolute_paths = this.update.absolute_paths || {};
-    let missing_requirements = this.update.missing_requirements || {};
+    let hasKernel = this.hasKernel
     lastExecutionCount = null;
     Object.keys(executionCounts)
       .sort((a, b) => Number(a) - Number(b))
@@ -124,7 +127,7 @@ export class Linter {
         let tuple = executionCounts[currentCount];
         let cell = tuple[1];
         let index = tuple[0];
-        if (has_imports.includes(currentCount) && index != firstCodeCell) {
+        if (hasImports.includes(currentCount) && index != firstCodeCell) {
           headings.push(itemGenerator.create(index, cell.model.type, ERRORS.i1, [index]))
         }
         if (absolute_paths.hasOwnProperty(currentCount)) {
@@ -132,8 +135,8 @@ export class Linter {
             index,absolute_paths[currentCount].map(x => "'" + x + "'").join(", ")
           ]))
         }
-        if (missing_requirements.hasOwnProperty(currentCount)) {
-          Object.keys(missing_requirements[currentCount]).forEach(function(module, j) {
+        if (missingRequirements.hasOwnProperty(currentCount)) {
+          Object.keys(missingRequirements[currentCount]).forEach(function(module, j) {
             headings.push(itemGenerator.create(index, cell.model.type, ERRORS.i2, [index, module]))
           });
         }
@@ -144,6 +147,27 @@ export class Linter {
           headings.push(itemGenerator.create(index, cell.model.type, ERRORS.h4, [index]))
         }
         lastExecutionCount = currentCount;
+
+        if (hasKernel){
+          let dependencies = cellDependencies[currentCount];
+          if (dependencies !== undefined) {
+            Object.keys(dependencies).forEach(function(variable) {
+              let number = Number(dependencies[variable]);
+              if (!executionCounts.hasOwnProperty(number)){
+                headings.push(itemGenerator.create(index, cell.model.type, ERRORS.h5, [
+                  index, number, executedCode[number].replace("\\n", "\n"), variable
+                ]))
+              }
+            })
+          }
+          let missing = missingDependencies[currentCount];
+          console.log(missing)
+          if ((missing !== undefined) && (missing.length > 0)) {
+            headings.push(itemGenerator.create(index, cell.model.type, ERRORS.h6, [
+              index, missing.map(x => "'" + x + "'").join(", ")
+            ]))
+          }
+        }
       });
     if (notebookMetadata.cells.length > 0) {
       let cell = notebookMetadata.cells[0];

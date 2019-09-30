@@ -68,6 +68,7 @@ export interface IItemGenerator {
   rename_notebook(): void;
   go_to_cell(index: number): void;
   add_module(index: number, module: string): void;
+  restore_cell(index: number, executionCount: number, code: string): void;
 }
 
 /**

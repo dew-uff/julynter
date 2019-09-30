@@ -205,12 +205,12 @@ def _jupyterlab_julynter_add_package_to_requirements(module_name, requirements):
         with open(requirements, "r") as f:
             for line in f:
                 if line.strip().startswith(package):
-                    lines.append("{}{}".format(package, version))
+                    lines.append("{}{}\\n".format(package, version))
                     found = True
                 else:
                     lines.append(line)
     if not found:
-        lines.append("{}{}".format(package, version))
+        lines.append("{}{}\\n".format(package, version))
     with open(requirements, "w") as f:
         f.writelines(lines)
     return _jupyterlab_julynter_query(requirements)

@@ -144,7 +144,6 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernelHandle
      */
     private _handleQueryResponse = ( response: KernelMessage.IIOPubMessage ): void => {
         let msgType = response.header.msg_type;
-        console.log(msgType, response.content)
         switch ( msgType ) {
             case "execute_result":
                 let payload = response.content as nbformat.IExecuteResult;
@@ -205,9 +204,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernelHandle
         switch ( msgType ) {
             case 'execute_input':
                 let code = msg.content.code;
-                console.log(code);
                 if (!code.startsWith("_jupyterlab_julynter")) {
-                    console.log("Perform Query")
                     this.performQuery();
                 }
                 break;

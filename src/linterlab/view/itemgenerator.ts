@@ -73,6 +73,14 @@ export class ItemGenerator implements IItemGenerator {
     });
     this.go_to_cell(index);
   }
+
+  restore_cell(index: number, executionCount: number, code: string) {
+    let cell = this._notebook.model.contentFactory.createCodeCell({});
+    cell.value.text = code;
+    cell.executionCount = executionCount;
+    this._notebook.model.cells.insert(index, cell);
+    this.go_to_cell(index);
+  }
 }
 
 export class GroupGenerator implements IGroupGenerator {
