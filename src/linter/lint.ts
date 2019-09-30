@@ -22,9 +22,6 @@ export class Linter {
     this.checkTitle(notebookMetadata, headings, itemGenerator);
     this.checkCellDefinitions(notebookMetadata, headings, itemGenerator);
     
-    // ToDo: check variable definitions
-    // ToDo: check test
-    
     headings = this.filter_by_report_type(headings);
     if (this.options.checkMode() == 'cell'){
       headings = this.group_by_cell(headings, groupGenerator);
@@ -161,7 +158,6 @@ export class Linter {
             })
           }
           let missing = missingDependencies[currentCount];
-          console.log(missing)
           if ((missing !== undefined) && (missing.length > 0)) {
             headings.push(itemGenerator.create(index, cell.model.type, ERRORS.h6, [
               index, missing.map(x => "'" + x + "'").join(", ")

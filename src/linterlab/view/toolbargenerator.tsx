@@ -113,12 +113,15 @@ export function notebookGeneratorToolbar(options: ILintOptionsManager, tracker: 
             return null;
           }
           options.updateRequirements(name);
+          this.setState({ "requirements": options.checkRequirements() });
+
         });
 
       };
     }
 
     render() {
+      let i = 0;
       let listing: JSX.Element[] = ERROR_TYPES.map(element => {
         let key = element.key.replace(' ', '-').toLowerCase();
         let toggle_class = element.icon + " " + (
@@ -127,6 +130,7 @@ export function notebookGeneratorToolbar(options: ILintOptionsManager, tracker: 
         let button_class = "julynter-toolbar-button";
         let label = element.label;
         return <div
+          key={`toolbar-${key}-${i++}`}
           className={button_class}
           onClick={event => this.toggle(key).bind(this)(this)}
         >
@@ -149,6 +153,7 @@ export function notebookGeneratorToolbar(options: ILintOptionsManager, tracker: 
         toggle_class += " julynter-toolbar-type-icon";
       }
       let modeToggle = <div
+        key="toolbar-mode"
         className="julynter-toolbar-button"
         onClick={event => this.toggleMode().bind(this)(this)}
       >
@@ -161,6 +166,7 @@ export function notebookGeneratorToolbar(options: ILintOptionsManager, tracker: 
       </div>
 
       let reqConfig = <div
+      key="toolbar-req"
       className="julynter-toolbar-button"
       onClick={event => this.changeRequirements().bind(this)(this)}
     >

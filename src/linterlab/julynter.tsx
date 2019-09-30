@@ -240,31 +240,31 @@ export interface IJulynterItemProps extends React.Props<JulynterItem> {
   /**
    * An IHeading to render.
    */
-  heading: IReport;
+  report: IReport;
   itemRenderer: (item: IReport) => JSX.Element | null;
 }
 
 export interface IJulynterItemStates {}
 
 /**
- * A React component for a table of contents entry.
+ * A React component for a report entry.
  */
 export class JulynterItem extends React.Component<IJulynterItemProps, IJulynterItemStates> {
   /**
    * Render the item.
    */
   render() {
-    const { heading } = this.props;
-
+    const { report } = this.props;
+    
     // Create an onClick handler for the Julynter item
     // that scrolls the anchor into view.
     const handleClick = (event: React.SyntheticEvent<HTMLSpanElement>) => {
       event.preventDefault();
       event.stopPropagation();
-      heading.onClick();
+      report.onClick();
     };
 
-    let content = this.props.itemRenderer(heading);
+    let content = this.props.itemRenderer(report);
     return content && <li onClick={handleClick}>{content}</li>;
   }
 }
@@ -302,15 +302,16 @@ export class JulynterTree extends React.Component<IJulynterTreeProps, IJulynterT
     let i = 0;
     const Toolbar = this.props.toolbar;
     let listing: JSX.Element[] = this.props.julynter.map(el => {
-      console.log(el)
+      let key = `${el.cell_id}-${el.text}-${i++}`;
       return (
         <JulynterItem
-          heading={el}
+          report={el}
           itemRenderer={this.props.itemRenderer}
-          key={`${el.text}-${i++}`}
+          key={key}
         />
       );
     });
+
     return (
       <div className="jp-Julynter">
         <header>{this.props.title}</header>
