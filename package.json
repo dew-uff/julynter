@@ -7,9 +7,9 @@
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/gems-uff/julint",
+  "homepage": "https://github.com/dew-uff/julynter",
   "bugs": {
-    "url": "https://github.com/gems-uff/julint/issues"
+    "url": "https://github.com/dew-uff/julynter/issues"
   },
   "license": "BSD-3-Clause",
   "author": "Joao Felipe Pimentel",
@@ -22,31 +22,40 @@
   "style": "style/index.css",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gems-uff/julint.git"
+    "url": "https://github.com/dew-uff/julynter.git"
   },
   "scripts": {
     "build": "tsc",
-    "clean": "rimraf lib && rimraf tsconfig.tsbuildinfo",
-    "prepare": "npm run clean && npm run build",
+    "clean": "rimraf lib tsconfig.tsbuildinfo",
+    "eslint": "eslint . --ext .ts,.tsx --fix",
+    "eslint:check": "eslint . --ext .ts,.tsx",
+    "prepare": "jlpm run clean && jlpm run build",
     "watch": "tsc -w"
   },
   "dependencies": {
-    "@jupyterlab/application": "^1.0.0",
-    "@jupyterlab/docmanager": "^1.1.0",
-    "@jupyterlab/fileeditor": "^1.1.0",
-    "@jupyterlab/notebook": "^1.1.0",
-    "@phosphor/disposable": "^1.3.0",
-    "react": "^16.8.4",
-    "react-dom": "^16.8.4"
+    "@jupyterlab/application": "^2.0.0",
+    "@jupyterlab/docmanager": "^2.0.0",
+    "@jupyterlab/fileeditor": "^2.0.0",
+    "@jupyterlab/notebook": "^2.0.0",
+    "@jupyterlab/nbformat": "^2.0.0",
+    "@lumino/disposable": "^1.4.0",
+    "react": "~16.9.0",
+    "react-dom": "~16.9.0"
   },
   "devDependencies": {
-    "@types/react": "^16.8.4",
-    "@types/react-dom": "^16.8.4",
+    "@typescript-eslint/eslint-plugin": "^2.25.0",
+    "@typescript-eslint/parser": "^2.25.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-prettier": "^3.1.2", 
+    "@types/react": "~16.9.0",
+    "@types/react-dom": "~16.9.0",
+    "prettier": "1.16.4",
     "rimraf": "^2.6.1",
-    "typescript": "~3.5.2"
+    "typescript": "~3.7.0"
   },
   "resolutions": {
-    "@types/react": "^16.8.4"
+    "@types/react": "~16.9.0"
   },
   "sideEffects": [
     "style/*.css"

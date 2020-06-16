@@ -1,4 +1,4 @@
-import { ISignal } from "@phosphor/signaling";
+import { ISignal } from "@lumino/signaling";
 
 import { IQueryResult } from "../../linter/interfaces";
 
@@ -6,7 +6,6 @@ import { IQueryResult } from "../../linter/interfaces";
 export interface IJulynterKernelUpdate {
   status: string;
   kernelName?: string;
-  languageName?: string;
   result?: IQueryResult;
 } 
 

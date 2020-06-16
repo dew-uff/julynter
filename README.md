@@ -1,11 +1,13 @@
 # julynter
 
+![Github Actions Status](https://github.com/dew-uff/julynter/workflows/Build/badge.svg)
+
 A quality checker for Jupyter
 
 
 ## Requirements
 
-* JupyterLab >= 0.30.0 
+* JupyterLab >= 2.0
 
 ## Install
 

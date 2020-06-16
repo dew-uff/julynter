@@ -1,12 +1,12 @@
-import { IDisposable } from "@phosphor/disposable";
+import { IDisposable } from "@lumino/disposable";
 
-import { Signal, ISignal } from "@phosphor/signaling"
+import { Signal, ISignal } from "@lumino/signaling"
 
 import { KernelMessage } from "@jupyterlab/services";
 
-import { nbformat } from "@jupyterlab/coreutils"
+import { IExecuteResult, IError } from "@jupyterlab/nbformat"
 
-import { IClientSession } from "@jupyterlab/apputils";
+import { ISessionContext } from "@jupyterlab/apputils";
 
 import { KernelConnector } from "./kernelconnector";
 
@@ -146,7 +146,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernelHandle
         let msgType = response.header.msg_type;
         switch ( msgType ) {
             case "execute_result":
-                let payload = response.content as nbformat.IExecuteResult;
+                let payload = response.content as IExecuteResult;
                 let content: string = <string>payload.data["text/plain"];
                 if (content.slice(0, 1) == "'" || content.slice(0, 1) == "\""){
                     content = content.slice(1,-1);
@@ -156,12 +156,11 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernelHandle
                 this._inspected.emit({
                     status: "",
                     kernelName : this._connector.kernelName || "",
-                    languageName : this._connector.kernelType || "",
                     result:  <IQueryResult>JSON.parse(content)
                 });
                 break;
             case "display_data":
-                let payload_display = response.content as nbformat.IExecuteResult;
+                let payload_display = response.content as IExecuteResult;
                 let content_display: string = <string>payload_display.data["text/plain"];
                 if (content_display.slice(0, 1) == "'" || content_display.slice(0, 1) == "\""){
                     content_display = content_display.slice(1,-1);
@@ -171,12 +170,11 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernelHandle
                 this._inspected.emit({
                     status: "",
                     kernelName : this._connector.kernelName || "",
-                    languageName : this._connector.kernelType || "",
                     result:  <IQueryResult>JSON.parse(content_display)
                 });
                 break;
             case "error":
-                    let payload_error = response.content as nbformat.IError;
+                    let payload_error = response.content as IError;
                     if (payload_error.evalue.includes("julynter")) {
                         this._attempts += 1;
                         console.log("Failed to initialize scripts. Retrying " + this._attempts + "/3");
@@ -198,7 +196,7 @@ export class JulynterKernelHandler implements IDisposable, IJulynterKernelHandle
     /*
      * Invokes a inspection if the signal emitted from specified session is an 'execute_input' msg.
      */
-    private _queryCall = ( sess: IClientSession, args: KernelMessage.IMessage ) => {
+    private _queryCall = ( sess: ISessionContext, args: KernelMessage.IMessage ) => {
         let msg: KernelMessage.IExecuteInputMsg = args as KernelMessage.IExecuteInputMsg;
         let msgType = msg.header.msg_type;
         switch ( msgType ) {
@@ -270,7 +268,6 @@ export
             this._inspected.emit(<IJulynterKernelUpdate>{
                 status: "Language currently not supported",
                 kernelName : this._connector.kernelName || "",
-                languageName : this._connector.kernelType || ""
             });
         }
 
@@ -278,7 +275,6 @@ export
             this._inspected.emit(<IJulynterKernelUpdate>{
                 status: "Language currently not supported",
                 kernelName : this._connector.kernelName || "",
-                languageName : this._connector.kernelType || ""
             });
         }
 }

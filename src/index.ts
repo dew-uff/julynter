@@ -78,42 +78,44 @@ function activateJulynter(
   notebookTracker.widgetAdded.connect(( sender, nbPanel: NotebookPanel ) => {
    //A promise that resolves after the initialization of the handler is done.
     handlers[nbPanel.id] = new Promise( function( resolve, reject ) {
-      const session = nbPanel.session;
+      const session = nbPanel.sessionContext;
       const connector = new KernelConnector( { session } );
 
-      connector.ready.then(() => { // Create connector and init w script if it exists for kernel type.
-        let kerneltype: string = connector.kernelType;
 
-        let scripts: Promise<Languages.LanguageModel> = Languages.getScript( kerneltype );
+      let scripts: Promise<Languages.LanguageModel> = connector.ready.then(() => { // Create connector and init w script if it exists for kernel type.
+        return connector.kernelLanguage.then((lang:string) =>{
+          return Languages.getScript( lang );
+        })
+      });
 
-        scripts.then(( result: Languages.LanguageModel ) => {
-          let initScript = result.initScript;
-          let queryCommand = result.queryCommand;
-          let addModuleCommand = result.addModuleCommand;
-          
-          const koptions: JulynterKernelHandler.IOptions = {
-            queryCommand: queryCommand,
-            addModuleCommand: addModuleCommand,
-            connector: connector,
-            initScript: initScript,
-            id: session.path,  //Using the sessions path as an identifier for now.
-            options: options
-          };
-          const handler = new JulynterKernelHandler( koptions );
-          nbPanel.disposed.connect(() => {
-              delete handlers[nbPanel.id];
-              handler.dispose();
-          } );
-          
-          handler.ready.then(() => {
-              resolve( handler );
-          } );
+
+      scripts.then(( result: Languages.LanguageModel ) => {
+        let initScript = result.initScript;
+        let queryCommand = result.queryCommand;
+        let addModuleCommand = result.addModuleCommand;
+        
+        const koptions: JulynterKernelHandler.IOptions = {
+          queryCommand: queryCommand,
+          addModuleCommand: addModuleCommand,
+          connector: connector,
+          initScript: initScript,
+          id: session.path,  //Using the sessions path as an identifier for now.
+          options: options
+        };
+        const handler = new JulynterKernelHandler( koptions );
+        nbPanel.disposed.connect(() => {
+            delete handlers[nbPanel.id];
+            handler.dispose();
         } );
-        //Otherwise log error message.
-        scripts.catch(( result: string ) => {
-            reject( result );
-        } )
+        
+        handler.ready.then(() => {
+            resolve( handler );
+        } );
       } );
+      //Otherwise log error message.
+      scripts.catch(( result: string ) => {
+          reject( result );
+      } )
     } );
   } );
 

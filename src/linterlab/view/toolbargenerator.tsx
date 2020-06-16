@@ -6,7 +6,7 @@ import { IJulynterLintOptions, ILintOptionsManager } from '../../linter/interfac
 
 import * as React from 'react';
 import { showDialog, Dialog, showErrorMessage } from '@jupyterlab/apputils';
-import { Widget } from '@phosphor/widgets';
+import { Widget } from '@lumino/widgets';
 import { PathExt } from '@jupyterlab/coreutils';
 
 interface IToolbarProps {}
