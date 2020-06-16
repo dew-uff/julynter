@@ -83,11 +83,10 @@ export class Linter {
             if (!executedCode.hasOwnProperty(executionCountNumber)) {
               headings.push(itemGenerator.create(i, cell.model.type, ERRORS.h1, [i]))
             } else {
-              let history_code = executedCode[executionCountNumber].replace("\\n", "\n");
-              if (history_code != (cell as IGenericCodeCellMetadata).model.value.text) {
+              let history_code = executedCode[executionCountNumber].replace(/\\n/g, "\n").replace(/\\\\/g, "\\").trim();
+              if (history_code != (cell as IGenericCodeCellMetadata).model.value.text.trim()) {
                 headings.push(itemGenerator.create(i, cell.model.type, ERRORS.h2, [i]))
               }
-
             }
           }
         }

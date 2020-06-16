@@ -12,7 +12,7 @@ export
      * Init and query script for supported languages.
      */
 
-    static py_script: string = `import json, ast, os, sys, pkg_resources, re
+    static py_script: string = `import json, ast, os, sys, pkg_resources, re, builtins
 from collections import defaultdict
 class _JulynterImportVisitor(ast.NodeVisitor):
     def __init__(self):
@@ -34,7 +34,7 @@ class _JulynterNameVisitor(ast.NodeVisitor):
         for alias in node.names:
             self.name_definitions.add(alias.asname or alias.name.split(".")[0])
     def visit_Name(self, node):
-        if isinstance(node.ctx, ast.Store):
+        if isinstance(node.ctx, (ast.Param, ast.Store)):
             self.name_definitions.add(node.id)
         else:
             self.name_usages.add(node.id)
@@ -42,6 +42,8 @@ class _JulynterNameVisitor(ast.NodeVisitor):
         self.name_definitions.add(node.name)
     def visit_ClassDef(self, node):
         self.name_definitions.add(node.name)
+    def visit_arg(self, node):
+        self.name_definitions.add(node.arg)
 class _JulynterPathVisitor(ast.NodeVisitor):    
     def __init__(self):
         self.absolute_paths = set()
@@ -62,6 +64,8 @@ def _julynter_dependencies(ip, hm):
     for i, (session, lineno, inline) in enumerate(hm.get_range(raw=False, output=False)):
         if lineno in processed:
             continue
+        if inline.startswith("get_ipython().run_cell_magic(\\'time\\'"):
+            inline = inline[42:-2].encode('utf-8').decode("unicode_escape")
         processed.add(lineno)
         tree = ast.parse(inline)
         name_visitor = _JulynterNameVisitor()
@@ -71,13 +75,18 @@ def _julynter_dependencies(ip, hm):
         missing_dependencies[lineno] = []
         for usage in name_visitor.name_usages:
             found = False
-            for _, line, _ in reversed(list(hm.get_tail(i + 1))):
+            for _, line, _ in reversed(list(hm.get_range(stop=lineno + 1))):
                 if usage in name_definitions.get(line, []):
                     found = True
                     if line != lineno:
                         cell_dependencies[lineno][usage] = line
                     break
-            if not found and usage not in {'_', '__', '___', '_sh', 'Out', 'In'} and usage not in ip.ns_table:
+            if (
+                not found
+                and usage not in {'_', '__', '___', '_sh', 'Out', 'In', 'get_ipython'}
+                and usage not in ip.ns_table
+                and usage not in builtins.__dict__
+            ):
                 missing_dependencies[lineno].append(usage)
     return cell_dependencies, missing_dependencies
 def _julynter_history(ip, hm):
