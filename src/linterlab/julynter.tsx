@@ -21,6 +21,8 @@ import { KernelRenderer } from './view/kernelrenderer';
 import { ItemGenerator, GroupGenerator  } from './itemgenerator';
 import { JulynterNotebook } from './julynternotebook';
 
+import { Config } from './config';
+
 /**
  * Timeout for throttling Julynter rendering.
  */
@@ -50,6 +52,7 @@ export class Julynter extends Widget {
   private _monitor: ActivityMonitor<any, any> | null;
   private _tracker: INotebookTracker | null;
   private _notebook: JulynterNotebook;
+  private _config: Config;
   public handlers: { [id: string]: Promise<JulynterKernelHandler> };
   public options: OptionsManager;
 
@@ -63,8 +66,10 @@ export class Julynter extends Widget {
     this.handlers = {};
     const update = this.update.bind(this);
 
+    this._config = new Config();
     this._notebook = new JulynterNotebook();
-    this.options = new OptionsManager(tracker, update);
+    this.options = new OptionsManager(tracker, this._config, update);
+    this._config.optionsManager = this.options;
   }
 
   addNewNotebook(nbPanel: NotebookPanel): void {
@@ -125,6 +130,7 @@ export class Julynter extends Widget {
     if (this._tracker.has(widget) && widget !== this._currentWidget){
       // change wigdet and it is not the same as the previous one
       this._currentWidget = widget;
+      this._config.load();
       
       // Dispose an old activity monitor if it existsd
       if (this._monitor) {

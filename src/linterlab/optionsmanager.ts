@@ -3,6 +3,7 @@ import { ISanitizer } from '@jupyterlab/apputils';
 import { INotebookTracker } from '@jupyterlab/notebook';
 
 import { IJulynterLintOptions, ILintOptionsManager, ViewModes } from "../linter/interfaces"
+import { Config } from './config';
 
 export class OptionsManager implements ILintOptionsManager {
   private _preRenderedToolbar: any = null;
@@ -11,16 +12,8 @@ export class OptionsManager implements ILintOptionsManager {
   private _default: IJulynterLintOptions;
   private _update: () => void;
   
-  constructor(tracker: INotebookTracker, update: () => void) {
-    this._default = {
-      "invalid-title": true,
-      "hidden-state": true,
-      "confuse-notebook": true,
-      "import": true,
-      "absolute-path": true,
-      "mode": "type",
-      "requirements": "requirements.txt"
-    };
+  constructor(tracker: INotebookTracker, config: Config, update: () => void) {
+    this._default = config.defaultOptions;
     this._checks = { ...this._default }; 
     this._tracker = tracker;
     this._update = update;
@@ -81,12 +74,14 @@ export class OptionsManager implements ILintOptionsManager {
   }
 
   reloadOptions() {
-    for (let key in this._checks) {
-      let value = this._tracker.currentWidget.model.metadata.get('julynter-check-' + key);
-      if (value !== undefined) {
-        (this._checks as any)[key] = value;
-      } else {
-        (this._checks as any)[key] = (this._default as any)[key];
+    if (this._tracker.currentWidget !== undefined && this._tracker.currentWidget !== null) {
+      for (let key in this._checks) {
+        let value = this._tracker.currentWidget.model.metadata.get('julynter-check-' + key);
+        if (value !== undefined) {
+          (this._checks as any)[key] = value;
+        } else {
+          (this._checks as any)[key] = (this._default as any)[key];
+        }
       }
     }
   }

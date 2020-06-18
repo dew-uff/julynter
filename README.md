@@ -2,7 +2,11 @@
 
 ![Github Actions Status](https://github.com/dew-uff/julynter/workflows/Build/badge.svg)
 
-A quality checker for Jupyter
+A quality checker for Jupyter.
+
+This extension is composed of a Python package named `julynter`
+for the server extension and a NPM package named `julynter`
+for the frontend extension.
 
 
 ## Requirements
@@ -11,8 +15,34 @@ A quality checker for Jupyter
 
 ## Install
 
+Note: You will need NodeJS to install the extension.
+
 ```bash
-jupyter labextension install julynter
+pip install julynter
+jupyter lab build
+```
+
+## Troubleshoot
+
+If you are seeing the frontend extension but it is not working, check
+that the server extension is enabled:
+
+```bash
+jupyter serverextension list
+```
+
+If the server extension is installed and enabled but you are not seeing
+the frontend, check the frontend is installed:
+
+```bash
+jupyter labextension list
+```
+
+If it is installed, try:
+
+```bash
+jupyter lab clean
+jupyter lab build
 ```
 
 ## Contributing
@@ -26,6 +56,12 @@ The `jlpm` command is JupyterLab's pinned version of
 ```bash
 # Clone the repo to your local environment
 # Move to julynter directory
+
+# Install server extension
+pip install -e .
+# Register server extension
+jupyter serverextension enable --py julynter --sys-prefix
+
 # Install dependencies
 jlpm
 # Build Typescript source
@@ -50,6 +86,7 @@ jupyter lab --watch
 ### Uninstall
 
 ```bash
+pip uninstall julynter
 jupyter labextension uninstall julynter
 ```
 
