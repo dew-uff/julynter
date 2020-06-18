@@ -1,21 +1,25 @@
-
-import { ActivityMonitor, PathExt } from '@jupyterlab/coreutils';
-
-import { IDocumentManager } from '@jupyterlab/docmanager';
-
-import { Message } from '@lumino/messaging';
-
-import { Widget } from '@lumino/widgets';
-
-import { JulynterRegistry } from './registry';
-
-import { IReport } from '../linter/interfaces';
-
-
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { IJulynterKernelUpdate, IJulynterKernelHandler } from './kernel/interfaces';
-import { INotebookTracker } from '@jupyterlab/notebook';
+
+import { Token } from '@lumino/coreutils';
+import { Message } from '@lumino/messaging';
+import { Widget } from '@lumino/widgets';
+
+import { ActivityMonitor, PathExt } from '@jupyterlab/coreutils';
+import { IDocumentManager } from '@jupyterlab/docmanager';
+import { NotebookPanel, INotebookTracker } from '@jupyterlab/notebook';
+
+import { IReport, IGenericNotebookMetadata, IGenericCellMetadata } from '../linter/interfaces';
+import { Languages } from '../linter/languages';
+import { Linter } from '../linter/lint';
+
+import { JulynterKernelHandler } from './kernel/handler';
+import { KernelConnector } from './kernel/kernelconnector';
+import { OptionsManager } from './optionsmanager';
+import { ListRenderer } from './view/listrenderer';
+import { KernelRenderer } from './view/kernelrenderer';
+import { ItemGenerator, GroupGenerator  } from './itemgenerator';
+import { JulynterNotebook } from './julynternotebook';
 
 /**
  * Timeout for throttling Julynter rendering.
@@ -23,75 +27,178 @@ import { INotebookTracker } from '@jupyterlab/notebook';
 const RENDER_TIMEOUT = 1000;
 
 
+/**
+ * An interface for a Julynter
+ */
+export interface IJulynter extends Julynter {}
+
+/**
+ * The Julynter token.
+ */
+export const IJulynter = new Token<Julynter>(
+  'jupyterlab-julynter:IJulynter'
+);
+
 
 /**
  * A widget for hosting a notebook julynter.
  */
 export class Julynter extends Widget {
 
-  private _toolbar: any;
   private _docmanager: IDocumentManager;
-  private _current: Julynter.ICurrentWidget | null;
+  private _currentWidget: Widget | null;
   private _monitor: ActivityMonitor<any, any> | null;
-  private _handler: IJulynterKernelHandler | null;
   private _tracker: INotebookTracker | null;
+  private _notebook: JulynterNotebook;
+  public handlers: { [id: string]: Promise<JulynterKernelHandler> };
+  public options: OptionsManager;
 
   /**
    * Create a new table of contents.
    */
   constructor(docmanager: IDocumentManager, tracker: INotebookTracker) {
-    super();
-    this._handler = null;
+    super()
     this._docmanager = docmanager;
     this._tracker = tracker;
+    this.handlers = {};
+    const update = this.update.bind(this);
+
+    this._notebook = new JulynterNotebook();
+    this.options = new OptionsManager(tracker, update);
+  }
+
+  addNewNotebook(nbPanel: NotebookPanel): void {
+    //A promise that resolves after the initialization of the handler is done.
+    const options = this.options;
+    const handlers = this.handlers;
+
+    this.handlers[nbPanel.id] = new Promise( function( resolve, reject ) {
+      const session = nbPanel.sessionContext;
+      const connector = new KernelConnector( { session } );
+
+      let scripts: Promise<Languages.LanguageModel> = connector.ready.then(() => { // Create connector and init w script if it exists for kernel type.
+        return connector.kernelLanguage.then((lang:string) =>{
+          return Languages.getScript( lang );
+        })
+      });
+
+      scripts.then(( result: Languages.LanguageModel ) => {
+        let initScript = result.initScript;
+        let queryCommand = result.queryCommand;
+        let addModuleCommand = result.addModuleCommand;
+        
+        const koptions: JulynterKernelHandler.IOptions = {
+          queryCommand: queryCommand,
+          addModuleCommand: addModuleCommand,
+          connector: connector,
+          initScript: initScript,
+          id: session.path,  //Using the sessions path as an identifier for now.
+          options: options
+        };
+        const handler = new JulynterKernelHandler( koptions );
+        nbPanel.disposed.connect(() => {
+            delete handlers[nbPanel.id];
+            handler.dispose();
+        } );
+        
+        handler.ready.then(() => {
+            resolve( handler );
+        } );
+      } );
+      //Otherwise log error message.
+      scripts.catch(( result: string ) => {
+          reject( result );
+      } )
+    } );
+  }
+
+  changeActiveWidget(widget: Widget): void {
+    let future = this.handlers[widget.id];
+    if (future !== undefined) {
+      future.then((source: JulynterKernelHandler) => {
+        if (source) {
+          this._notebook.handler = source;
+          this._notebook.handler.performQuery();
+        }
+      });
+    }
+    if (this._tracker.has(widget) && widget !== this._currentWidget){
+      // change wigdet and it is not the same as the previous one
+      this._currentWidget = widget;
+      
+      // Dispose an old activity monitor if it existsd
+      if (this._monitor) {
+        this._monitor.dispose();
+        this._monitor = null;
+      }
+      // If we are wiping the Julynter, update and return.
+      if (!this._currentWidget) {
+        this.updateJulynter();
+        return;
+      }
+
+      // Find the document model associated with the widget.
+      const context = this._docmanager.contextForWidget(this._currentWidget);
+      if (!context || !context.model) {
+        throw Error('Could not find a context for Julynter');
+      }
+
+      // Throttle the rendering rate of julynter.
+      this._monitor = new ActivityMonitor({
+        signal: context.model.contentChanged,
+        timeout: RENDER_TIMEOUT
+      });
+      this._monitor.activityStopped.connect(this.update, this);
+      this.options.reloadOptions();
+      this.updateJulynter();
+    } else {
+      this._currentWidget = null;
+    }
+  }
+
+  updateJulynter() {
+    let title = 'Julynter';
+    let listRenderer: JSX.Element = null;
+    let kernelRenderer: JSX.Element = null;
+
+    if (this._currentWidget) {
+      const update = this.update.bind(this);
+      const groupGenerator = new GroupGenerator(this._tracker, update);
+      const itemGenerator = new ItemGenerator(this._docmanager, this._tracker, this._notebook);
+      const notebookMetadata: IGenericNotebookMetadata = {
+        title: this._tracker.currentWidget.title.label,
+        cells: this._tracker.currentWidget.content.widgets as unknown as IGenericCellMetadata[],
+      }
+      const linter = new Linter(this.options, this._notebook.update, this._notebook.hasKernel);
+      const reports: IReport[] = linter.generate(notebookMetadata, itemGenerator, groupGenerator);
+
+      const context = this._docmanager.contextForWidget(this._currentWidget);
+      if (context) {
+        title = PathExt.basename(context.localPath);
+      }
+    
+      listRenderer = <ListRenderer options={this.options} tracker={this._tracker} reports={reports}/>;
+      kernelRenderer = <KernelRenderer notebook={this._notebook}/>;
+    }
+    const renderedJSX = (
+      <div className="jp-Julynter">
+      <header>
+        <div className="jp-Julynter-title">
+          {title}
+        </div>
+        {kernelRenderer}
+      </header>
+      {listRenderer}
+    </div>
+    );
+    ReactDOM.render(renderedJSX, this.node);
   }
 
   /**
-   * The current widget-generator tuple for the Julynter.
+   * Rerender after showing.
    */
-  get current(): Julynter.ICurrentWidget | null {
-    return this._current;
-  }
-  set current(value: Julynter.ICurrentWidget | null) {
-    // If they are the same as previously, do nothing.
-    if (
-      value &&
-      this._current &&
-      this._current.widget === value.widget &&
-      this._current.generator === value.generator
-    ) {
-      return;
-    }
-    this._current = value;
-
-    if (this.generator && this.generator.toolbarGenerator) {
-      this._toolbar = this.generator.toolbarGenerator();
-    }
-
-    // Dispose an old activity monitor if it existsd
-    if (this._monitor) {
-      this._monitor.dispose();
-      this._monitor = null;
-    }
-    // If we are wiping the Julynter, update and return.
-    if (!this._current) {
-      this.updateJulynter();
-      return;
-    }
-
-    // Find the document model associated with the widget.
-    const context = this._docmanager.contextForWidget(this._current.widget);
-    if (!context || !context.model) {
-      throw Error('Could not find a context for Julynter');
-    }
-
-    // Throttle the rendering rate of julynter.
-    this._monitor = new ActivityMonitor({
-      signal: context.model.contentChanged,
-      timeout: RENDER_TIMEOUT
-    });
-    this._monitor.activityStopped.connect(this.update, this);
-    this.updateJulynter();
+  protected onAfterShow(msg: Message): void {
+    this.update();
   }
 
   /**
@@ -105,219 +212,12 @@ export class Julynter extends Widget {
     this.updateJulynter();
   }
 
-  updateJulynter() {
-    let julynter: IReport[] = [];
-    let title = 'Julynter';
-    if (this._current) {
-      julynter = this._current.generator.generate(this._current.widget);
-      const context = this._docmanager.contextForWidget(this._current.widget);
-      if (context) {
-        title = PathExt.basename(context.localPath);
-      }
-    }
-    let itemRenderer: (item: IReport) => JSX.Element | null = (
-      item: IReport
-    ) => {
-      return <span>{item.text}</span>;
-    };
-    if (this._current && this._current.generator.itemRenderer) {
-      itemRenderer = this._current.generator.itemRenderer!;
-    }
-    let renderedJSX = (
-      <div className="jp-Julynter">
-        <header>{title}</header>
-      </div>
-    );
-    if (this._current && this._current.generator) {
-      renderedJSX = (
-        <JulynterTree
-          title={title}
-          julynter={julynter}
-          generator={this.generator}
-          itemRenderer={itemRenderer}
-          toolbar={this._toolbar}
-        />
-      );
-    }
-    ReactDOM.render(renderedJSX, this.node, () => {
-      
-    });
-  }
-
-  get generator() {
-    if (this._current) {
-      return this._current.generator;
-    }
-    return null;
-  }
-
-  get docManager() {
-    return this._docmanager;
-  }
-
-  get tracker() {
-    return this._tracker;
-  }
-
-  /**
-   * Rerender after showing.
-   */
-  protected onAfterShow(msg: Message): void {
-    this.update();
-  }
-
-  get handler(): IJulynterKernelHandler | null {
-    return this._handler;
-  }
-
-  set handler(handler: IJulynterKernelHandler | null) {
-    if (this._handler === handler) {
-      return;
-    }
-    //Remove old subscriptions
-    if (this._handler) {
-      this._handler.inspected.disconnect( this.onInspectorUpdate, this );
-      this._handler.disposed.disconnect( this.onSourceDisposed, this );
-    }
-    this._handler = handler;
-    //Subscribe to new object
-    if ( this._handler ) {
-        this._handler.inspected.connect( this.onInspectorUpdate, this );
-        this._handler.disposed.connect( this.onSourceDisposed, this );
-        this._handler.performQuery();
-    }
-
-  }
-
   dispose(): void {
     if ( this.isDisposed ) {
         return;
     }
-    this.handler = null;
+    this._notebook.handler = null;
     super.dispose();
   }
 
-  protected onInspectorUpdate( sender: any, allArgs: IJulynterKernelUpdate): void {
-    let generator = this.generator;
-    if (generator !== null) {
-      generator.processKernelMessage(allArgs);
-    }
-  }
-
-  /**
-   * Handle disposed signals.
-   */
-  protected onSourceDisposed( sender: any, args: void ): void {
-      this.handler = null;
-  }
-
-
-
-  
-}
-
-
-/**
- * A namespace for Julynter statics.
- */
-export namespace Julynter {
-
-  /**
-   * A type representing a tuple of a widget,
-   * and a generator that knows how to generate
-   * heading information from that widget.
-   */
-  export interface ICurrentWidget<W extends Widget = Widget> {
-    widget: W;
-    generator: JulynterRegistry.IGenerator<W>;
-  }
-}
-
-/**
- * Props for the JulynterItem component.
- */
-export interface IJulynterItemProps extends React.Props<JulynterItem> {
-  /**
-   * An IHeading to render.
-   */
-  report: IReport;
-  itemRenderer: (item: IReport) => JSX.Element | null;
-}
-
-export interface IJulynterItemStates {}
-
-/**
- * A React component for a report entry.
- */
-export class JulynterItem extends React.Component<IJulynterItemProps, IJulynterItemStates> {
-  /**
-   * Render the item.
-   */
-  render() {
-    const { report } = this.props;
-    
-    // Create an onClick handler for the Julynter item
-    // that scrolls the anchor into view.
-    const handleClick = (event: React.SyntheticEvent<HTMLSpanElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-      report.onClick();
-    };
-
-    let content = this.props.itemRenderer(report);
-    return content && <li onClick={handleClick}>{content}</li>;
-  }
-}
-
-export interface IJulynterTreeStates {}
-
-/**
- * Props for the JulynterTree component.
- */
-export interface IJulynterTreeProps extends React.Props<JulynterTree> {
-  /**
-   * A title to display.
-   */
-  title: string;
-
-  /**
-   * A list of IHeadings to render.
-   */
-  julynter: IReport[];
-  toolbar: any;
-  generator: JulynterRegistry.IGenerator<Widget> | null;
-  itemRenderer: (item: IReport) => JSX.Element | null;
-}
-
-/**
- * A React component for julynter tree
- */
-export class JulynterTree extends React.Component<IJulynterTreeProps, IJulynterTreeStates> {
-  /**
-   * Render the JulynterTree.
-   */
-
-  render() {
-    // Map the heading objects onto a list of JSX elements.
-    let i = 0;
-    const Toolbar = this.props.toolbar;
-    let listing: JSX.Element[] = this.props.julynter.map(el => {
-      let key = `${el.cell_id}-${el.text}-${i++}`;
-      return (
-        <JulynterItem
-          report={el}
-          itemRenderer={this.props.itemRenderer}
-          key={key}
-        />
-      );
-    });
-
-    return (
-      <div className="jp-Julynter">
-        <header>{this.props.title}</header>
-        {Toolbar && <Toolbar />}
-        <ul className="jp-Julynter-content">{listing}</ul>
-      </div>
-    );
-  }
 }

@@ -43,6 +43,14 @@
   padding: 12px 0 4px 12px;
   text-transform: uppercase;
 }
+
+.jp-Julynter-title {
+  display: inline-block;
+}
+
+.jp-Julynter-kernel {
+  float: right;
+}
 /*
 [data-jp-theme-light='true'] .jp-Julynter-icon {
   background-image: url(list-light.svg);
@@ -53,6 +61,7 @@
 }
 
 */
+
 
 .julynter-toolbar-icon,
 .julynter-toolbar-icon-selected {
@@ -67,6 +76,17 @@
   width: 24px;
   margin: 4px;
   border-radius: 2px;
+}
+
+.julynter-icon {
+  float: left;
+  background-repeat: no-repeat;
+  background-color: none;
+  background-size: 100%;
+  background-position: center;
+  height: 12px;
+  width: 12px;
+  margin-right: 8px;
 }
 
 [data-jp-theme-light='true'] .julynter-toolbar-title-icon {
@@ -155,6 +175,24 @@
 
 [data-jp-theme-light='false'] .julynter-toolbar-icon-selected {
   background-color: #565656;
+}
+
+[data-jp-theme-light='true'] .jp-julynter-kernel-on-icon {
+  background-image: url('img/kernelon.svg');
+}
+
+[data-jp-theme-light='false'] .jp-julynter-kernel-on-icon {
+  background-image: url('img/kernelon_darktheme.svg');
+
+}
+
+[data-jp-theme-light='true'] .jp-julynter-kernel-off-icon {
+  background-image: url('img/kerneloff.svg');
+  
+}
+
+[data-jp-theme-light='false'] .jp-julynter-kernel-off-icon {
+  background-image: url('img/kerneloff_darktheme.svg');
 }
 
 /*

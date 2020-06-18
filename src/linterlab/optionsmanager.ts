@@ -2,19 +2,17 @@ import { ISanitizer } from '@jupyterlab/apputils';
 
 import { INotebookTracker } from '@jupyterlab/notebook';
 
-import { IJulynterLintOptions, ILintOptionsManager, ViewModes } from "../../linter/interfaces"
-
-import { Julynter } from '../julynter';
-
+import { IJulynterLintOptions, ILintOptionsManager, ViewModes } from "../linter/interfaces"
 
 export class OptionsManager implements ILintOptionsManager {
   private _preRenderedToolbar: any = null;
-  private _notebook: INotebookTracker;
-  private _widget: Julynter;
+  private _tracker: INotebookTracker;
   private _checks: IJulynterLintOptions;
+  private _default: IJulynterLintOptions;
+  private _update: () => void;
   
-  constructor(widget: Julynter) {
-    this._checks = {
+  constructor(tracker: INotebookTracker, update: () => void) {
+    this._default = {
       "invalid-title": true,
       "hidden-state": true,
       "confuse-notebook": true,
@@ -23,22 +21,23 @@ export class OptionsManager implements ILintOptionsManager {
       "mode": "type",
       "requirements": "requirements.txt"
     };
-    this._widget = widget;
-    this._notebook = widget.tracker;
+    this._checks = { ...this._default }; 
+    this._tracker = tracker;
+    this._update = update;
   }
 
   readonly sanitizer: ISanitizer;
 
   set notebookMetadata(value: [string, any]) {
-    if (this._notebook.currentWidget != null) {
-      this._notebook.currentWidget.model.metadata.set(value[0], value[1]);
+    if (this._tracker.currentWidget != null) {
+      this._tracker.currentWidget.model.metadata.set(value[0], value[1]);
     }
   }
 
   update(key: string, value: boolean){
     (this._checks as any)[key] = value;
     this.notebookMetadata = ['julynter-check-' + key, value];
-    this._widget.update();
+    this._update();
   }
 
   check(key: string) {
@@ -56,16 +55,16 @@ export class OptionsManager implements ILintOptionsManager {
   updateMode(mode: ViewModes) {
     this._checks["mode"] = mode;
     this.notebookMetadata = ['julynter-check-mode', mode];
-    this._widget.update();
+    this._update();
   }
 
   updateRequirements(req: string) {
     this._checks["requirements"] = req;
     this.notebookMetadata = ['julynter-check-requirements', req];
-    this._widget.update();
+    this._update();
   }
 
-  get checks() {
+  get checks(): IJulynterLintOptions {
     return this._checks;
   }
 
@@ -78,14 +77,24 @@ export class OptionsManager implements ILintOptionsManager {
   }
 
   updateWidget() {
-    this._widget.update();
+    this._update();
   }
 
+  reloadOptions() {
+    for (let key in this._checks) {
+      let value = this._tracker.currentWidget.model.metadata.get('julynter-check-' + key);
+      if (value !== undefined) {
+        (this._checks as any)[key] = value;
+      } else {
+        (this._checks as any)[key] = (this._default as any)[key];
+      }
+    }
+  }
 
   // initialize options, will NOT change notebook metadata
   initializeOptions(checks: IJulynterLintOptions) {
     this._checks = checks;
-    this._widget.update();
+    this._update();
   }
-  
+
 }

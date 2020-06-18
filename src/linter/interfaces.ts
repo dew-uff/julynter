@@ -104,6 +104,7 @@ export interface ILintOptionsManager {
   updateRequirements(req: string): void;
   updateWidget(): void;
   initializeOptions(checks: IJulynterLintOptions): void;
+  checks: IJulynterLintOptions;
 }
 
 
