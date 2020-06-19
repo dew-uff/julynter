@@ -4,15 +4,12 @@ import { Widget } from '@lumino/widgets';
 
 import { showDialog, Dialog, showErrorMessage } from '@jupyterlab/apputils';
 import { PathExt } from '@jupyterlab/coreutils';
-import { INotebookTracker } from '@jupyterlab/notebook';
 
 import { ERROR_TYPES } from '../../linter/errors';
-import { ILintOptionsManager } from '../../linter/interfaces'
-
+import { OptionsManager } from '../optionsmanager';
 
 interface IToolbarProps {
-  options: ILintOptionsManager;
-  tracker: INotebookTracker;
+  options: OptionsManager;
 }
 
 
@@ -20,7 +17,7 @@ export class ToolbarRenderer extends React.Component<IToolbarProps> {
   constructor(props: IToolbarProps) {
     super(props);
     
-    if (this.props.tracker.currentWidget) {
+    /*if (this.props.tracker.currentWidget) {
       // Read saved user settings in notebook metadata
       this.props.tracker.currentWidget.context.ready.then(() => {
         if (this.props.tracker.currentWidget) {
@@ -29,7 +26,7 @@ export class ToolbarRenderer extends React.Component<IToolbarProps> {
           });
         }
       });
-    }
+    }*/
     this.toggle = this.toggle.bind(this);
     this.toggleMode = this.toggleMode.bind(this);
     this.changeRequirements = this.changeRequirements.bind(this);
@@ -123,18 +120,18 @@ export class ToolbarRenderer extends React.Component<IToolbarProps> {
     </div>
 
     let reqConfig = <div
-    key="toolbar-req"
-    className="julynter-toolbar-button"
-    onClick={this.changeRequirements}
-  >
-    <div
-      role="text"
-      aria-label="Change requirements location"
-      title="Change requirements location"
-      className="julynter-toolbar-icon julynter-toolbar-rename-icon"
-    />
-  </div>
-
+      key="toolbar-req"
+      className="julynter-toolbar-button"
+      onClick={this.changeRequirements}
+    >
+      <div
+        role="text"
+        aria-label="Change requirements location"
+        title="Change requirements location"
+        className="julynter-toolbar-icon julynter-toolbar-rename-icon"
+      />
+    </div>
+    //let label = this.props.options._nbPanel.title.label;
     return (
       <div>
         <div className={'julynter-toolbar'}>

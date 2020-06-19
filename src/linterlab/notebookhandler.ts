@@ -9,12 +9,16 @@ import { IExecuteResult, IError } from "@jupyterlab/nbformat"
 import { ISessionContext } from "@jupyterlab/apputils";
 import { IInfoReply } from "@jupyterlab/services/lib/kernel/messages";
 
-import { IQueryResult } from "../linter/interfaces";
+import { IQueryResult, IReport, IGenericNotebookMetadata, IGenericCellMetadata } from "../linter/interfaces";
 import { Languages } from '../linter/languages';
 
 import { OptionsManager } from "./optionsmanager";
 import { ExperimentManager } from "./experimentmanager";
 import { NotebookPanel } from "@jupyterlab/notebook";
+import { Config } from "./config";
+import { IDocumentManager } from "@jupyterlab/docmanager";
+import { GroupGenerator, ItemGenerator } from "./itemgenerator";
+import { Linter } from "../linter/lint";
 
 
 export interface IJulynterKernelUpdate {
@@ -37,35 +41,43 @@ export class NotebookHandler implements IDisposable {
   private _nbPanel: NotebookPanel;
   private _attempts: number;
   private _session: ISessionContext;
+  private _docManager: IDocumentManager;
+  private _config: Config;
+  private _update: ()=>void;
+  
 
   private _experimentManager: ExperimentManager;
   private _error: string;
   private _reportedStart: boolean;
   
-  public options: OptionsManager; // ToDo: one per Handler
+  public options: OptionsManager;
   public update: IQueryResult | null;
   public hasKernel: boolean;
 
   constructor(
+    docManager: IDocumentManager,
     session: ISessionContext, 
     nbPanel: NotebookPanel,
-    options: OptionsManager,
-    experimentManager: ExperimentManager
+    config: Config,
+    experimentManager: ExperimentManager,
+    update: ()=>void,
   ) {
-    this._session = session;  
+    this._docManager = docManager;
+    this._session = session; 
     this._nbPanel = nbPanel;
     this._name = session.path;
+    this._config = config;
+    this._experimentManager = experimentManager;
+    this._update = update;
     this._panelId = this._nbPanel.id;
     this._language = null;
     this._attempts = 0;
-    this.options = options;
-    this._experimentManager = experimentManager;
     this.update = {};
     this.hasKernel = false;
     this._reportedStart = false;
     
     session.kernelDisplayName
-    this._experimentManager.reportOpenNotebook(this);
+    this._experimentManager.reportActivity(this, 'open');
     session.statusChanged.connect((sender: ISessionContext, status: KernelMessage.Status) => {
       if (status.endsWith('restarting')) {
         this._experimentManager.reportKernelActivity(this, 'restartKernel', session.kernelDisplayName);
@@ -90,6 +102,8 @@ export class NotebookHandler implements IDisposable {
   }
 
   configureHandler(language: Languages.LanguageModel) {
+    this.options = new OptionsManager(this._nbPanel, this._config, this._experimentManager, this._update);
+    
     this._language = language;
     
     this._ready =  this._session.ready.then(() => {
@@ -118,14 +132,14 @@ export class NotebookHandler implements IDisposable {
   disconnectHandler() {
     this.inspected.disconnect(this.onQueryUpdate, this);
     this.disposed.disconnect(this.onSourceDisposed, this);
-    this._experimentManager.reportContextSwitch(this, 'MoveOut');
+    this._experimentManager.reportActivity  (this, 'MoveOut');
   }
 
   connectHandler() {
     this.inspected.connect( this.onQueryUpdate, this );
     this.disposed.connect( this.onSourceDisposed, this );
     this.performQuery();
-    this._experimentManager.reportContextSwitch(this, 'MoveIn');
+    this._experimentManager.reportActivity(this, 'MoveIn');
   }
 
   get name():string{
@@ -179,6 +193,23 @@ export class NotebookHandler implements IDisposable {
     this._disposed.emit(void 0);
     Signal.clearData(this);
   }
+
+  /**
+   * Lint notebook
+   */
+  public lint(): IReport[] {
+    const groupGenerator = new GroupGenerator(this._nbPanel, this._update);
+    const itemGenerator = new ItemGenerator(this._docManager, this);
+    const notebookMetadata: IGenericNotebookMetadata = {
+      title: this.nbPanel.title.label,
+      cells: this.nbPanel.content.widgets as unknown as IGenericCellMetadata[],
+    }
+    const linter = new Linter(this.options, this.update, this.hasKernel);
+    const results = linter.generate(notebookMetadata, itemGenerator, groupGenerator);
+    this._experimentManager.reportLinting(this, results);
+    return results;
+  }
+
 
   /**
    * Send a query command to the kernel

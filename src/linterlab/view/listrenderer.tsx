@@ -1,6 +1,5 @@
 import * as React from 'react';
 
-import { INotebookTracker } from '@jupyterlab/notebook';
 import { IReport } from '../../linter/interfaces';
 import { OptionsManager } from '../optionsmanager';
 import { ItemRenderer } from './itemrenderer';
@@ -8,7 +7,6 @@ import { ToolbarRenderer } from './toolbarrenderer';
 
 interface IListProps {
   options: OptionsManager;
-  tracker: INotebookTracker | null;
   reports: IReport[];
 }
 
@@ -32,7 +30,7 @@ export class ListRenderer extends React.Component<IListProps> {
     }); 
     return (
       <div>
-        <ToolbarRenderer options={this.props.options} tracker={this.props.tracker}/>
+        <ToolbarRenderer options={this.props.options}/>
         <ul className="jp-Julynter-content">{listing}</ul>
       </div>
     );

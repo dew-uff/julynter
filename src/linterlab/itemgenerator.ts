@@ -1,7 +1,7 @@
 import { showDialog, Dialog } from '@jupyterlab/apputils';
 import { Cell } from '@jupyterlab/cells';
 import { renameDialog, IDocumentManager } from '@jupyterlab/docmanager';
-import { INotebookTracker, Notebook } from '@jupyterlab/notebook';
+import { Notebook, NotebookPanel } from '@jupyterlab/notebook';
 import { IObservableJSON } from '@jupyterlab/observables';
 
 import { IReport, IErrorMessage, IItemGenerator, IGroupGenerator, ReportType } from '../linter/interfaces';
@@ -19,20 +19,18 @@ function capitalizeFirstLetter(string: string): string {
 
 export class ItemGenerator implements IItemGenerator {
   _docManager: IDocumentManager;
-  _tracker: INotebookTracker;
+  _nbPanel: NotebookPanel;
   _notebookContent: Notebook;
   _handler: NotebookHandler;
 
 
   constructor(
     docManager: IDocumentManager,
-    tracker: INotebookTracker,
     handler: NotebookHandler
   ){
     this._docManager = docManager;
-    this._tracker = tracker;
     this._handler = handler;
-    this._notebookContent = tracker.currentWidget.content
+    this._notebookContent = handler.nbPanel.content
   }
 
   create(cell_id: number | string, type: ReportType, message:IErrorMessage, args:any[]): IReport {
@@ -48,7 +46,7 @@ export class ItemGenerator implements IItemGenerator {
   }
 
   rename_notebook(): void {
-    renameDialog(this._docManager, this._tracker.currentWidget.context!.path)
+    renameDialog(this._docManager, this._handler.nbPanel.context!.path)
   }
 
   go_to_cell(index: number): void {
@@ -84,11 +82,11 @@ export class ItemGenerator implements IItemGenerator {
 
 export class GroupGenerator implements IGroupGenerator {
 
-  _tracker: INotebookTracker;
+  _nbPanel: NotebookPanel;
   _update: () => void;
 
-  constructor(tracker: INotebookTracker, update: () => void) {
-    this._tracker = tracker;
+  constructor(nbPanel: NotebookPanel, update: () => void) {
+    this._nbPanel = nbPanel;
     this._update = update;
   }
 
@@ -98,12 +96,12 @@ export class GroupGenerator implements IGroupGenerator {
     let metaname: string;
     if (isNumber(title)){
       str_title = "Cell " + title;
-      let cell: Cell = this._tracker.currentWidget.content.widgets[Number(title)];
+      let cell: Cell = this._nbPanel.content.widgets[Number(title)];
       metavar = cell.model.metadata;
       metaname = 'julynter-cellgroup-collapsed';
     } else {
       str_title = capitalizeFirstLetter(String(title));
-      metavar = this._tracker.currentWidget.model.metadata;
+      metavar = this._nbPanel.model.metadata;
       metaname = 'julynter-cellgroup-' + str_title.replace(' ', '-').toLowerCase() + '-collapsed';
     }
     let collapsed = metavar.get(metaname) as boolean;

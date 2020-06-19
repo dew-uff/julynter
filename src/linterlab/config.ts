@@ -1,11 +1,9 @@
 import { requestAPI } from '../server';
 import { IJulynterLintOptions } from "../linter/interfaces"
-import { OptionsManager } from './optionsmanager';
 import { IExperimentConfig } from './experimentmanager';
 
 export class Config {
 
-  public optionsManager: OptionsManager | null;
   public defaultOptions: IJulynterLintOptions;
   public experimentConfig: IExperimentConfig;
 
@@ -20,7 +18,6 @@ export class Config {
       "requirements": "requirements.txt"
     };
     this.experimentConfig = experimentConfig;
-    this.optionsManager = null;
     this.load();
   }
 
@@ -28,9 +25,6 @@ export class Config {
     if ({}.hasOwnProperty.call(data, 'options')) {
       for (let key in data.options) {
         (this.defaultOptions as any)[key] = data.options[key];
-      }
-      if (this.optionsManager !== null) {
-        this.optionsManager.reloadOptions();
       }
     }
     if ({}.hasOwnProperty.call(data, 'experiment')) {
@@ -42,15 +36,21 @@ export class Config {
     }
   }
 
-  load() {
+  load(onSuccess?: (data:any) => void, onError?: (reason:any) => void) {
     requestAPI<any>('config')
     .then(data => {
       this.loadData(data);
+      if (onSuccess) {
+        onSuccess(data);
+      }
     })
     .catch(reason => {
       console.error(
         `The julynter server extension appears to be missing.\n${reason}`
       );
+      if (onError) {
+        onError(reason);
+      }
     });
   }
 

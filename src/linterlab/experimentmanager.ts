@@ -1,5 +1,5 @@
-import { INotebookTracker, Notebook } from "@jupyterlab/notebook";
-import { IReport } from "../linter/interfaces";
+import { Notebook, NotebookPanel } from "@jupyterlab/notebook";
+import { IReport, IJulynterLintOptions } from "../linter/interfaces";
 import { KernelMessage } from '@jupyterlab/services';
 import { NotebookHandler } from './notebookhandler';
 import { ICodeCellModel, CodeCell, Cell } from "@jupyterlab/cells";
@@ -31,7 +31,6 @@ export class ExperimentManager {
 => What is your participant ID? Please, write <ID>
 => Can we collect linting messages that appear for you? (Y/n)
 => Can we collect the types of linting messages? (Y/n) -- It appears if you choose N in the previous question
-=> Can we collect activity information (i.e., Julynter filters, notebook opening and closing)? (Y/n)
 
   */
 
@@ -414,16 +413,15 @@ export class ExperimentManager {
   
   /* Start Activities */
 
-  reportOpenNotebook(handler: NotebookHandler) {
+  reportLoadConfig(nbPanel: NotebookPanel, checks: IJulynterLintOptions) {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
-
     this._send('Activity', {
-      'operation': 'open',
-      'notebook-name': this._notebook_name(handler.name),
-      'notebook-id': handler.id,
-      'options': handler.options.checks
+      'operation': 'loadConfig',
+      'notebook-name': this._notebook_name(nbPanel.title.label),
+      'notebook-id': nbPanel.id,
+      'options': checks
     });
   } 
 
@@ -452,7 +450,7 @@ export class ExperimentManager {
     });
   }
 
-  reportContextSwitch(handler: NotebookHandler, operation: string) {
+  reportActivity(handler: NotebookHandler, operation: string) {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
@@ -463,6 +461,35 @@ export class ExperimentManager {
       'notebook-id': handler.id
     });
   }
+
+  reportVisibility(handler: NotebookHandler, visible:boolean) {
+    if (!this.config.enabled || !this.config.activity) {
+      return;
+    }
+    if (!handler) {
+      return;
+    }
+
+    this._send('Activity', {
+      'operation': 'visibility',
+      'notebook-name': this._notebook_name(handler.name),
+      'notebook-id': handler.id,
+      'visible': visible
+    });
+  }
+
+  reportSetConfig(nbPanel: NotebookPanel, config: string, value: any) {
+    if (!this.config.enabled || !this.config.activity) {
+      return;
+    }
+    this._send('Activity', {
+      'operation': 'setConfig',
+      'notebook-name': this._notebook_name(nbPanel.title.label),
+      'notebook-id': nbPanel.id,
+      'config': config,
+      'value': value,
+    });
+  } 
 
   /* End Activities */
 
@@ -506,11 +533,16 @@ export class ExperimentManager {
 
   /* Start lint */
 
-  reportLinting(tracker:INotebookTracker, reports:IReport[]) {
+  reportLinting(handler: NotebookHandler, reports:IReport[]) {
     if (!this.config.enabled) {
       return;
     }
-    console.log("Julynter: lint notebook", tracker.currentWidget.id)
+    this._send("Lint", {
+      'operation': 'lint',
+      'notebook-name': this._notebook_name(handler.name),
+      'notebook-id': handler.id,
+      'reports': reports.length,
+    });
     // ToDo. Check lintingMessages and lintingTypes
 
   }

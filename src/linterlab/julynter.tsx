@@ -9,15 +9,12 @@ import { ActivityMonitor, PathExt } from '@jupyterlab/coreutils';
 import { IDocumentManager } from '@jupyterlab/docmanager';
 import { NotebookPanel, INotebookTracker } from '@jupyterlab/notebook';
 
-import { IReport, IGenericNotebookMetadata, IGenericCellMetadata } from '../linter/interfaces';
+import { IReport } from '../linter/interfaces';
 import { Languages } from '../linter/languages';
-import { Linter } from '../linter/lint';
 
 import { NotebookHandler } from './notebookhandler';
-import { OptionsManager } from './optionsmanager';
 import { ListRenderer } from './view/listrenderer';
 import { KernelRenderer } from './view/kernelrenderer';
-import { ItemGenerator, GroupGenerator  } from './itemgenerator';
 
 import { Config } from './config';
 import { ExperimentManager } from './experimentmanager';
@@ -54,7 +51,7 @@ export class Julynter extends Widget {
   private _config: Config;
   private _experimentManager: ExperimentManager;
   public handlers: { [id: string]: Promise<NotebookHandler> };
-  public options: OptionsManager;
+  
 
   /**
    * Create a new table of contents.
@@ -64,35 +61,41 @@ export class Julynter extends Widget {
     this._docmanager = docmanager;
     this._tracker = tracker;
     this.handlers = {};
-    const update = this.update.bind(this);
+    
 
     this._currentHandler = null;
     this._experimentManager = new ExperimentManager();
     this._config = new Config(this._experimentManager.config);
-    this.options = new OptionsManager(tracker, this._config, update);
-    this._config.optionsManager = this.options;
   }
 
   addNewNotebook(nbPanel: NotebookPanel): void {
     //A promise that resolves after the initialization of the handler is done.
     const handlers = this.handlers;
-    const options = this.options;
+    const update = this.update.bind(this);
     const experimentmanager = this._experimentManager;
-    this._config.load();
+    const config = this._config;
+    const docManager = this._docmanager;
+    
     this.handlers[nbPanel.id] = new Promise(function(resolve, reject) {
       const session = nbPanel.sessionContext;
-      const handler = new NotebookHandler(session, nbPanel, options, experimentmanager);
+      const handler = new NotebookHandler(
+        docManager, session, nbPanel, config, 
+        experimentmanager, update
+      );
       let scripts = session.ready.then(handler.getKernelLanguage.bind(handler))
       scripts.then((language: Languages.LanguageModel) => {
-        handler.configureHandler(language);
-
-        nbPanel.disposed.connect(() => {
-          delete handlers[nbPanel.id];
-          handler.dispose();
-        });
+        config.load(() => {
+          handler.configureHandler(language);
         
-        handler.ready.then(() => {
-          resolve(handler);
+          
+          nbPanel.disposed.connect(() => {
+            delete handlers[nbPanel.id];
+            handler.dispose();
+          });
+          
+          handler.ready.then(() => {
+            resolve(handler);
+          });
         });
   
       });
@@ -108,17 +111,19 @@ export class Julynter extends Widget {
     if (future !== undefined) {
       future.then((source: NotebookHandler) => {
         if (source) {
-          console.log("Julynter detect1")
           self.currentHandler = source;
+          this._experimentManager.reportVisibility(this._currentHandler, true);
+          this.updateJulynter();
         } else {
           self.currentHandler = null;
+          this.updateJulynter();
         }
       });
     } else if (self._currentHandler !== null) {
       self.currentHandler = null;
+      this.updateJulynter();
     }
     if (this._tracker.has(widget) && widget !== this._currentWidget){
-      console.log("Julynter detect2")
       // change wigdet and it is not the same as the previous one
       this._currentWidget = widget;
       
@@ -145,7 +150,6 @@ export class Julynter extends Widget {
         timeout: RENDER_TIMEOUT
       });
       this._monitor.activityStopped.connect(this.update, this);
-      this.options.reloadOptions();
       this.updateJulynter();
     } else {
       this._currentWidget = null;
@@ -158,24 +162,13 @@ export class Julynter extends Widget {
     let kernelRenderer: JSX.Element = null;
 
     if (this._currentWidget && this._currentHandler) {
-      const update = this.update.bind(this);
-      const groupGenerator = new GroupGenerator(this._tracker, update);
-      const itemGenerator = new ItemGenerator(this._docmanager, this._tracker, this._currentHandler);
-      const notebookMetadata: IGenericNotebookMetadata = {
-        title: this._tracker.currentWidget.title.label,
-        cells: this._tracker.currentWidget.content.widgets as unknown as IGenericCellMetadata[],
-      }
-      const linter = new Linter(this.options, this._currentHandler.update, this._currentHandler.hasKernel);
-      const reports: IReport[] = linter.generate(notebookMetadata, itemGenerator, groupGenerator);
-
-      this._experimentManager.reportLinting(this._tracker, reports);
-
+      const reports: IReport[] = this.currentHandler.lint();
       const context = this._docmanager.contextForWidget(this._currentWidget);
       if (context) {
         title = PathExt.basename(context.localPath);
       }
     
-      listRenderer = <ListRenderer options={this.options} tracker={this._tracker} reports={reports}/>;
+      listRenderer = <ListRenderer options={this._currentHandler.options} reports={reports}/>;
       kernelRenderer = <KernelRenderer notebook={this._currentHandler}/>;
     }
     const renderedJSX = (
@@ -196,7 +189,15 @@ export class Julynter extends Widget {
    * Rerender after showing.
    */
   protected onAfterShow(msg: Message): void {
+    this._experimentManager.reportVisibility(this._currentHandler, true);
     this.update();
+  }
+
+  /**
+   * Notify after hide.
+   */
+  protected onAfterHide(msg: Message): void {
+    this._experimentManager.reportVisibility(this._currentHandler, false);
   }
 
   /**
