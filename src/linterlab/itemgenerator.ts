@@ -5,7 +5,7 @@ import { INotebookTracker, Notebook } from '@jupyterlab/notebook';
 import { IObservableJSON } from '@jupyterlab/observables';
 
 import { IReport, IErrorMessage, IItemGenerator, IGroupGenerator, ReportType } from '../linter/interfaces';
-import { JulynterNotebook } from './julynternotebook';
+import { NotebookHandler } from './notebookhandler';
 
 
 function isNumber(value: string | number): boolean
@@ -21,17 +21,17 @@ export class ItemGenerator implements IItemGenerator {
   _docManager: IDocumentManager;
   _tracker: INotebookTracker;
   _notebookContent: Notebook;
-  _notebook: JulynterNotebook;
+  _handler: NotebookHandler;
 
 
   constructor(
     docManager: IDocumentManager,
     tracker: INotebookTracker,
-    notebook: JulynterNotebook
+    handler: NotebookHandler
   ){
     this._docManager = docManager;
     this._tracker = tracker;
-    this._notebook = notebook;
+    this._handler = handler;
     this._notebookContent = tracker.currentWidget.content
   }
 
@@ -58,7 +58,7 @@ export class ItemGenerator implements IItemGenerator {
   }
 
   add_module(index: number, module: string): void {
-    const handler = this._notebook.handler;
+    const handler = this._handler;
     showDialog({
       'title': 'Add requirement',
       body: `Add "${module}" to requirements?`,

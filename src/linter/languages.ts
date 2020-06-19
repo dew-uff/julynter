@@ -3,6 +3,7 @@ export namespace Languages {
         initScript: string;
         queryCommand: (requirements: string) => string;
         addModuleCommand: (module: string, requirements: string) => string;
+        name: string;
     }
 }
 
@@ -228,29 +229,32 @@ print("ok-initialized")
 
     
     static scripts: { [index: string]: Languages.LanguageModel } = {
-        "python3": {
+        'python3': {
             initScript: Languages.py_script,
             queryCommand: (requirements:string) => 
                 "_jupyterlab_julynter_query('" + requirements + "')",
             addModuleCommand: (module: string, requirements: string) =>
                 "_jupyterlab_julynter_add_package_to_requirements('" +
                 module + "','" + requirements + "')",
+            name: 'python'
         },
-        "python2": {
+        'python2': {
             initScript: Languages.py_script,
             queryCommand: (requirements:string) => 
                 "_jupyterlab_julynter_query('" + requirements + "')",
             addModuleCommand: (module: string, requirements: string) =>
                 "_jupyterlab_julynter_add_package_to_requirements('" +
                 module + "','" + requirements + "')",
+            name: 'python'
         },
-        "python": {
+        'python': {
             initScript: Languages.py_script,
             queryCommand: (requirements:string) => 
                 "_jupyterlab_julynter_query('" + requirements + "')",
             addModuleCommand: (module: string, requirements: string) =>
                 "_jupyterlab_julynter_add_package_to_requirements('" +
                 module + "','" + requirements + "')",
+            name: 'python'
         },
     };
 

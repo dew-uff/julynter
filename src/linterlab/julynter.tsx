@@ -13,15 +13,14 @@ import { IReport, IGenericNotebookMetadata, IGenericCellMetadata } from '../lint
 import { Languages } from '../linter/languages';
 import { Linter } from '../linter/lint';
 
-import { JulynterKernelHandler } from './kernel/handler';
-import { KernelConnector } from './kernel/kernelconnector';
+import { NotebookHandler } from './notebookhandler';
 import { OptionsManager } from './optionsmanager';
 import { ListRenderer } from './view/listrenderer';
 import { KernelRenderer } from './view/kernelrenderer';
 import { ItemGenerator, GroupGenerator  } from './itemgenerator';
-import { JulynterNotebook } from './julynternotebook';
 
 import { Config } from './config';
+import { ExperimentManager } from './experimentmanager';
 
 /**
  * Timeout for throttling Julynter rendering.
@@ -49,11 +48,12 @@ export class Julynter extends Widget {
 
   private _docmanager: IDocumentManager;
   private _currentWidget: Widget | null;
+  private _currentHandler: NotebookHandler | null;
   private _monitor: ActivityMonitor<any, any> | null;
   private _tracker: INotebookTracker | null;
-  private _notebook: JulynterNotebook;
   private _config: Config;
-  public handlers: { [id: string]: Promise<JulynterKernelHandler> };
+  private _experimentManager: ExperimentManager;
+  public handlers: { [id: string]: Promise<NotebookHandler> };
   public options: OptionsManager;
 
   /**
@@ -66,71 +66,61 @@ export class Julynter extends Widget {
     this.handlers = {};
     const update = this.update.bind(this);
 
-    this._config = new Config();
-    this._notebook = new JulynterNotebook();
+    this._currentHandler = null;
+    this._experimentManager = new ExperimentManager();
+    this._config = new Config(this._experimentManager.config);
     this.options = new OptionsManager(tracker, this._config, update);
     this._config.optionsManager = this.options;
   }
 
   addNewNotebook(nbPanel: NotebookPanel): void {
     //A promise that resolves after the initialization of the handler is done.
-    const options = this.options;
     const handlers = this.handlers;
-
-    this.handlers[nbPanel.id] = new Promise( function( resolve, reject ) {
+    const options = this.options;
+    const experimentmanager = this._experimentManager;
+    this._config.load();
+    this.handlers[nbPanel.id] = new Promise(function(resolve, reject) {
       const session = nbPanel.sessionContext;
-      const connector = new KernelConnector( { session } );
+      const handler = new NotebookHandler(session, nbPanel, options, experimentmanager);
+      let scripts = session.ready.then(handler.getKernelLanguage.bind(handler))
+      scripts.then((language: Languages.LanguageModel) => {
+        handler.configureHandler(language);
 
-      let scripts: Promise<Languages.LanguageModel> = connector.ready.then(() => { // Create connector and init w script if it exists for kernel type.
-        return connector.kernelLanguage.then((lang:string) =>{
-          return Languages.getScript( lang );
-        })
-      });
-
-      scripts.then(( result: Languages.LanguageModel ) => {
-        let initScript = result.initScript;
-        let queryCommand = result.queryCommand;
-        let addModuleCommand = result.addModuleCommand;
-        
-        const koptions: JulynterKernelHandler.IOptions = {
-          queryCommand: queryCommand,
-          addModuleCommand: addModuleCommand,
-          connector: connector,
-          initScript: initScript,
-          id: session.path,  //Using the sessions path as an identifier for now.
-          options: options
-        };
-        const handler = new JulynterKernelHandler( koptions );
         nbPanel.disposed.connect(() => {
-            delete handlers[nbPanel.id];
-            handler.dispose();
-        } );
+          delete handlers[nbPanel.id];
+          handler.dispose();
+        });
         
         handler.ready.then(() => {
-            resolve( handler );
-        } );
-      } );
-      //Otherwise log error message.
-      scripts.catch(( result: string ) => {
-          reject( result );
-      } )
-    } );
+          resolve(handler);
+        });
+  
+      });
+      scripts.catch((result: string) => {
+        reject(result);
+      })
+    });
   }
 
   changeActiveWidget(widget: Widget): void {
     let future = this.handlers[widget.id];
+    let self = this;
     if (future !== undefined) {
-      future.then((source: JulynterKernelHandler) => {
+      future.then((source: NotebookHandler) => {
         if (source) {
-          this._notebook.handler = source;
-          this._notebook.handler.performQuery();
+          console.log("Julynter detect1")
+          self.currentHandler = source;
+        } else {
+          self.currentHandler = null;
         }
       });
+    } else if (self._currentHandler !== null) {
+      self.currentHandler = null;
     }
     if (this._tracker.has(widget) && widget !== this._currentWidget){
+      console.log("Julynter detect2")
       // change wigdet and it is not the same as the previous one
       this._currentWidget = widget;
-      this._config.load();
       
       // Dispose an old activity monitor if it existsd
       if (this._monitor) {
@@ -167,16 +157,18 @@ export class Julynter extends Widget {
     let listRenderer: JSX.Element = null;
     let kernelRenderer: JSX.Element = null;
 
-    if (this._currentWidget) {
+    if (this._currentWidget && this._currentHandler) {
       const update = this.update.bind(this);
       const groupGenerator = new GroupGenerator(this._tracker, update);
-      const itemGenerator = new ItemGenerator(this._docmanager, this._tracker, this._notebook);
+      const itemGenerator = new ItemGenerator(this._docmanager, this._tracker, this._currentHandler);
       const notebookMetadata: IGenericNotebookMetadata = {
         title: this._tracker.currentWidget.title.label,
         cells: this._tracker.currentWidget.content.widgets as unknown as IGenericCellMetadata[],
       }
-      const linter = new Linter(this.options, this._notebook.update, this._notebook.hasKernel);
+      const linter = new Linter(this.options, this._currentHandler.update, this._currentHandler.hasKernel);
       const reports: IReport[] = linter.generate(notebookMetadata, itemGenerator, groupGenerator);
+
+      this._experimentManager.reportLinting(this._tracker, reports);
 
       const context = this._docmanager.contextForWidget(this._currentWidget);
       if (context) {
@@ -184,7 +176,7 @@ export class Julynter extends Widget {
       }
     
       listRenderer = <ListRenderer options={this.options} tracker={this._tracker} reports={reports}/>;
-      kernelRenderer = <KernelRenderer notebook={this._notebook}/>;
+      kernelRenderer = <KernelRenderer notebook={this._currentHandler}/>;
     }
     const renderedJSX = (
       <div className="jp-Julynter">
@@ -222,8 +214,25 @@ export class Julynter extends Widget {
     if ( this.isDisposed ) {
         return;
     }
-    this._notebook.handler = null;
+    this._currentHandler.disconnectHandler();
+    this._currentHandler = null;
     super.dispose();
+  }
+
+  get currentHandler() {
+    return this._currentHandler;
+  }
+
+  set currentHandler(newHandler: NotebookHandler) {
+    if(this._currentHandler !== newHandler) {
+      if (this._currentHandler !== null) {
+        this._currentHandler.disconnectHandler();
+      }
+      this._currentHandler = newHandler;
+      if (this._currentHandler !== null) {
+        this._currentHandler.connectHandler();
+      }
+    }
   }
 
 }

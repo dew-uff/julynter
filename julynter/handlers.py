@@ -40,8 +40,15 @@ class RouteHandler(APIHandler):
         data = load_config(Path.home() / '.julynter')
         new_data = load_config(Path.cwd() / '.julynter')
         data = merge(data, new_data)
-        if "experiment_id" not in data and "experiment" not in data:
-            data["experiment"] = False
+        if "experiment" not in data:
+            data["experiment"] = {
+                'id': '<unset>',
+                'lintingMessage': False,
+                'lintingTypes': False,
+                'execution': False,
+                'code': False,
+                'enabled': False
+            }
         self.finish(json.dumps(data))
 
 

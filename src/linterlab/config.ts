@@ -1,13 +1,15 @@
 import { requestAPI } from '../server';
 import { IJulynterLintOptions } from "../linter/interfaces"
 import { OptionsManager } from './optionsmanager';
+import { IExperimentConfig } from './experimentmanager';
 
 export class Config {
 
   public optionsManager: OptionsManager | null;
   public defaultOptions: IJulynterLintOptions;
+  public experimentConfig: IExperimentConfig;
 
-  constructor() {
+  constructor(experimentConfig: IExperimentConfig) {
     this.defaultOptions = {
       "invalid-title": true,
       "hidden-state": true,
@@ -17,6 +19,7 @@ export class Config {
       "mode": "type",
       "requirements": "requirements.txt"
     };
+    this.experimentConfig = experimentConfig;
     this.optionsManager = null;
     this.load();
   }
@@ -29,6 +32,13 @@ export class Config {
       if (this.optionsManager !== null) {
         this.optionsManager.reloadOptions();
       }
+    }
+    if ({}.hasOwnProperty.call(data, 'experiment')) {
+      for (let key in data.experiment) {
+        (this.experimentConfig as any)[key] = data.experiment[key];
+      }
+    } else {
+      this.experimentConfig.enabled = false;
     }
   }
 

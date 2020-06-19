@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import { JulynterNotebook } from '../julynternotebook';
+import { NotebookHandler } from '../notebookhandler';
 
 interface IKernelProps {
-  notebook: JulynterNotebook;
+  notebook: NotebookHandler;
 }
 
 export class KernelRenderer extends React.Component<IKernelProps> {
