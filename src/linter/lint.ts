@@ -1,8 +1,10 @@
 import { 
   IQueryResult, IReport, ILintOptionsManager, IItemGenerator, IGroupGenerator,
-  IGenericNotebookMetadata, IGenericCellMetadata, IGenericCodeCellMetadata
-} from "./interfaces";
-import { ERRORS, ERROR_TYPES_MAP } from "./errors"
+  IGenericNotebookMetadata, IGenericCellMetadata, IGenericCodeCellMetadata,
+  ErrorTypeKey,
+  ErrorTypeKeys
+} from './interfaces';
+import { ERROR_TYPES_MAP } from './errors'
 
 
 export class Linter {
@@ -34,25 +36,25 @@ export class Linter {
   private checkTitle(notebookMetadata: IGenericNotebookMetadata, headings: IReport[], generator: IItemGenerator) {
     let title = notebookMetadata.title.toLowerCase();
     if (title == '.ipynb') {
-      headings.push(generator.create("title", "title", ERRORS.t1, []))
+      headings.push(generator.create('title', 'title', 't1', []))
     }
-    if (title.startsWith("untitled")) {
-      headings.push(generator.create("title", "title", ERRORS.t2, []))
+    if (title.startsWith('untitled')) {
+      headings.push(generator.create('title', 'title', 't2', []))
     }
-    if (title.includes("-copy")) {
-      headings.push(generator.create("title", "title", ERRORS.t3, []))
+    if (title.includes('-copy')) {
+      headings.push(generator.create('title', 'title', 't3', []))
     }
-    if (title.includes(" ")) {
-      headings.push(generator.create("title", "title", ERRORS.t4, []))
+    if (title.includes(' ')) {
+      headings.push(generator.create('title', 'title', 't4', []))
     }
     if (!/^([a-z]|[0-9]|_|-| |\.)*$/.test(title)) {
-      headings.push(generator.create("title", "title", ERRORS.t5, []))
+      headings.push(generator.create('title', 'title', 't5', []))
     }
     if (title.length > 100) {
-      headings.push(generator.create("title", "title", ERRORS.t6, []))
+      headings.push(generator.create('title', 'title', 't6', []))
     }
     if (title.length < 8) {
-      headings.push(generator.create("title", "title", ERRORS.t7, []))
+      headings.push(generator.create('title', 'title', 't7', []))
     }
   }
   
@@ -81,26 +83,26 @@ export class Linter {
         if (this.hasKernel) {
           if (executionCountNumber != null) {
             if (!executedCode.hasOwnProperty(executionCountNumber)) {
-              headings.push(itemGenerator.create(i, cell.model.type, ERRORS.h1, [i]))
+              headings.push(itemGenerator.create(i, cell.model.type, 'h1', [i]))
             } else {
-              let history_code = executedCode[executionCountNumber].replace(/\\n/g, "\n").replace(/\\\\/g, "\\").trim();
+              let history_code = executedCode[executionCountNumber].replace(/\\n/g, '\n').replace(/\\\\/g, '\\').trim();
               if (history_code != (cell as IGenericCodeCellMetadata).model.value.text.trim()) {
-                headings.push(itemGenerator.create(i, cell.model.type, ERRORS.h2, [i]))
+                headings.push(itemGenerator.create(i, cell.model.type, 'h2', [i]))
               }
             }
           }
         }
 
         if (executionCountNumber === null) {
-          if ((i < nonExecutedTail) && (model.value.text.trim() != "")) {
-            headings.push(itemGenerator.create(i, cell.model.type, ERRORS.c1, [i]))
+          if ((i < nonExecutedTail) && (model.value.text.trim() != '')) {
+            headings.push(itemGenerator.create(i, cell.model.type, 'c1', [i]))
           }
         } else {
           if (executionCountNumber < lastExecutionCount) {
-            headings.push(itemGenerator.create(i, cell.model.type, ERRORS.c2, [i, executionCountNumber]))
+            headings.push(itemGenerator.create(i, cell.model.type, 'c2', [i, executionCountNumber]))
           }
           if (executionCounts.hasOwnProperty(executionCountNumber)) {
-            headings.push(itemGenerator.create(i, cell.model.type, ERRORS.h3, [i, executionCountNumber]))
+            headings.push(itemGenerator.create(i, cell.model.type, 'h3', [i, executionCountNumber]))
           }
           executionCounts[executionCountNumber] = [i, cell];
           lastExecutionCount = executionCountNumber;
@@ -109,7 +111,7 @@ export class Linter {
       let text = model.value.text;
       
       if (text.trim() == '' && i < emptyTail) {
-        headings.push(itemGenerator.create(i, cell.model.type, ERRORS.c3, [i]))
+        headings.push(itemGenerator.create(i, cell.model.type, 'c3', [i]))
       }
     }
     let hasImports = this.update.has_imports || [];
@@ -124,23 +126,23 @@ export class Linter {
         let cell = tuple[1];
         let index = tuple[0];
         if (hasImports.includes(currentCount) && index != firstCodeCell) {
-          headings.push(itemGenerator.create(index, cell.model.type, ERRORS.i1, [index]))
+          headings.push(itemGenerator.create(index, cell.model.type, 'i1', [index]))
         }
         if (absolute_paths.hasOwnProperty(currentCount)) {
-          headings.push(itemGenerator.create(index, cell.model.type, ERRORS.p1, [
-            index,absolute_paths[currentCount].map(x => "'" + x + "'").join(", ")
+          headings.push(itemGenerator.create(index, cell.model.type, 'p1', [
+            index,absolute_paths[currentCount].map(x => "'" + x + "'").join(', ')
           ]))
         }
         if (missingRequirements.hasOwnProperty(currentCount)) {
           Object.keys(missingRequirements[currentCount]).forEach(function(module, j) {
-            headings.push(itemGenerator.create(index, cell.model.type, ERRORS.i2, [index, module]))
+            headings.push(itemGenerator.create(index, cell.model.type, 'i2', [index, module]))
           });
         }
 
         if ((lastExecutionCount === null) && (currentCount != 1)) {
-          headings.push(itemGenerator.create(index, cell.model.type, ERRORS.h4, [index]))
+          headings.push(itemGenerator.create(index, cell.model.type, 'h4', [index]))
         } else if ((lastExecutionCount !== null) && (lastExecutionCount !== currentCount - 1)) {
-          headings.push(itemGenerator.create(index, cell.model.type, ERRORS.h4, [index]))
+          headings.push(itemGenerator.create(index, cell.model.type, 'h4', [index]))
         }
         lastExecutionCount = currentCount;
 
@@ -150,16 +152,16 @@ export class Linter {
             Object.keys(dependencies).forEach(function(variable) {
               let number = Number(dependencies[variable]);
               if (!executionCounts.hasOwnProperty(number)){
-                headings.push(itemGenerator.create(index, cell.model.type, ERRORS.h5, [
-                  index, number, executedCode[number].replace("\\n", "\n"), variable
+                headings.push(itemGenerator.create(index, cell.model.type, 'h5', [
+                  index, number, executedCode[number].replace('\\n', '\n'), variable
                 ]))
               }
             })
           }
           let missing = missingDependencies[currentCount];
           if ((missing !== undefined) && (missing.length > 0)) {
-            headings.push(itemGenerator.create(index, cell.model.type, ERRORS.h6, [
-              index, missing.map(x => "'" + x + "'").join(", ")
+            headings.push(itemGenerator.create(index, cell.model.type, 'h6', [
+              index, missing.map(x => "'" + x + "'").join(', ')
             ]))
           }
         }
@@ -168,14 +170,14 @@ export class Linter {
       let cell = notebookMetadata.cells[0];
       let model = cell.model;
       if (model.type !== 'markdown') {
-        headings.push(itemGenerator.create(0, cell.model.type, ERRORS.c4, [0]))
+        headings.push(itemGenerator.create(0, cell.model.type, 'c4', [0]))
       }
     }
     if (emptyTail > 1) {
       let cell = notebookMetadata.cells[emptyTail - 1];
       let model = cell.model;
       if (model.type !== 'markdown') {
-        headings.push(itemGenerator.create(emptyTail - 1, cell.model.type, ERRORS.c5, [emptyTail - 1]))
+        headings.push(itemGenerator.create(emptyTail - 1, cell.model.type, 'c5', [emptyTail - 1]))
       }
     }
   }
@@ -217,7 +219,7 @@ export class Linter {
     let options = this.options;
     let new_headings: IReport[] = [];
     headings.forEach(element => {
-      if (options.check(element.report_type)){
+      if (options.checkType(element.report_type) && ((element.report_id == 'group') || options.checkReport(element.report_id))){
         new_headings.push(element);
       }
     });
@@ -238,7 +240,7 @@ export class Linter {
     let new_headings: IReport[] = [];
     for (let key in groups) {
       let elements = groups[key];
-      new_headings.push(groupGenerator.create(key, "group", elements));
+      new_headings.push(groupGenerator.create(key, 'group', elements));
       new_headings.push(...elements);
     }
 
@@ -246,7 +248,7 @@ export class Linter {
   }
 
   private group_by_type(headings: IReport[], groupGenerator: IGroupGenerator) {
-    let groups: { [id:string]: IReport[]} = {};
+    const groups: { [id in ErrorTypeKey]?: IReport[]} = {};
     headings.forEach(element => {
       if (element.report_type in groups){
         groups[element.report_type].push(element);
@@ -255,12 +257,14 @@ export class Linter {
       }
     });
 
-    let new_headings: IReport[] = [];
-    for (let key in groups) {
-      let elements = groups[key];
-      let groupText = ERROR_TYPES_MAP[key].label;
-      new_headings.push(groupGenerator.create(groupText, key, elements));
-      new_headings.push(...elements);
+    const new_headings: IReport[] = [];
+    for (let key of ErrorTypeKeys) {
+      const elements = groups[key];
+      if (elements) {
+        let groupText = ERROR_TYPES_MAP[key].label;
+        new_headings.push(groupGenerator.create(groupText, key, elements));
+        new_headings.push(...elements);
+      }
     }
 
     return new_headings;

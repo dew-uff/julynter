@@ -1,42 +1,36 @@
 import { Notebook, NotebookPanel } from "@jupyterlab/notebook";
 import { IReport, IJulynterLintOptions } from "../linter/interfaces";
-import { KernelMessage } from '@jupyterlab/services';
+import { KernelMessage, Contents } from '@jupyterlab/services';
 import { NotebookHandler } from './notebookhandler';
 import { ICodeCellModel, CodeCell, Cell } from "@jupyterlab/cells";
 import { IStream, IError, CellType, IBaseCell } from "@jupyterlab/nbformat";
 import { ISessionContext, Clipboard } from "@jupyterlab/apputils";
 import { JSONObject } from "@lumino/coreutils";
 import { NotebookActions } from "@jupyterlab/notebook";
+import { IDocumentManager } from '@jupyterlab/docmanager';
+import { requestAPI } from "../server";
 
 const JUPYTER_CELL_MIME = 'application/vnd.jupyter.cells';
 
+export const IExperimentConfigAttributes = [
+  'lintingMessages', 'lintingTypes', 'execution', 
+  'activity', 'code', 'name', 'enabled'
+] as const;
+export type IExperimentConfigAttribute = typeof IExperimentConfigAttributes[number];
 
-
-export interface IExperimentConfig {
-  id: string;
-  lintingMessages: boolean | 'maybe';
-  lintingTypes: boolean | 'maybe';
-  execution: boolean | 'maybe';
-  activity: boolean | 'maybe';
-  code: boolean | 'maybe';
-  name: boolean | 'maybe';
-  enabled: boolean | 'maybe';
+export type IExperimentConfig = {
+  [id in IExperimentConfigAttribute]: boolean | 'maybe';
 }
 
 export class ExperimentManager {
 
   public config: IExperimentConfig;
+  public lastLint: {
+    [id:string]: IReport[] 
+  };
 
-  /*
-=> What is your participant ID? Please, write <ID>
-=> Can we collect linting messages that appear for you? (Y/n)
-=> Can we collect the types of linting messages? (Y/n) -- It appears if you choose N in the previous question
-
-  */
-
-  constructor() {
+  constructor(docmanager: IDocumentManager) {
     this.config = {
-      id: '<unset>',
       lintingMessages: 'maybe',
       lintingTypes: 'maybe',
       execution: 'maybe',
@@ -45,14 +39,23 @@ export class ExperimentManager {
       name: 'maybe',
       enabled: true,
     }
-
-    this._overrideJupyterLab();
-    
-    
+    this.lastLint = {};
+    this._overrideJupyterLab(docmanager);
   }
 
-  private _overrideJupyterLab() {
+  private _overrideJupyterLab(docmanager: IDocumentManager) {
     let self = this;
+
+
+    let oldRename = docmanager.rename.bind(docmanager);
+    docmanager.rename = (oldPath: string, newPath: string): Promise<Contents.IModel> => {
+      return oldRename(oldPath, newPath).then(result => {
+        self.reportRename(oldPath, newPath);
+        return result;
+      })
+    }
+
+
     let oldExecute = CodeCell.execute;
     CodeCell['execute'] = (
       cell: CodeCell,
@@ -248,6 +251,19 @@ export class ExperimentManager {
   
   /* Start Actions */
 
+  reportRename(oldName: string, newName: string) {
+    if (!this.config.enabled || !this.config.activity) {
+      return;
+    }
+
+    this._send('Action', {
+      'operation': 'rename',
+      'old-name': oldName,
+      'new-name': newName,
+    });
+  }
+
+
   reportSplitCell(oldIndex:number, notebook: Notebook) {
     if (!this.config.enabled || !this.config.activity) {
       return;
@@ -425,9 +441,25 @@ export class ExperimentManager {
     });
   } 
 
+  reportSaveConfig(nbPanel: NotebookPanel, checks: IJulynterLintOptions) {
+    if (!this.config.enabled || !this.config.activity) {
+      return;
+    }
+    this._send('Activity', {
+      'operation': 'saveConfig',
+      'notebook-name': this._notebook_name(nbPanel.title.label),
+      'notebook-id': nbPanel.id,
+      'options': checks
+    });
+  } 
+
   reportCloseNotebook(handler: NotebookHandler) {
     if (!this.config.enabled || !this.config.activity) {
       return;
+    }
+
+    if ({}.hasOwnProperty.call(this.lastLint, handler.id)) {
+      delete this.lastLint[handler.id];
     }
 
     this._send('Activity', {
@@ -537,14 +569,124 @@ export class ExperimentManager {
     if (!this.config.enabled) {
       return;
     }
+
+    if (!{}.hasOwnProperty.call(this.lastLint, handler.id)) {
+      this.lastLint[handler.id] = [];
+    }
+
+    let newReports = reports.filter(report => {
+      if (report.type === 'group') {
+        return false;
+      }
+      let same = this.lastLint[handler.id].find(other => {
+        return (
+          (other.text == report.text)
+          && (other.report_type == report.report_type)
+          && (other.cell_id == report.cell_id)
+          && (other.report_id == report.report_id)
+        );
+      })
+      if (same) {
+        report.feedback = same.feedback;
+        same.kept = true;
+        return false;
+      } else {
+        report.feedback = 1;
+      }
+      return true;
+    });
+
+    let removedReports = this.lastLint[handler.id].filter(report => {
+      if (report.type === 'group') {
+        return false;
+      }
+      if (report.kept) {
+        return false;
+      }
+      return true;
+    });
+
+    this.lastLint[handler.id] = reports;
+
+
+    if (!(this.config.lintingMessages || this.config.lintingTypes)) {
+      return;
+    }
+    if (newReports.length === 0 && removedReports.length === 0) {
+      return;
+    }
+    const mapfn = this.config.lintingMessages? this.selectMessages.bind(this) : this.selectTypes.bind(this); 
     this._send("Lint", {
       'operation': 'lint',
       'notebook-name': this._notebook_name(handler.name),
       'notebook-id': handler.id,
-      'reports': reports.length,
+      'new-reports-c': newReports.length,
+      'new-reports': newReports.map(mapfn),
+      'removed-reports-c': removedReports.length,
+      'removed-reports': removedReports.map(mapfn) 
     });
-    // ToDo. Check lintingMessages and lintingTypes
 
+  }
+
+  reportFeedback(handler: NotebookHandler, report:IReport, message: string) {
+    if (!this.config.enabled) {
+      return;
+    }
+    const mapfn = this.config.lintingMessages? this.selectMessages.bind(this) : this.selectTypes.bind(this); 
+    let newReport = mapfn(report);
+
+    this._send("Lint", {
+      'operation': 'feedback',
+      'notebook-name': this._notebook_name(handler.name),
+      'notebook-id': handler.id,
+      'report': newReport,
+      'message': message
+    });
+
+  }
+
+  reportLintClick(handler: NotebookHandler, report:IReport) {
+    if (!this.config.enabled || !this.config.activity) {
+      return;
+    }
+    if (!this.config.lintingMessages || !this.config.lintingTypes) {
+      return;
+    }
+    
+    const mapfn = this.config.lintingMessages? this.selectMessages.bind(this) : this.selectTypes.bind(this); 
+    let newReport = mapfn(report);
+
+    this._send("Lint", {
+      'operation': 'lintclick',
+      'notebook-name': this._notebook_name(handler.name),
+      'notebook-id': handler.id,
+      'report': newReport,
+    });
+  
+  }
+
+  private selectMessages(report: IReport) {
+    return {
+      text: report.text,
+      report_type: report.report_type,
+      report_id: report.report_id,
+      suggestion: report.suggestion,
+      cell_id: report.cell_id,
+      visible: report.visible,
+      filtered_out: report.filtered_out,
+      type: report.type,
+    }
+  }
+
+  private selectTypes(report: IReport) {
+    return {
+      report_type: report.report_type,
+      report_id: report.report_id,
+      cell_id: report.cell_id,
+      visible: report.visible,
+      filtered_out: report.filtered_out,
+      type: report.type,
+    }
   }
 
   /* End lint */
@@ -601,11 +743,23 @@ export class ExperimentManager {
 
   private _send(header: string, data: any){
     data['date'] = new Date();
+    data['header'] = header;
+    return requestAPI<any>('experiment', {
+      body: JSON.stringify(data),
+      method: 'POST'
+    }).catch(reason => {
+      console.error(
+        `The julynter server extension appears to be missing.\n${reason}`
+      );
+      return reason;
+    })
+    /*
     console.log("Julynter:", header);
     for (let key in data) {
       let value = data[key];
       console.log("  " + key + ":", value);
     }
+    */
   }
 
 }

@@ -36,7 +36,6 @@ export class NotebookHandler implements IDisposable {
   private _inspected = new Signal<this, IJulynterKernelUpdate>(this);
   private _isDisposed = false;
   private _ready : Promise<void>;
-  private _name : string;
   private _panelId : string;
   private _nbPanel: NotebookPanel;
   private _attempts: number;
@@ -65,7 +64,6 @@ export class NotebookHandler implements IDisposable {
     this._docManager = docManager;
     this._session = session; 
     this._nbPanel = nbPanel;
-    this._name = session.path;
     this._config = config;
     this._experimentManager = experimentManager;
     this._update = update;
@@ -143,7 +141,7 @@ export class NotebookHandler implements IDisposable {
   }
 
   get name():string{
-    return this._name;
+    return this._session.path;
   }
 
   get id():string{
@@ -154,9 +152,12 @@ export class NotebookHandler implements IDisposable {
     return this._nbPanel;
   }
 
-
   get error():string{
     return this._error;
+  }
+
+  get experimentManager(): ExperimentManager {
+    return this._experimentManager;
   }
 
   /**

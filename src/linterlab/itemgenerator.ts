@@ -4,8 +4,9 @@ import { renameDialog, IDocumentManager } from '@jupyterlab/docmanager';
 import { Notebook, NotebookPanel } from '@jupyterlab/notebook';
 import { IObservableJSON } from '@jupyterlab/observables';
 
-import { IReport, IErrorMessage, IItemGenerator, IGroupGenerator, ReportType } from '../linter/interfaces';
+import { IReport, IItemGenerator, IGroupGenerator, ReportType, ReportId, ErrorTypeKey } from '../linter/interfaces';
 import { NotebookHandler } from './notebookhandler';
+import { ERRORS } from '../linter/errors';
 
 
 function isNumber(value: string | number): boolean
@@ -33,29 +34,33 @@ export class ItemGenerator implements IItemGenerator {
     this._notebookContent = handler.nbPanel.content
   }
 
-  create(cell_id: number | string, type: ReportType, message:IErrorMessage, args:any[]): IReport {
+  create(cell_id: number | string, type: ReportType, message_id:ReportId, args:any[]): IReport {
+    const message = ERRORS[message_id];
     return {
       text: message.label(...args),
       report_type: message.type,
+      report_id: message_id,
+      suggestion: message.suggestion,
       cell_id: cell_id,
       visible: true,
       filtered_out: false,
       type: type,
-      onClick: message.action(this, ...args)
+      action: message.action,
+      boundAction: message.action.execute(this, ...args)
     }
   }
 
-  rename_notebook(): void {
+  renameNotebook(): void {
     renameDialog(this._docManager, this._handler.nbPanel.context!.path)
   }
 
-  go_to_cell(index: number): void {
+  goToCell(index: number): void {
     const cell = this._notebookContent.widgets[index];
     this._notebookContent.activeCellIndex = index;
     cell.node.scrollIntoView();
   }
 
-  add_module(index: number, module: string): void {
+  addModule(index: number, module: string): void {
     const handler = this._handler;
     showDialog({
       'title': 'Add requirement',
@@ -68,15 +73,15 @@ export class ItemGenerator implements IItemGenerator {
         }
       })
     });
-    this.go_to_cell(index);
+    this.goToCell(index);
   }
 
-  restore_cell(index: number, executionCount: number, code: string): void {
-    let cell = this._notebookContent.model.contentFactory.createCodeCell({});
+  restoreCell(index: number, executionCount: number, code: string): void {
+    const cell = this._notebookContent.model.contentFactory.createCodeCell({});
     cell.value.text = code;
     cell.executionCount = executionCount;
     this._notebookContent.model.cells.insert(index, cell);
-    this.go_to_cell(index);
+    this.goToCell(index);
   }
 }
 
@@ -90,13 +95,13 @@ export class GroupGenerator implements IGroupGenerator {
     this._update = update;
   }
 
-  create(title: string | number, report_type: string, elements: IReport[]): IReport {
+  create(title: string | number, report_type: ErrorTypeKey, elements: IReport[]): IReport {
     let str_title: string;
     let metavar: IObservableJSON;
     let metaname: string;
     if (isNumber(title)){
-      str_title = "Cell " + title;
-      let cell: Cell = this._nbPanel.content.widgets[Number(title)];
+      str_title = 'Cell ' + title;
+      const cell: Cell = this._nbPanel.content.widgets[Number(title)];
       metavar = cell.model.metadata;
       metaname = 'julynter-cellgroup-collapsed';
     } else {
@@ -111,28 +116,36 @@ export class GroupGenerator implements IGroupGenerator {
       element.has_parent = true;
     });
 
-    let result: IReport = {
+    const result: IReport = {
       text: str_title,
       report_type: report_type,
-      cell_id: "group",
+      report_id: 'group',
+      cell_id: 'group',
+      suggestion: null,
       visible: true,
       filtered_out: false,
       collapsed: collapsed,
-      type: "group",
+      type: 'group',
       has_parent: true,
-      onClick: null
+      action: null,
+      boundAction: null
     }
     const onClickFactory = (line: number) => {
       return () => {
         elements.forEach(element => {
-          element.visible = result["collapsed"];
+          element.visible = result['collapsed'];
         });
-        result["collapsed"] = !result["collapsed"];
+        result['collapsed'] = !result['collapsed'];
         metavar.set(metaname, !collapsed);
         this._update();
       };
     };
-    result["onClick"] = onClickFactory(0);
+    result.boundAction = onClickFactory(0);
+    result.action = {
+      label: 'Collapse/Expand category',
+      title: 'Collapse or expand lints of this type',
+      execute: null
+    }
     return result;
   }
 }

@@ -1,13 +1,12 @@
 import * as React from 'react';
 
 import { IReport } from '../../linter/interfaces';
-import { OptionsManager } from '../optionsmanager';
 import { ItemRenderer } from './itemrenderer';
-import { ToolbarRenderer } from './toolbarrenderer';
+import { NotebookHandler } from '../notebookhandler';
 
 interface IListProps {
-  options: OptionsManager;
   reports: IReport[];
+  notebook: NotebookHandler;
 }
 
 export class ListRenderer extends React.Component<IListProps> {
@@ -19,20 +18,18 @@ export class ListRenderer extends React.Component<IListProps> {
   render(): JSX.Element | null {
 
     let i = 0;
-    let listing: JSX.Element[] = this.props.reports.map(el => {
-      let key = `${el.cell_id}-${el.text}-${i++}`;
+    const listing: JSX.Element[] = this.props.reports.map(el => {
+      const key = `${el.cell_id}-${el.text}-${i++}`;
       return (
         <ItemRenderer
           item={el}
           key={key}
+          notebook={this.props.notebook}
         />
       );
     }); 
     return (
-      <div>
-        <ToolbarRenderer options={this.props.options}/>
-        <ul className="jp-Julynter-content">{listing}</ul>
-      </div>
+      <ul className='jp-Julynter-content'>{listing}</ul>
     );
   }
 }

@@ -6,7 +6,26 @@ export type ReportType = 'header' | 'markdown' | 'code' | 'raw' | 'title' | 'gro
 /**
  * Possible visualization modes
  */
-export type ViewModes = 'list' | 'cell' | 'type';
+export const ViewModes = ['list', 'cell', 'type'] as const;
+export type ViewMode = typeof ViewModes[number];
+
+/**
+ * Possible report types
+ */
+export const ErrorTypeKeys = ['invalidtitle', 'hiddenstate', 'confusenotebook', 'import', 'absolutepath'] as const;
+export type ErrorTypeKey = typeof ErrorTypeKeys[number];
+
+/**
+ * Possible report ids
+ */
+export const ReportIds = [
+  'c1', 'c2', 'c3', 'c4', 'c5',
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  'i1', 'i2',
+  'p1',
+  't1', 't2', 't3', 't4', 't5', 't6', 't7'
+] as const;
+export type ReportId = typeof ReportIds[number];
 
 /**
  * An object that represents a query result
@@ -28,26 +47,42 @@ export interface IQueryResult {
  */
 export interface IReport {
   text: string;
-  report_type: string;
+  report_type: ErrorTypeKey;
+  report_id: ReportId | 'group';
+  suggestion: string;
   cell_id: string | number;
   visible: boolean;
   filtered_out: boolean;
   
-  onClick: () => void;
+  action: IErrorAction;
+  boundAction: () => void;
 
   type?: ReportType;
   collapsed?: boolean;
   has_parent?: boolean;
+
+  // Experiment attributes
+  feedback?: number;
+  kept?: boolean;
 }
 
 /**
  * An error type that can be filtered
  */
 export interface IErrorType {
-  key: string;
+  key: ErrorTypeKey;
   label: string;
   toggle: string;
   icon: string;
+}
+
+/**
+ * An report action
+ */
+export interface IErrorAction {
+  execute: (itemgenerator: IItemGenerator, ...args: any[]) => () => void;
+  label: string;
+  title: string;
 }
 
 /**
@@ -56,19 +91,19 @@ export interface IErrorType {
 export interface IErrorMessage {
   label: (...args: any[]) => string;
   suggestion: string;
-  type: string;
-  action: (itemgenerator: IItemGenerator, ...args: any[]) => () => void;
+  type: ErrorTypeKey;
+  action: IErrorAction;
 }
 
 /**
  * An object that generates error reports
  */
 export interface IItemGenerator {
-  create(cell_id: number | string, type: ReportType, message:IErrorMessage, args:any[]): IReport;
-  rename_notebook(): void;
-  go_to_cell(index: number): void;
-  add_module(index: number, module: string): void;
-  restore_cell(index: number, executionCount: number, code: string): void;
+  create(cell_id: number | string, type: ReportType, message_id:string, args:any[]): IReport;
+  renameNotebook(): void;
+  goToCell(index: number): void;
+  addModule(index: number, module: string): void;
+  restoreCell(index: number, executionCount: number, code: string): void;
 }
 
 /**
@@ -83,27 +118,28 @@ export interface IGroupGenerator {
  * Linter configuration options
  */
 export interface IJulynterLintOptions {
-  "invalid-title": boolean;
-  "hidden-state": boolean;
-  "confuse-notebook": boolean;
-  "import": boolean;
-  "absolute-path": boolean;
-  "mode": ViewModes;
-  "requirements": string;
+  mode: ViewMode;
+  requirements: string;
+  types: {[id in ErrorTypeKey]: boolean},
+  reports: {[id in ReportId]: boolean},
 }
 
 /**
  * And object that sets and reads options from notebooks
  */
 export interface ILintOptionsManager {
-  check(key: string): boolean;
-  checkMode(): ViewModes;
+  checkReport(key: ReportId): boolean;
+  checkType(key: ErrorTypeKey): boolean;
+  checkMode(): ViewMode;
   checkRequirements(): string;
-  update(key: string, value:boolean): void;
-  updateMode(mode: ViewModes): void;
+  updateReport(key: ReportId, value:boolean): void;
+  updateType(key: ErrorTypeKey, value:boolean): void;
+  updateMode(mode: ViewMode): void;
   updateRequirements(req: string): void;
   updateWidget(): void;
   initializeOptions(checks: IJulynterLintOptions): void;
+  reloadOptions(): void;
+  saveOptions(): void;
   checks: IJulynterLintOptions;
 }
 

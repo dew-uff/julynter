@@ -41,11 +41,12 @@ function activateJulynter(
   restorer: ILayoutRestorer,
   notebookTracker: INotebookTracker
 ): IJulynter {
+
   // Create the widget.
-  const julynter = new Julynter(docmanager, notebookTracker)
+  const julynter = new Julynter(docmanager, notebookTracker, labShell)
 
   // Add the julynter to the left area.
-  julynter.title.iconClass = 'jp-TrustedIcon jp-SideBar-tabIcon';
+  julynter.title.iconClass = 'julynter-main-icon jp-SideBar-tabIcon';
   julynter.title.caption = 'Julynter';
   julynter.id = 'julynter';
   labShell.add(julynter, 'left', { rank: 700 });

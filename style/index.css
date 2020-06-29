@@ -1,3 +1,27 @@
+.julynter-main-icon, .julynter-main-new-icon {
+  display: block;
+  height: auto;
+  margin: 0 auto;
+  width: 20px;
+}
+
+[data-jp-theme-light='true'] .julynter-main-icon {
+  background-image: url('img/julynter.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-main-icon {
+  background-image: url('img/julynter_darktheme.svg');
+}
+
+[data-jp-theme-light='true'] .julynter-main-new-icon {
+  background-image: url('img/julynter_new.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-main-new-icon {
+  background-image: url('img/julynter_new_darktheme.svg');
+}
+
+
 .jp-Julynter-content {
   flex: 1 1 auto;
   margin: 0;
@@ -11,10 +35,10 @@
   display: flex;
   flex-direction: row;
   padding: 4px 12px;
-  -webkit-user-select: none;
+  /* -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
-  user-select: none;
+  user-select: none; */
   cursor: pointer;
   padding-top: 8px;
   padding-bottom: 8px;
@@ -44,12 +68,21 @@
   text-transform: uppercase;
 }
 
-.jp-Julynter-title {
+.julynter-title {
   display: inline-block;
+}
+
+.julynter-title:hover {
+  cursor: pointer;
 }
 
 .jp-Julynter-kernel {
   float: right;
+}
+
+.jp-Julynter-kernel span {
+  float: left;
+  margin: 0 3px;
 }
 /*
 [data-jp-theme-light='true'] .jp-Julynter-icon {
@@ -161,6 +194,14 @@
   background-image: url('img/rename_darktheme.svg');
 }
 
+[data-jp-theme-light='true'] .julynter-toolbar-config-icon {
+  background-image: url('img/config.svg');
+}
+
+[data-jp-theme-light='false'] .julynter-toolbar-config-icon {
+  background-image: url('img/config_darktheme.svg');
+}
+
 [data-jp-theme-light='true'] .julynter-toolbar-icon:hover {
   background-color: var(--jp-input-background);
 }
@@ -177,23 +218,70 @@
   background-color: #565656;
 }
 
-[data-jp-theme-light='true'] .jp-julynter-kernel-on-icon {
+[data-jp-theme-light='true'] .jp-julynter-feedback-positive-icon {
+  background-image: url('img/plus.svg');
+  
+}
+
+[data-jp-theme-light='false'] .jp-julynter-feedback-positive-icon {
+  background-image: url('img/plus_darktheme.svg');
+}
+
+[data-jp-theme-light='true'] .jp-julynter-feedback-negative-icon {
+  background-image: url('img/minus.svg');
+  
+}
+
+[data-jp-theme-light='false'] .jp-julynter-feedback-negative-icon {
+  background-image: url('img/minus_darktheme.svg');
+}
+
+[data-jp-theme-light='true'] .jp-julynter-feedback-text-icon {
+  background-image: url('img/feedback.svg');
+  
+}
+
+[data-jp-theme-light='false'] .jp-julynter-feedback-text-icon {
+  background-image: url('img/feedback_darktheme.svg');
+}
+
+
+[data-jp-theme-light='true'] .julynter-kernel-on-icon {
   background-image: url('img/kernelon.svg');
 }
 
-[data-jp-theme-light='false'] .jp-julynter-kernel-on-icon {
+[data-jp-theme-light='false'] .julynter-kernel-on-icon {
   background-image: url('img/kernelon_darktheme.svg');
 
 }
 
-[data-jp-theme-light='true'] .jp-julynter-kernel-off-icon {
+[data-jp-theme-light='true'] .julynter-kernel-off-icon {
   background-image: url('img/kerneloff.svg');
   
 }
 
-[data-jp-theme-light='false'] .jp-julynter-kernel-off-icon {
+[data-jp-theme-light='false'] .julynter-kernel-off-icon {
   background-image: url('img/kerneloff_darktheme.svg');
 }
+
+[data-jp-theme-light='true'] .julynter-disconnected-icon {
+  background-image: url('img/disconnected.svg');
+  
+}
+
+[data-jp-theme-light='false'] .julynter-disconnected-icon {
+  background-image: url('img/disconnected_darktheme.svg');
+}
+
+[data-jp-theme-light='true'] .julynter-never-connected-icon {
+  background-image: url('img/neverconnected.svg');
+  
+}
+
+[data-jp-theme-light='false'] .julynter-never-connected-icon {
+  background-image: url('img/neverconnected_darktheme.svg');
+}
+
 
 /*
 .julynter-toolbar-title-icon {
@@ -207,11 +295,12 @@
   position: relative;
   width: 100%;
   margin: 0px;
+  padding: 2px 0;
   user-select: none;
   border-bottom: var(--jp-border-width) solid var(--jp-border-color2);
-  height: 36px;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .julynter-entry-holder {
@@ -283,4 +372,211 @@
 
 .julynter-title-size {
   font-size: var(--jp-ui-font-size2);
+}
+
+.julynter-report-prompt {
+  width: 100%;
+}
+
+
+.julynter-feedback {
+  display: none;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.julynter-report-prompt:hover .julynter-feedback {
+  display: flex;
+}
+
+.julynter-feedback-text {
+  flex: 1;
+  padding: 7px 0;
+}
+
+.julynter-feedback-buttons {
+  flex: 1;
+  display: flex;
+}
+
+.julynter-feedback-icon,
+.julynter-feedback-icon-selected {
+  float: left;
+  padding: 0px;
+  margin: 4px;
+  background-repeat: no-repeat;
+  background-color: none;
+  background-size: 100%;
+  background-position: center;
+  height: 24px;
+  width: 24px;
+  margin: 4px;
+  border-radius: 2px;
+}
+
+[data-jp-theme-light='true'] .julynter-feedback-icon:hover {
+  background-color: var(--jp-input-background);
+}
+
+[data-jp-theme-light='false'] .julynter-feedback-icon:hover {
+  background-color: #3a3a3a;
+}
+
+[data-jp-theme-light='true'] .julynter-feedback-icon-selected {
+  background-color: var(--jp-input-background) !important
+}
+
+[data-jp-theme-light='false'] .julynter-feedback-icon-selected {
+  background-color: #3a3a3a !important;
+}
+
+.julynter-feedback-ul {
+  margin: 0;
+  margin-bottom: 5px;
+  padding: 0;
+  list-style-type: none;
+}
+
+.julynter-feedback-textarea {
+  min-width: 400px;
+  width: 99%;
+  min-height: 200px;
+}
+
+
+.julynter-config {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: auto;
+  padding: 15px;
+  background: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color1);
+  font-size: var(--jp-ui-font-size0);
+}
+
+.julynter-config-inner h1 {
+  margin: 0;
+}
+
+.julynter-config-notice {
+  margin-bottom: 15px;
+}
+
+.julynter-config-inner table {
+  border-collapse: collapse;
+  border-style: hidden;
+}
+
+.julynter-config-inner table td {
+  border: none;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+}
+
+.julynter-config-inner table th {
+  border: none;
+  text-align: left;
+}
+
+.julynter-config-inner table tr {
+  border: none;
+  text-align: left;
+}
+
+
+.julynter-config-inner table, .julynter-config-inner tr {
+  width: 100%;
+}
+
+.julynter-config-inner tr td:nth-child(1), .julynter-config-inner tr th:nth-child(1) {
+  width: 5%;
+  text-align: center;
+}
+
+.julynter-config-inner tr td:nth-child(2), .julynter-config-inner tr th:nth-child(2) {
+  width: 5%;
+  text-align: center;
+}
+
+.julynter-config-inner tr td:nth-child(3) {
+  width: 40%;
+}
+
+.julynter-config-inner tr td:nth-child(4) {
+  width: 50%;
+}
+
+.julynter-config-inner thead {
+  border-bottom: var(--jp-border-width) solid var(--jp-border-color1);
+  vertical-align: bottom;
+}
+
+.julynter-config-inner tbody tr:nth-child(2n) {
+  background: var(--jp-rendermime-table-row-background);
+}
+
+.julynter-config-inner tbody tr:hover {
+  background: var(--jp-rendermime-table-row-hover-background);
+  cursor: pointer;
+}
+
+.julynter-config-select {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  padding: 1px;
+  background-color: var(--jp-layout-color1);
+  height: 28px;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+  width: 189px !important;
+
+}
+
+.julynter-config-select select {
+  color: var(--jp-ui-font-color0) !important;
+  border: var(--jp-border-width) solid var(--jp-border-color1) !important;
+
+  flex: 1 1 auto !important;
+  height: 32px !important;
+  width: 100% !important;
+  background: var(--jp-input-background) !important;
+  padding: 0 25px 0 8px !important;
+  border: var(--jp-border-width) solid var(--jp-input-border-color) !important;
+  border-radius: 0px !important;
+  outline: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  
+}
+
+.julynter-config-select select:hover {
+  background-color: var(--jp-layout-color1) !important;
+  cursor: pointer !important;
+  color: var(--jp-ui-font-color0) !important;
+  background-color: var(--jp-input-hover-background) !important;
+  box-shadow: inset 0 0px 1px rgba(0, 0, 0, 0.5) !important;
+}
+
+.julynter-config-group-head {
+  display: inline;
+}
+
+.julynter-config-group-head span {
+  margin-left: 20px;
+}
+
+.julynter-error-desc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.julynter-context-info {
+  font-weight: bold;
 }
