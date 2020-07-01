@@ -1,10 +1,16 @@
 import { requestAPI } from '../server';
-import { IJulynterLintOptions, ErrorTypeKeys, ReportIds } from '../linter/interfaces';
-import { IExperimentConfig, IExperimentConfigAttributes } from './experimentmanager';
+import {
+  ErrorTypeKeys,
+  IJulynterLintOptions,
+  ReportIds
+} from '../linter/interfaces';
+import {
+  IExperimentConfig,
+  IExperimentConfigAttributes
+} from './experimentmanager';
 import { IJulynterStatus } from './view/statusrenderer';
 
 export class Config {
-
   public defaultOptions: IJulynterLintOptions;
   public experimentConfig: IExperimentConfig;
   public status: IJulynterStatus;
@@ -25,7 +31,7 @@ export class Config {
         hiddenstate: true,
         confusenotebook: true,
         import: true,
-        absolutepath: true,
+        absolutepath: true
       },
       reports: {
         c1: true,
@@ -48,21 +54,25 @@ export class Config {
         t4: true,
         t5: true,
         t6: true,
-        t7: true,
+        t7: true
       }
     };
   }
 
-  loadData(options: IJulynterLintOptions, experiment: IExperimentConfig, data:any) {
+  loadData(
+    options: IJulynterLintOptions,
+    experiment: IExperimentConfig,
+    data: any
+  ): void {
     if (options) {
       this.merge(options, data.options);
     }
-   
+
     if (experiment) {
-      const data_experiment: IExperimentConfig = data.experiment
-      if (data_experiment) {
+      const dataExperiment: IExperimentConfig = data.experiment;
+      if (dataExperiment) {
         for (const key of IExperimentConfigAttributes) {
-          const value = data_experiment[key];
+          const value = dataExperiment[key];
           if (value !== undefined && value !== null) {
             experiment[key] = value;
           }
@@ -76,64 +86,64 @@ export class Config {
     }
   }
 
-  load(onSuccess?: (data:any) => void, onError?: (reason:any) => void) {
+  load(onSuccess?: (data: any) => void, onError?: (reason: any) => void): void {
     requestAPI<any>('config')
-    .then(data => {
-      this.loadData(this.defaultOptions, this.experimentConfig as any, data);
-      if (onSuccess) {
-        onSuccess(data);
-      }
-    })
-    .catch(reason => {
-      this.status.serverSide = false;
-      this.status.overrideMessage = `The julynter server extension appears to be missing.\n${reason}`;
-      console.error(
-        `The julynter server extension appears to be missing.\n${reason}`
-      );
-      if (onError) {
-        onError(reason);
-      }
-    });
+      .then(data => {
+        this.loadData(this.defaultOptions, this.experimentConfig as any, data);
+        if (onSuccess) {
+          onSuccess(data);
+        }
+      })
+      .catch(reason => {
+        this.status.serverSide = false;
+        this.status.overrideMessage = `The julynter server extension appears to be missing.\n${reason}`;
+        console.error(
+          `The julynter server extension appears to be missing.\n${reason}`
+        );
+        if (onError) {
+          onError(reason);
+        }
+      });
   }
 
-  loadUser(){
-    return requestAPI<any>('userconfig')
-    .then(data => {
+  loadUser(): Promise<IJulynterLintOptions> {
+    return requestAPI<any>('userconfig').then(data => {
       const config = this.createDefault();
       this.loadData(config, null, data);
       return config;
     });
   }
 
-  loadProject(){
-    return requestAPI<any>('config')
-    .then(data => {
+  loadProject(): Promise<IJulynterLintOptions> {
+    return requestAPI<any>('config').then(data => {
       const config = this.createDefault();
       this.loadData(config, null, data);
       return config;
     });
   }
 
-  saveProject(options:IJulynterLintOptions){
+  saveProject(options: IJulynterLintOptions): Promise<any> {
     this.defaultOptions = options;
     return requestAPI<any>('config', {
-      body: JSON.stringify({options:options}),
+      body: JSON.stringify({ options: options }),
       method: 'POST'
     });
   }
 
-  saveUser(options:IJulynterLintOptions){
+  saveUser(options: IJulynterLintOptions): Promise<any> {
     return requestAPI<any>('userconfig', {
-      body: JSON.stringify({options:options}),
+      body: JSON.stringify({ options: options }),
       method: 'POST'
-    }).then((data) => {
+    }).then(data => {
       this.load();
       return data;
     });
   }
 
-  
-  merge(original:IJulynterLintOptions, newOptions:IJulynterLintOptions) {
+  merge(
+    original: IJulynterLintOptions,
+    newOptions: IJulynterLintOptions
+  ): void {
     if (!newOptions) {
       return;
     }
@@ -160,6 +170,4 @@ export class Config {
       }
     }
   }
-  
-
 }

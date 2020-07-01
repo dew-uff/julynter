@@ -1,7 +1,8 @@
 import * as React from 'react';
 
-import { IReport } from '../../linter/interfaces';
 import { Dialog } from '@jupyterlab/apputils';
+
+import { IReport } from '../../linter/interfaces';
 
 export class TextDialog<T> extends Dialog<T> {
   handleEvent(event: Event): void {
@@ -38,24 +39,27 @@ export function showTextDialog<T>(
   return dialog.launch();
 }
 
-
 interface IFeedback {
   item: IReport;
   onChange: (event: React.SyntheticEvent<HTMLTextAreaElement>) => void;
 }
 
 export class FeedbackDialogRenderer extends React.Component<IFeedback> {
-
   render(): JSX.Element | null {
-    return <div>
-      <ul className='julynter-feedback-ul'>
-        <li>Type: {this.props.item.report_type}</li>
-        <li>ID: {this.props.item.report_id}</li>
-        <li>Message: {this.props.item.text}</li>
-        <li>Suggestion: {this.props.item.suggestion}</li>
-        <li>Feedback:</li>
-      </ul>
-      <textarea className='julynter-feedback-textarea' onChange={this.props.onChange}/>
-    </div>;
+    return (
+      <div>
+        <ul className="julynter-feedback-ul">
+          <li>Type: {this.props.item.reportType}</li>
+          <li>ID: {this.props.item.reportId}</li>
+          <li>Message: {this.props.item.text}</li>
+          <li>Suggestion: {this.props.item.suggestion}</li>
+          <li>Feedback:</li>
+        </ul>
+        <textarea
+          className="julynter-feedback-textarea"
+          onChange={this.props.onChange}
+        />
+      </div>
+    );
   }
 }

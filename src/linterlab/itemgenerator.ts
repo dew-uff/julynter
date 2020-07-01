@@ -4,14 +4,19 @@ import { renameDialog, IDocumentManager } from '@jupyterlab/docmanager';
 import { Notebook, NotebookPanel } from '@jupyterlab/notebook';
 import { IObservableJSON } from '@jupyterlab/observables';
 
-import { IReport, IItemGenerator, IGroupGenerator, ReportType, ReportId, ErrorTypeKey } from '../linter/interfaces';
-import { NotebookHandler } from './notebookhandler';
 import { ERRORS } from '../linter/errors';
+import {
+  ErrorTypeKey,
+  IItemGenerator,
+  IGroupGenerator,
+  IReport,
+  ReportId,
+  ReportType
+} from '../linter/interfaces';
+import { NotebookHandler } from './notebookhandler';
 
-
-function isNumber(value: string | number): boolean
-{
-  return ((value != null) && !isNaN(Number(value.toString())));
+function isNumber(value: string | number): boolean {
+  return value !== null && !isNaN(Number(value.toString()));
 }
 
 function capitalizeFirstLetter(string: string): string {
@@ -24,34 +29,35 @@ export class ItemGenerator implements IItemGenerator {
   _notebookContent: Notebook;
   _handler: NotebookHandler;
 
-
-  constructor(
-    docManager: IDocumentManager,
-    handler: NotebookHandler
-  ){
+  constructor(docManager: IDocumentManager, handler: NotebookHandler) {
     this._docManager = docManager;
     this._handler = handler;
-    this._notebookContent = handler.nbPanel.content
+    this._notebookContent = handler.nbPanel.content;
   }
 
-  create(cell_id: number | string, type: ReportType, message_id:ReportId, args:any[]): IReport {
-    const message = ERRORS[message_id];
+  create(
+    cellId: number | string,
+    type: ReportType,
+    messageId: ReportId,
+    args: any[]
+  ): IReport {
+    const message = ERRORS[messageId];
     return {
       text: message.label(...args),
-      report_type: message.type,
-      report_id: message_id,
+      reportType: message.type,
+      reportId: messageId,
       suggestion: message.suggestion,
-      cell_id: cell_id,
+      cellId: cellId,
       visible: true,
-      filtered_out: false,
+      filteredOut: false,
       type: type,
       action: message.action,
       boundAction: message.action.execute(this, ...args)
-    }
+    };
   }
 
   renameNotebook(): void {
-    renameDialog(this._docManager, this._handler.nbPanel.context!.path)
+    renameDialog(this._docManager, this._handler.nbPanel.context.path);
   }
 
   goToCell(index: number): void {
@@ -63,7 +69,7 @@ export class ItemGenerator implements IItemGenerator {
   addModule(index: number, module: string): void {
     const handler = this._handler;
     showDialog({
-      'title': 'Add requirement',
+      title: 'Add requirement',
       body: `Add "${module}" to requirements?`,
       buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'Add' })]
     }).then(result => {
@@ -71,7 +77,7 @@ export class ItemGenerator implements IItemGenerator {
         if (ok) {
           handler.addModule(module);
         }
-      })
+      });
     });
     this.goToCell(index);
   }
@@ -86,7 +92,6 @@ export class ItemGenerator implements IItemGenerator {
 }
 
 export class GroupGenerator implements IGroupGenerator {
-
   _nbPanel: NotebookPanel;
   _update: () => void;
 
@@ -95,57 +100,73 @@ export class GroupGenerator implements IGroupGenerator {
     this._update = update;
   }
 
-  create(title: string | number, report_type: ErrorTypeKey, elements: IReport[]): IReport {
-    let str_title: string;
+  create(
+    title: string | number,
+    reportType: ErrorTypeKey,
+    elements: IReport[]
+  ): IReport {
+    let strTitle: string;
     let metavar: IObservableJSON;
     let metaname: string;
-    if (isNumber(title)){
-      str_title = 'Cell ' + title;
+    if (isNumber(title)) {
+      strTitle = 'Cell ' + title;
       const cell: Cell = this._nbPanel.content.widgets[Number(title)];
       metavar = cell.model.metadata;
       metaname = 'julynter-cellgroup-collapsed';
     } else {
-      str_title = capitalizeFirstLetter(String(title));
+      strTitle = capitalizeFirstLetter(String(title));
       metavar = this._nbPanel.model.metadata;
-      metaname = 'julynter-cellgroup-' + str_title.replace(' ', '-').toLowerCase() + '-collapsed';
+      metaname =
+        'julynter-cellgroup-' +
+        strTitle.replace(' ', '-').toLowerCase() +
+        '-collapsed';
     }
     let collapsed = metavar.get(metaname) as boolean;
-    collapsed = collapsed != undefined ? collapsed : false;
+    collapsed = collapsed !== undefined ? collapsed : false;
     elements.forEach(element => {
       element.visible = !collapsed;
-      element.has_parent = true;
+      element.hasParent = true;
     });
 
     const result: IReport = {
-      text: str_title,
-      report_type: report_type,
-      report_id: 'group',
-      cell_id: 'group',
+      text: strTitle,
+      reportType: reportType,
+      reportId: 'group',
+      cellId: 'group',
       suggestion: null,
       visible: true,
-      filtered_out: false,
+      filteredOut: false,
       collapsed: collapsed,
       type: 'group',
-      has_parent: true,
+      hasParent: true,
       action: null,
-      boundAction: null
-    }
+      boundAction: () => {
+        return;
+      }
+    };
     const onClickFactory = (line: number) => {
-      return () => {
+      return (): void => {
         elements.forEach(element => {
-          element.visible = result['collapsed'];
+          element.visible = result.collapsed;
         });
-        result['collapsed'] = !result['collapsed'];
+        result.collapsed = !result.collapsed;
+        result.action.label = result.collapsed
+          ? 'Expand category'
+          : 'Collapse category';
         metavar.set(metaname, !collapsed);
         this._update();
       };
     };
     result.boundAction = onClickFactory(0);
     result.action = {
-      label: 'Collapse/Expand category',
+      label: result.collapsed ? 'Expand category' : 'Collapse category',
       title: 'Collapse or expand lints of this type',
-      execute: null
-    }
+      execute: (ItemGenerator: IItemGenerator, ...args: any[]) => {
+        return (): void => {
+          return;
+        };
+      }
+    };
     return result;
   }
 }

@@ -1,7 +1,13 @@
 /**
  * Possible export types
  */
-export type ReportType = 'header' | 'markdown' | 'code' | 'raw' | 'title' | 'group';
+export type ReportType =
+  | 'header'
+  | 'markdown'
+  | 'code'
+  | 'raw'
+  | 'title'
+  | 'group';
 
 /**
  * Possible visualization modes
@@ -12,18 +18,40 @@ export type ViewMode = typeof ViewModes[number];
 /**
  * Possible report types
  */
-export const ErrorTypeKeys = ['invalidtitle', 'hiddenstate', 'confusenotebook', 'import', 'absolutepath'] as const;
+export const ErrorTypeKeys = [
+  'invalidtitle',
+  'hiddenstate',
+  'confusenotebook',
+  'import',
+  'absolutepath'
+] as const;
 export type ErrorTypeKey = typeof ErrorTypeKeys[number];
 
 /**
  * Possible report ids
  */
 export const ReportIds = [
-  'c1', 'c2', 'c3', 'c4', 'c5',
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'i1', 'i2',
+  'c1',
+  'c2',
+  'c3',
+  'c4',
+  'c5',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'i1',
+  'i2',
   'p1',
-  't1', 't2', 't3', 't4', 't5', 't6', 't7'
+  't1',
+  't2',
+  't3',
+  't4',
+  't5',
+  't6',
+  't7'
 ] as const;
 export type ReportId = typeof ReportIds[number];
 
@@ -36,10 +64,14 @@ export interface IQueryResult {
   missing_dependencies?: { [cell: string]: string[] };
   absolute_paths?: { [cell: number]: string[] };
   has_imports?: number[];
-  missing_requirements?: { [cell: number]: { [name: string]: {
-      status: number;
-      msg: string;
-  } } };
+  missing_requirements?: {
+    [cell: number]: {
+      [name: string]: {
+        status: number;
+        msg: string;
+      };
+    };
+  };
 }
 
 /**
@@ -47,19 +79,19 @@ export interface IQueryResult {
  */
 export interface IReport {
   text: string;
-  report_type: ErrorTypeKey;
-  report_id: ReportId | 'group';
+  reportType: ErrorTypeKey;
+  reportId: ReportId | 'group';
   suggestion: string;
-  cell_id: string | number;
+  cellId: string | number;
   visible: boolean;
-  filtered_out: boolean;
-  
+  filteredOut: boolean;
+
   action: IErrorAction;
   boundAction: () => void;
 
   type?: ReportType;
   collapsed?: boolean;
-  has_parent?: boolean;
+  hasParent?: boolean;
 
   // Experiment attributes
   feedback?: number;
@@ -99,7 +131,12 @@ export interface IErrorMessage {
  * An object that generates error reports
  */
 export interface IItemGenerator {
-  create(cell_id: number | string, type: ReportType, message_id:string, args:any[]): IReport;
+  create(
+    cellId: number | string,
+    type: ReportType,
+    messageId: string,
+    args: any[]
+  ): IReport;
   renameNotebook(): void;
   goToCell(index: number): void;
   addModule(index: number, module: string): void;
@@ -110,9 +147,8 @@ export interface IItemGenerator {
  * An object that generates grouped error reports
  */
 export interface IGroupGenerator {
-  create(key: string, report_type: string, elements: IReport[]): IReport;
+  create(key: string, reportType: string, elements: IReport[]): IReport;
 }
-
 
 /**
  * Linter configuration options
@@ -120,8 +156,8 @@ export interface IGroupGenerator {
 export interface IJulynterLintOptions {
   mode: ViewMode;
   requirements: string;
-  types: {[id in ErrorTypeKey]: boolean},
-  reports: {[id in ReportId]: boolean},
+  types: { [id in ErrorTypeKey]: boolean };
+  reports: { [id in ReportId]: boolean };
 }
 
 /**
@@ -132,8 +168,8 @@ export interface ILintOptionsManager {
   checkType(key: ErrorTypeKey): boolean;
   checkMode(): ViewMode;
   checkRequirements(): string;
-  updateReport(key: ReportId, value:boolean): void;
-  updateType(key: ErrorTypeKey, value:boolean): void;
+  updateReport(key: ReportId, value: boolean): void;
+  updateType(key: ErrorTypeKey, value: boolean): void;
   updateMode(mode: ViewMode): void;
   updateRequirements(req: string): void;
   updateWidget(): void;
@@ -143,9 +179,8 @@ export interface ILintOptionsManager {
   checks: IJulynterLintOptions;
 }
 
-
 /**
- * The following interfaces mimics jupyter lab interfaces to support the 
+ * The following interfaces mimics jupyter lab interfaces to support the
  * reconstruction of notebooks metadata on jupyter notebook
  */
 
@@ -167,7 +202,8 @@ export interface IGenericCellModelMetadata {
 /**
  * Generic version of ICodeCellModel from @jupyterlab/cells
  */
-export interface IGenericCodeCellModelMetadata extends IGenericCellModelMetadata {
+export interface IGenericCodeCellModelMetadata
+  extends IGenericCellModelMetadata {
   executionCount: number | null;
 }
 

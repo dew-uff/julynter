@@ -1,9 +1,16 @@
 import { ISanitizer } from '@jupyterlab/apputils';
-
-
-import { IJulynterLintOptions, ILintOptionsManager, ViewMode, ErrorTypeKey, ErrorTypeKeys, ReportId, ReportIds } from '../linter/interfaces'
-import { Config } from './config';
 import { NotebookPanel } from '@jupyterlab/notebook';
+
+import {
+  ErrorTypeKey,
+  ErrorTypeKeys,
+  IJulynterLintOptions,
+  ILintOptionsManager,
+  ReportId,
+  ReportIds,
+  ViewMode
+} from '../linter/interfaces';
+import { Config } from './config';
 import { ExperimentManager } from './experimentmanager';
 
 export class OptionsManager implements ILintOptionsManager {
@@ -12,11 +19,16 @@ export class OptionsManager implements ILintOptionsManager {
   private _experimentManager: ExperimentManager;
   private _nbPanel: NotebookPanel;
   private _update: () => void;
-  
-  constructor(nbPanel: NotebookPanel, config: Config, environmentManager: ExperimentManager, update: () => void) {
+
+  constructor(
+    nbPanel: NotebookPanel,
+    config: Config,
+    environmentManager: ExperimentManager,
+    update: () => void
+  ) {
     this._default = config.defaultOptions;
     this._experimentManager = environmentManager;
-    this._checks = { ...this._default }; 
+    this._checks = { ...this._default };
     this._nbPanel = nbPanel;
     this._update = update;
     this.reloadOptions();
@@ -24,57 +36,59 @@ export class OptionsManager implements ILintOptionsManager {
 
   readonly sanitizer: ISanitizer;
 
-  private loadKey<T>(key: string, def:T): T {
+  private loadKey<T>(key: string, def: T): T {
     let result = def;
-    if (this._nbPanel != null) {
+    if (this._nbPanel) {
       const temp = this._nbPanel.model.metadata.get('julynter-check-' + key);
       if (temp !== undefined && temp !== null) {
-        result = temp as unknown as T;
-      } 
+        result = (temp as unknown) as T;
+      }
     }
     return result;
   }
 
-  private saveKey(key: string, value: any) {
-    if (this._nbPanel != null) {
+  private saveKey(key: string, value: any, ereport = true): void {
+    if (this._nbPanel) {
       this._nbPanel.model.metadata.set('julynter-check-' + key, value);
-      this._experimentManager.reportSetConfig(this._nbPanel, key, value);
+      if (ereport) {
+        this._experimentManager.reportSetConfig(this._nbPanel, key, value);
+      }
     }
     this._update();
   }
 
-  checkReport(key: ReportId) {
+  checkReport(key: ReportId): boolean {
     return this._checks.reports[key];
   }
 
-  checkType(key: ErrorTypeKey) {
+  checkType(key: ErrorTypeKey): boolean {
     return this._checks.types[key];
   }
 
-  checkMode() {
+  checkMode(): ViewMode {
     return this._checks.mode;
   }
 
-  checkRequirements() {
+  checkRequirements(): string {
     return this._checks.requirements;
   }
 
-  updateReport(key: ReportId, value: boolean) {
+  updateReport(key: ReportId, value: boolean): void {
     this._checks.reports[key] = value;
     this.saveKey('report-' + key, value);
   }
 
-  updateType(key: ErrorTypeKey, value: boolean) {
+  updateType(key: ErrorTypeKey, value: boolean): void {
     this._checks.types[key] = value;
     this.saveKey('type-' + key, value);
   }
 
-  updateMode(mode: ViewMode) {
+  updateMode(mode: ViewMode): void {
     this._checks.mode = mode;
     this.saveKey('mode', mode);
   }
 
-  updateRequirements(req: string) {
+  updateRequirements(req: string): void {
     this._checks.requirements = req;
     this.saveKey('requirements', req);
   }
@@ -83,48 +97,55 @@ export class OptionsManager implements ILintOptionsManager {
     return this._checks;
   }
 
-  updateWidget() {
+  updateWidget(): void {
     this._update();
   }
 
   // initialize options, will NOT change notebook metadata
-  initializeOptions(checks: IJulynterLintOptions) {
+  initializeOptions(checks: IJulynterLintOptions): void {
     this._checks = checks;
     this._update();
   }
 
-  reloadOptions() {
-    const self = this;
+  reloadOptions(): void {
     this._checks = {
       mode: this.loadKey('mode', this._default.mode),
       requirements: this.loadKey('requirements', this._default.requirements),
-      reports: ReportIds.reduce((previous, key) => {
-        previous[key] = self.loadKey('report-' + key, this._default.reports[key]);
-        return previous; 
-      }, {...this._default.reports}),
-      types: ErrorTypeKeys.reduce((previous, key) => {
-        previous[key] = self.loadKey('type-' + key, this._default.types[key]);
-        return previous; 
-      }, {...this._default.types}),
-    }
+      reports: ReportIds.reduce(
+        (previous, key) => {
+          const rkey = 'report-' + key;
+          previous[key] = this.loadKey(rkey, this._default.reports[key]);
+          return previous;
+        },
+        { ...this._default.reports }
+      ),
+      types: ErrorTypeKeys.reduce(
+        (previous, key) => {
+          const tkey = 'type-' + key;
+          previous[key] = this.loadKey(tkey, this._default.types[key]);
+          return previous;
+        },
+        { ...this._default.types }
+      )
+    };
+    this._experimentManager.reportLoadConfig(this._nbPanel, this._checks);
     this._update();
   }
 
-  saveOptions() {
-    this.saveKey('mode', this._checks.mode);
-    this.saveKey('requirements', this._checks.requirements);
+  saveOptions(): void {
+    this.saveKey('mode', this._checks.mode, false);
+    this.saveKey('requirements', this._checks.requirements, false);
     for (const key of ErrorTypeKeys) {
-      this.saveKey('type-' + key, this._checks.types[key]);
+      this.saveKey('type-' + key, this._checks.types[key], false);
     }
     for (const key of ReportIds) {
-      this.saveKey('report-' + key, this._checks.reports[key]);
+      this.saveKey('report-' + key, this._checks.reports[key], false);
     }
     this._experimentManager.reportSaveConfig(this._nbPanel, this._checks);
     this._update();
   }
 
-  get experimentManager() {
+  get experimentManager(): ExperimentManager {
     return this._experimentManager;
   }
-
 }

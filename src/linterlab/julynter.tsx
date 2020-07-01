@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/no-unused-vars: 0 */
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
@@ -5,46 +6,34 @@ import { Token } from '@lumino/coreutils';
 import { Message } from '@lumino/messaging';
 import { Widget } from '@lumino/widgets';
 
+import { ILabShell } from '@jupyterlab/application';
 import { ActivityMonitor } from '@jupyterlab/coreutils';
 import { IDocumentManager } from '@jupyterlab/docmanager';
 import { NotebookPanel, INotebookTracker } from '@jupyterlab/notebook';
 
 import { IReport } from '../linter/interfaces';
 import { Languages } from '../linter/languages';
-
+import { Config } from './config';
 import { NotebookHandler } from './notebookhandler';
+import { ExperimentManager } from './experimentmanager';
 import { ListRenderer } from './view/listrenderer';
 import { StatusRenderer, IJulynterStatus } from './view/statusrenderer';
-
-import { Config } from './config';
-import { ExperimentManager } from './experimentmanager';
 import { ToolbarRenderer } from './view/toolbarrenderer';
-import { ILabShell } from '@jupyterlab/application';
 
 /**
  * Timeout for throttling Julynter rendering.
  */
 const RENDER_TIMEOUT = 1000;
 
-
-/**
- * An interface for a Julynter
- */
-export interface IJulynter extends Julynter {}
-
 /**
  * The Julynter token.
  */
-export const IJulynter = new Token<Julynter>(
-  'jupyterlab-julynter:IJulynter'
-);
-
+export const IJulynter = new Token<Julynter>('jupyterlab-julynter:IJulynter');
 
 /**
  * A widget for hosting a notebook julynter.
  */
 export class Julynter extends Widget {
-
   private _docmanager: IDocumentManager;
   private _labShell: ILabShell;
   private _currentWidget: Widget | null;
@@ -56,26 +45,29 @@ export class Julynter extends Widget {
   private _experimentManager: ExperimentManager;
   private _status: IJulynterStatus;
   public handlers: { [id: string]: Promise<NotebookHandler> };
-  
 
   /**
    * Create a new table of contents.
    */
-  constructor(docmanager: IDocumentManager, tracker: INotebookTracker, labShell: ILabShell) {
-    super()
+  constructor(
+    docmanager: IDocumentManager,
+    tracker: INotebookTracker,
+    labShell: ILabShell
+  ) {
+    super();
     this._docmanager = docmanager;
     this._labShell = labShell;
     this._tracker = tracker;
     this.handlers = {};
-    
+
     this._status = {
       connectedOnce: false,
       connectedNow: false,
       serverSide: false,
       hasKernel: false,
       experiment: false,
-      overrideMessage: null,
-    }
+      overrideMessage: null
+    };
     this._currentHandler = null;
     this._visibleWidget = null;
     this._experimentManager = new ExperimentManager(docmanager);
@@ -90,13 +82,19 @@ export class Julynter extends Widget {
     const config = this._config;
     const docManager = this._docmanager;
     const status = this._status;
-    this.handlers[nbPanel.id] = new Promise(function(resolve, reject) {
+    this.handlers[nbPanel.id] = new Promise((resolve, reject) => {
       const session = nbPanel.sessionContext;
       const handler = new NotebookHandler(
-        docManager, session, nbPanel, config, 
-        experimentmanager, update
+        docManager,
+        session,
+        nbPanel,
+        config,
+        experimentmanager,
+        update
       );
-      const scripts = session.ready.then(handler.getKernelLanguage.bind(handler))
+      const scripts = session.ready.then(
+        handler.getKernelLanguage.bind(handler)
+      );
       scripts.then((language: Languages.LanguageModel) => {
         status.connectedOnce = true;
         config.load(() => {
@@ -113,30 +111,27 @@ export class Julynter extends Widget {
       });
       scripts.catch((result: string) => {
         reject(result);
-      })
+      });
     });
   }
 
   changeActiveWidget(widget: Widget): void {
     this._currentWidget = widget;
     const future = this.handlers[widget.id];
-    const self = this;
     if (future !== undefined) {
       future.then((source: NotebookHandler) => {
-        self.currentHandler = source;
+        this.currentHandler = source;
       });
-    } else if (self._currentHandler !== null) {
-      self.currentHandler = null;
+    } else if (this._currentHandler !== null) {
+      this.currentHandler = null;
     }
-    
-    
   }
 
-  titleClick(){
+  titleClick(): void {
     this.updateJulynter();
   }
 
-  updateJulynter() {
+  updateJulynter(): void {
     let title = 'Julynter';
     let listRenderer: JSX.Element = null;
     let toolbarRenderer: JSX.Element = null;
@@ -154,30 +149,38 @@ export class Julynter extends Widget {
         this.title.iconClass = 'julynter-main-new-icon jp-SideBar-tabIcon';
       }
       title = this._currentHandler.name;
-      listRenderer = <ListRenderer reports={reports} notebook={this.currentHandler}/>;
-      toolbarRenderer = <ToolbarRenderer 
-        tracker={this._tracker}
-        handlers={this.handlers}
-        config={this._config}
-        notebook={this.currentHandler} 
-        labShell={this._labShell}
-      />;
+      listRenderer = (
+        <ListRenderer reports={reports} notebook={this.currentHandler} />
+      );
+      toolbarRenderer = (
+        <ToolbarRenderer
+          tracker={this._tracker}
+          handlers={this.handlers}
+          config={this._config}
+          notebook={this.currentHandler}
+          labShell={this._labShell}
+        />
+      );
     } else {
-      listRenderer = <div className='julynter-error-desc'>
-        No notebooks to lint
-      </div>
+      listRenderer = (
+        <div className="julynter-error-desc"> No notebooks to lint </div>
+      );
     }
     renderedJSX = (
-      <div className='jp-Julynter'>
-      <header>
-        <div className='julynter-title' onClick={this.titleClick.bind(this)} title='Click to reload'>
-          {title}
-        </div>
-        <StatusRenderer {...this._status}/>
-      </header>
-      {toolbarRenderer}
-      {listRenderer}
-    </div>
+      <div className="jp-Julynter">
+        <header>
+          <div
+            className="julynter-title"
+            onClick={this.titleClick.bind(this)}
+            title="Click to reload"
+          >
+            {title}
+          </div>
+          <StatusRenderer {...this._status} />
+        </header>
+        {toolbarRenderer}
+        {listRenderer}
+      </div>
     );
     ReactDOM.render(renderedJSX, this.node);
   }
@@ -209,21 +212,21 @@ export class Julynter extends Widget {
   }
 
   dispose(): void {
-    if ( this.isDisposed ) {
-        return;
+    if (this.isDisposed) {
+      return;
     }
     this._currentHandler.disconnectHandler();
     this._currentHandler = null;
     super.dispose();
   }
 
-  get currentHandler() {
+  get currentHandler(): NotebookHandler {
     return this._currentHandler;
   }
 
   set currentHandler(newHandler: NotebookHandler) {
     const widget = this._currentWidget;
-    if(this._currentHandler !== newHandler) {
+    if (this._currentHandler !== newHandler) {
       if (this._currentHandler !== null) {
         this._currentHandler.disconnectHandler();
       }
@@ -236,7 +239,7 @@ export class Julynter extends Widget {
       this.updateJulynter();
       return;
     }
-    if (this._tracker.has(widget) && widget !== this._visibleWidget){
+    if (this._tracker.has(widget) && widget !== this._visibleWidget) {
       // Dispose an old activity monitor if it existsd
       if (this._monitor) {
         this._monitor.dispose();
@@ -259,5 +262,4 @@ export class Julynter extends Widget {
     }
     this.updateJulynter();
   }
-
 }

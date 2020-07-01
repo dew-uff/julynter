@@ -1,32 +1,144 @@
-import { Notebook, NotebookPanel } from "@jupyterlab/notebook";
-import { IReport, IJulynterLintOptions } from "../linter/interfaces";
-import { KernelMessage, Contents } from '@jupyterlab/services';
-import { NotebookHandler } from './notebookhandler';
-import { ICodeCellModel, CodeCell, Cell } from "@jupyterlab/cells";
-import { IStream, IError, CellType, IBaseCell } from "@jupyterlab/nbformat";
-import { ISessionContext, Clipboard } from "@jupyterlab/apputils";
-import { JSONObject } from "@lumino/coreutils";
-import { NotebookActions } from "@jupyterlab/notebook";
+import { JSONObject } from '@lumino/coreutils';
+import { ISessionContext, Clipboard } from '@jupyterlab/apputils';
+import { ICodeCellModel, CodeCell, Cell } from '@jupyterlab/cells';
 import { IDocumentManager } from '@jupyterlab/docmanager';
-import { requestAPI } from "../server";
+import { IStream, IError, CellType, IBaseCell } from '@jupyterlab/nbformat';
+import { Notebook, NotebookPanel, NotebookActions } from '@jupyterlab/notebook';
+import { KernelMessage, Contents } from '@jupyterlab/services';
+import { IReport, IJulynterLintOptions } from '../linter/interfaces';
+import { requestAPI } from '../server';
+import { NotebookHandler } from './notebookhandler';
 
 const JUPYTER_CELL_MIME = 'application/vnd.jupyter.cells';
 
 export const IExperimentConfigAttributes = [
-  'lintingMessages', 'lintingTypes', 'execution', 
-  'activity', 'code', 'name', 'enabled'
+  'lintingMessages',
+  'lintingTypes',
+  'execution',
+  'activity',
+  'code',
+  'name',
+  'enabled'
 ] as const;
 export type IExperimentConfigAttribute = typeof IExperimentConfigAttributes[number];
 
 export type IExperimentConfig = {
-  [id in IExperimentConfigAttribute]: boolean | 'maybe';
+  [id in IExperimentConfigAttribute]: boolean | 'maybe'
+};
+
+type headers = 'Action' | 'Activity' | 'Code' | 'Execution' | 'Lint';
+
+interface IBase {
+  header: headers;
+  operation: string;
+  date?: Date;
+}
+
+interface INotebookBase extends IBase {
+  notebookName: string;
+  notebookId: string;
+}
+
+interface IInfoNotebook extends INotebookBase {
+  info: string;
+}
+
+interface IParamNotebook extends IInfoNotebook {
+  param: string;
+}
+
+interface IOnIndexesBase extends INotebookBase {
+  indexes: number[];
+}
+
+interface IRenameAction extends IBase {
+  oldName: string;
+  newName: string;
+}
+
+interface ICodesAction extends IOnIndexesBase {
+  newIndexes: number[];
+  codes: string[];
+}
+
+interface IChangeTypeAction extends IOnIndexesBase {
+  oldType: string;
+  newType: string;
+}
+
+interface IPasteAction extends ICodesAction, IInfoNotebook {
+  pasteCount: number;
+}
+
+interface IConfigActivity extends INotebookBase {
+  options: IJulynterLintOptions;
+}
+
+interface INotebookCells extends INotebookBase {
+  cells: ICellResult[];
+}
+
+interface INotebookExecution extends INotebookCells, IOnIndexesBase {}
+
+interface INotebookLint extends INotebookBase {
+  newReports: IReportResult[];
+  removedReports: IReportResult[];
+}
+
+interface INotebookLintSubject extends INotebookBase {
+  report: IReportResult;
+}
+
+interface INotebookLintFeedback extends INotebookLintSubject {
+  message: string;
+}
+
+type AnyReport =
+  | INotebookLintFeedback
+  | INotebookLintSubject
+  | INotebookLint
+  | INotebookExecution
+  | INotebookCells
+  | IConfigActivity
+  | IPasteAction
+  | IChangeTypeAction
+  | ICodesAction
+  | IRenameAction
+  | IOnIndexesBase
+  | IParamNotebook
+  | IInfoNotebook
+  | INotebookBase
+  | IBase;
+
+interface ICellOutput {
+  type: string;
+  mime: string[];
+}
+
+interface ICellResult {
+  type: string;
+  code: string;
+  length: number;
+  empty: boolean;
+  executionCount: number;
+  outputs: ICellOutput[];
+}
+
+interface IReportResult {
+  text?: string;
+  reportType: string;
+  reportId: string;
+  suggestion?: string;
+  cellId: string;
+  visible: boolean;
+  filteredOut: boolean;
+  type: string;
 }
 
 export class ExperimentManager {
-
   public config: IExperimentConfig;
   public lastLint: {
-    [id:string]: IReport[] 
+    [id: string]: IReport[];
   };
 
   constructor(docmanager: IDocumentManager) {
@@ -37,150 +149,163 @@ export class ExperimentManager {
       activity: 'maybe',
       code: 'maybe',
       name: 'maybe',
-      enabled: true,
-    }
+      enabled: true
+    };
     this.lastLint = {};
     this._overrideJupyterLab(docmanager);
   }
 
-  private _overrideJupyterLab(docmanager: IDocumentManager) {
-    let self = this;
-
-
-    let oldRename = docmanager.rename.bind(docmanager);
-    docmanager.rename = (oldPath: string, newPath: string): Promise<Contents.IModel> => {
+  private _overrideJupyterLab(docmanager: IDocumentManager): void {
+    const oldRename = docmanager.rename.bind(docmanager);
+    docmanager.rename = (
+      oldPath: string,
+      newPath: string
+    ): Promise<Contents.IModel> => {
       return oldRename(oldPath, newPath).then(result => {
-        self.reportRename(oldPath, newPath);
+        this.reportRename(oldPath, newPath);
         return result;
-      })
-    }
+      });
+    };
 
-
-    let oldExecute = CodeCell.execute;
+    const oldExecute = CodeCell.execute;
     CodeCell['execute'] = (
       cell: CodeCell,
       sessionContext: ISessionContext,
       metadata?: JSONObject
     ): Promise<KernelMessage.IExecuteReplyMsg | void> => {
-      
-      return oldExecute(cell, sessionContext, metadata).then((msg) => {
-        self.reportExecution(cell, sessionContext);
+      return oldExecute(cell, sessionContext, metadata).then(msg => {
+        this.reportExecution(cell, sessionContext);
         return msg;
       });
-    }
+    };
 
-    let oldSplit = NotebookActions.splitCell;
-    NotebookActions.splitCell = (notebook: Notebook) => {
-      let oldIndex = notebook.activeCellIndex;
-      let result = oldSplit(notebook);
-      self.reportSplitCell(oldIndex, notebook);
+    const oldSplit = NotebookActions.splitCell;
+    NotebookActions.splitCell = (notebook: Notebook): void => {
+      const oldIndex = notebook.activeCellIndex;
+      const result = oldSplit(notebook);
+      this.reportSplitCell(oldIndex, notebook);
       return result;
-    }
+    };
 
-    let oldMerge = NotebookActions.mergeCells;
-    NotebookActions.mergeCells = (notebook: Notebook) => {
-      const toMerge = self._getActiveIndexes(notebook);
-      let result = oldMerge(notebook);
-      self.reportMergeCell(toMerge, notebook);
+    const oldMerge = NotebookActions.mergeCells;
+    NotebookActions.mergeCells = (notebook: Notebook): void => {
+      const toMerge = this._getActiveIndexes(notebook);
+      const result = oldMerge(notebook);
+      this.reportMergeCell(toMerge, notebook);
       return result;
-    }
+    };
 
-    let oldDeleteCells = NotebookActions.deleteCells;
-    NotebookActions.deleteCells = (notebook: Notebook) => {
-      const toDelete = self._getActiveIndexes(notebook);
-      let result = oldDeleteCells(notebook);
-      self.reportDeleteCells(toDelete, notebook, 'deleteCells');
+    const oldDeleteCells = NotebookActions.deleteCells;
+    NotebookActions.deleteCells = (notebook: Notebook): void => {
+      const toDelete = this._getActiveIndexes(notebook);
+      const result = oldDeleteCells(notebook);
+      this.reportIndexesAction(toDelete, notebook, 'deleteCells');
       return result;
-    }
+    };
 
-    let oldInsertAbove = NotebookActions.insertAbove;
-    NotebookActions.insertAbove = (notebook: Notebook) => {
-      let oldIndex = notebook.activeCellIndex;
-      let result = oldInsertAbove(notebook);
-      self.reportInsertAbove(oldIndex, notebook);
+    const oldInsertAbove = NotebookActions.insertAbove;
+    NotebookActions.insertAbove = (notebook: Notebook): void => {
+      const oldIndex = notebook.activeCellIndex;
+      const result = oldInsertAbove(notebook);
+      this.reportIndexesAction([oldIndex], notebook, 'insertAbove');
       return result;
-    }
+    };
 
-    let oldInsertBelow = NotebookActions.insertBelow;
-    NotebookActions.insertBelow = (notebook: Notebook) => {
-      let oldIndex = notebook.activeCellIndex;
-      let result = oldInsertBelow(notebook);
-      self.reportInsertBelow(oldIndex, notebook);
+    const oldInsertBelow = NotebookActions.insertBelow;
+    NotebookActions.insertBelow = (notebook: Notebook): void => {
+      const oldIndex = notebook.activeCellIndex;
+      const result = oldInsertBelow(notebook);
+      this.reportIndexesAction([oldIndex], notebook, 'insertBelow');
       return result;
-    }
+    };
 
-    let oldMoveDown = NotebookActions.moveDown;
-    NotebookActions.moveDown = (notebook: Notebook) => {
-      const toMove = self._getActiveIndexes(notebook);
-      let result = oldMoveDown(notebook);
-      self.reportMove(toMove, notebook, 'moveDown');
+    const oldMoveDown = NotebookActions.moveDown;
+    NotebookActions.moveDown = (notebook: Notebook): void => {
+      const toMove = this._getActiveIndexes(notebook);
+      const result = oldMoveDown(notebook);
+      this.reportIndexesAction(toMove, notebook, 'moveDown');
       return result;
-    }
+    };
 
-    let oldMoveUp = NotebookActions.moveUp;
-    NotebookActions.moveUp = (notebook: Notebook) => {
-      const toMove = self._getActiveIndexes(notebook);
-      let result = oldMoveUp(notebook);
-      self.reportMove(toMove, notebook, 'moveUp');
+    const oldMoveUp = NotebookActions.moveUp;
+    NotebookActions.moveUp = (notebook: Notebook): void => {
+      const toMove = this._getActiveIndexes(notebook);
+      const result = oldMoveUp(notebook);
+      this.reportIndexesAction(toMove, notebook, 'moveUp');
       return result;
-    }
+    };
 
-    let oldChangeCellType = NotebookActions.changeCellType;
-    NotebookActions.changeCellType = (notebook: Notebook, value: CellType) => {
-      let index = notebook.activeCellIndex;
-      let oldValue = notebook.activeCell.model.type;
-      let result = oldChangeCellType(notebook, value);
-      self.reportChangeCellType(index, oldValue, value, notebook);
+    const oldChangeCellType = NotebookActions.changeCellType;
+    NotebookActions.changeCellType = (
+      notebook: Notebook,
+      value: CellType
+    ): void => {
+      const index = notebook.activeCellIndex;
+      const oldValue = notebook.activeCell.model.type;
+      const result = oldChangeCellType(notebook, value);
+      this.reportChangeCellType(index, oldValue, value, notebook);
       return result;
-    }
+    };
 
-    let oldRun = NotebookActions.run;
-    NotebookActions.run = (notebook: Notebook, sessionContext?: ISessionContext) => {
-      let cell = notebook.activeCell;
-      if (cell.model.type == 'markdown') {
-        self.reportExecution(cell, sessionContext);
+    const oldRun = NotebookActions.run;
+    NotebookActions.run = (
+      notebook: Notebook,
+      sessionContext?: ISessionContext
+    ): Promise<boolean> => {
+      const cell = notebook.activeCell;
+      if (cell.model.type === 'markdown') {
+        this.reportExecution(cell, sessionContext);
       }
-      let result = oldRun(notebook, sessionContext);
+      const result = oldRun(notebook, sessionContext);
       return result;
-    }
+    };
 
-    let oldRunAndAdvance = NotebookActions.runAndAdvance;
-    NotebookActions.runAndAdvance = (notebook: Notebook, sessionContext?: ISessionContext) => {
-      let index = notebook.activeCellIndex;
-      let last = notebook.widgets.length - 1;
-      let cell = notebook.activeCell;
-      if (cell.model.type == 'markdown') {
-        self.reportExecution(cell, sessionContext);
+    const oldRunAndAdvance = NotebookActions.runAndAdvance;
+    NotebookActions.runAndAdvance = (
+      notebook: Notebook,
+      sessionContext?: ISessionContext
+    ): Promise<boolean> => {
+      const index = notebook.activeCellIndex;
+      const last = notebook.widgets.length - 1;
+      const cell = notebook.activeCell;
+      if (cell.model.type === 'markdown') {
+        this.reportExecution(cell, sessionContext);
       }
-      let result = oldRunAndAdvance(notebook, sessionContext);
-      if (index == last) {
-        self.reportInsertAfterRun(index, notebook);
+      const result = oldRunAndAdvance(notebook, sessionContext);
+      if (index === last) {
+        this.reportIndexesAction([index], notebook, 'newCellAfterRun');
       }
       return result;
-    }
+    };
 
-    let oldRunAndInsert = NotebookActions.runAndInsert;
-    NotebookActions.runAndInsert = (notebook: Notebook, sessionContext?: ISessionContext) => {
-      let index = notebook.activeCellIndex;
-      let cell = notebook.activeCell;
-      if (cell.model.type == 'markdown') {
-        self.reportExecution(cell, sessionContext);
+    const oldRunAndInsert = NotebookActions.runAndInsert;
+    NotebookActions.runAndInsert = (
+      notebook: Notebook,
+      sessionContext?: ISessionContext
+    ): Promise<boolean> => {
+      const index = notebook.activeCellIndex;
+      const cell = notebook.activeCell;
+      if (cell.model.type === 'markdown') {
+        this.reportExecution(cell, sessionContext);
       }
-      let result = oldRunAndInsert(notebook, sessionContext);
-      self.reportInsertAfterRun(index, notebook);
+      const result = oldRunAndInsert(notebook, sessionContext);
+      this.reportIndexesAction([index], notebook, 'newCellAfterRun');
       return result;
-    }
+    };
 
-    let oldCut = NotebookActions.cut;
-    NotebookActions.cut = (notebook: Notebook) => {
-      const toDelete = self._getActiveIndexes(notebook);
-      let result = oldCut(notebook);
-      self.reportDeleteCells(toDelete, notebook, 'cut');
+    const oldCut = NotebookActions.cut;
+    NotebookActions.cut = (notebook: Notebook): void => {
+      const toDelete = this._getActiveIndexes(notebook);
+      const result = oldCut(notebook);
+      this.reportIndexesAction(toDelete, notebook, 'cut');
       return result;
-    }
+    };
 
-    let oldPaste = NotebookActions.paste;
-    NotebookActions.paste = (notebook: Notebook, mode: 'below' | 'above' | 'replace' = 'below') => {
+    const oldPaste = NotebookActions.paste;
+    NotebookActions.paste = (
+      notebook: Notebook,
+      mode: 'below' | 'above' | 'replace' = 'below'
+    ): void => {
       if (!notebook.model || !notebook.activeCell) {
         return oldPaste(notebook, mode);
       }
@@ -190,86 +315,92 @@ export class ExperimentManager {
       }
       const toInsert = clipboard.getData(JUPYTER_CELL_MIME) as IBaseCell[];
       let toDelete: number[] = [];
-      if (mode == 'replace') {
-        toDelete = self._getActiveIndexes(notebook);
+      if (mode === 'replace') {
+        toDelete = this._getActiveIndexes(notebook);
       }
-      let index = notebook.activeCellIndex;
-      let result = oldPaste(notebook, mode);
-      self.reportPaste(index, toInsert, toDelete, mode, notebook);
+      const index = notebook.activeCellIndex;
+      const result = oldPaste(notebook, mode);
+      this.reportPaste(index, toInsert, toDelete, mode, notebook);
       return result;
-    }
+    };
 
-    let oldUndo = NotebookActions.undo;
-    NotebookActions.undo = (notebook: Notebook) => {
-      let result = oldUndo(notebook);
-      self.reportAction(notebook, 'undo');
+    const oldUndo = NotebookActions.undo;
+    NotebookActions.undo = (notebook: Notebook): void => {
+      const result = oldUndo(notebook);
+      this.reportAction(notebook, 'undo');
       return result;
-    }
+    };
 
-    let oldRedo = NotebookActions.redo;
-    NotebookActions.redo = (notebook: Notebook) => {
-      let result = oldRedo(notebook);
-      self.reportAction(notebook, 'redo');
+    const oldRedo = NotebookActions.redo;
+    NotebookActions.redo = (notebook: Notebook): void => {
+      const result = oldRedo(notebook);
+      this.reportAction(notebook, 'redo');
       return result;
-    }
+    };
 
-    let oldRunAll = NotebookActions.runAll;
-    NotebookActions.runAll = (notebook: Notebook, sessionContext?: ISessionContext) => {
-      self.reportAction(notebook, 'runAll');
+    const oldRunAll = NotebookActions.runAll;
+    NotebookActions.runAll = (
+      notebook: Notebook,
+      sessionContext?: ISessionContext
+    ): Promise<boolean> => {
+      this.reportAction(notebook, 'runAll');
       return oldRunAll(notebook, sessionContext);
-    }
+    };
 
-
-    let oldRunAllAbove = NotebookActions.runAllAbove;
-    NotebookActions.runAllAbove = (notebook: Notebook, sessionContext?: ISessionContext) => {
-      self.reportAction(notebook, 'runAllAbove');
+    const oldRunAllAbove = NotebookActions.runAllAbove;
+    NotebookActions.runAllAbove = (
+      notebook: Notebook,
+      sessionContext?: ISessionContext
+    ): Promise<boolean> => {
+      this.reportAction(notebook, 'runAllAbove');
       return oldRunAllAbove(notebook, sessionContext);
-    }
+    };
 
-    let oldRunAllBelow = NotebookActions.runAllBelow;
-    NotebookActions.runAllBelow = (notebook: Notebook, sessionContext?: ISessionContext) => {
-      self.reportAction(notebook, 'runAllBelow');
+    const oldRunAllBelow = NotebookActions.runAllBelow;
+    NotebookActions.runAllBelow = (
+      notebook: Notebook,
+      sessionContext?: ISessionContext
+    ): Promise<boolean> => {
+      this.reportAction(notebook, 'runAllBelow');
       return oldRunAllBelow(notebook, sessionContext);
-    }
+    };
 
-    let oldClearOutputs = NotebookActions.clearOutputs;
-    NotebookActions.clearOutputs = (notebook: Notebook) => {
-      const toDelete = self._getActiveIndexes(notebook);
-      let result = oldClearOutputs(notebook);
-      self.reportDeleteCells(toDelete, notebook, 'clearOutputs');
+    const oldClearOutputs = NotebookActions.clearOutputs;
+    NotebookActions.clearOutputs = (notebook: Notebook): void => {
+      const toDelete = this._getActiveIndexes(notebook);
+      const result = oldClearOutputs(notebook);
+      this.reportIndexesAction(toDelete, notebook, 'clearOutputs');
       return result;
-    }
+    };
 
-    let oldClearAllOutputs = NotebookActions.clearAllOutputs;
-    NotebookActions.clearAllOutputs = (notebook: Notebook) => {
-      self.reportAction(notebook, 'clearAllOutputs');
+    const oldClearAllOutputs = NotebookActions.clearAllOutputs;
+    NotebookActions.clearAllOutputs = (notebook: Notebook): void => {
+      this.reportAction(notebook, 'clearAllOutputs');
       return oldClearAllOutputs(notebook);
-    }
-
+    };
   }
 
-  
   /* Start Actions */
 
-  reportRename(oldName: string, newName: string) {
+  reportRename(oldName: string, newName: string): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
-
-    this._send('Action', {
-      'operation': 'rename',
-      'old-name': oldName,
-      'new-name': newName,
-    });
+    const send: IRenameAction = {
+      header: 'Action',
+      operation: 'rename',
+      oldName: oldName,
+      newName: newName
+    };
+    this._send(send);
   }
 
-
-  reportSplitCell(oldIndex:number, notebook: Notebook) {
+  reportSplitCell(oldIndex: number, notebook: Notebook): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
-    let codes = null as any[] | null;
-    let newIndex = notebook.activeCellIndex;
+    const newIndex = notebook.activeCellIndex;
+    let codes = null as string[] | null;
 
     if (this.config.code) {
       codes = [];
@@ -278,115 +409,89 @@ export class ExperimentManager {
       }
     }
 
-    this._send('Action', {
-      'operation': 'splitCell',
-      'notebook-name': this._notebook_name(notebook.title.label),
-      'notebook-id': notebook.parent.id,
-      'old-index': oldIndex,
-      'new-index': newIndex,
-      'codes': codes
-    });
+    const send: ICodesAction = {
+      header: 'Action',
+      operation: 'splitCell',
+      notebookName: this._notebookName(notebook.title.label),
+      notebookId: notebook.parent.id,
+      indexes: [oldIndex],
+      newIndexes: [newIndex],
+      codes: codes
+    };
+    this._send(send);
   }
 
-  reportMergeCell(toMerge:number[], notebook: Notebook) {
+  reportMergeCell(toMerge: number[], notebook: Notebook): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
+    const newIndex = notebook.activeCellIndex;
     let code = null as string;
-    let newIndex = notebook.activeCellIndex;
 
     if (this.config.code) {
       code = notebook.widgets[newIndex].model.value.text;
     }
 
-    this._send('Action', {
-      'operation': 'mergeCells',
-      'notebook-name': this._notebook_name(notebook.title.label),
-      'notebook-id': notebook.parent.id,
-      'merged-indexes': toMerge,
-      'new-index': newIndex,
-      'code': code
-    });
+    const send: ICodesAction = {
+      header: 'Action',
+      operation: 'mergeCells',
+      notebookName: this._notebookName(notebook.title.label),
+      notebookId: notebook.parent.id,
+      indexes: toMerge,
+      newIndexes: [newIndex],
+      codes: [code]
+    };
+    this._send(send);
   }
 
-  reportDeleteCells(toDelete:number[], notebook: Notebook, operation: string) {
+  reportIndexesAction(
+    indexes: number[],
+    notebook: Notebook,
+    operation: string
+  ): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
 
-    this._send('Action', {
-      'operation': operation,
-      'notebook-name': this._notebook_name(notebook.title.label),
-      'notebook-id': notebook.parent.id,
-      'deleted-indexes': toDelete,
-    });
-  } 
-
-  reportInsertAbove(oldIndex:number, notebook: Notebook) {
-    if (!this.config.enabled || !this.config.activity) {
-      return;
-    }
-    this._send('Action', {
-      'operation': 'insertAbove',
-      'notebook-name': this._notebook_name(notebook.title.label),
-      'notebook-id': notebook.parent.id,
-      'index': oldIndex,
-    });
+    const send: IOnIndexesBase = {
+      header: 'Action',
+      operation: operation,
+      notebookName: this._notebookName(notebook.title.label),
+      notebookId: notebook.parent.id,
+      indexes: indexes
+    };
+    this._send(send);
   }
 
-  reportInsertBelow(oldIndex:number, notebook: Notebook) {
-    if (!this.config.enabled || !this.config.activity) {
-      return;
-    }
-    this._send('Action', {
-      'operation': 'insertBelow',
-      'notebook-name': this._notebook_name(notebook.title.label),
-      'notebook-id': notebook.parent.id,
-      'index': oldIndex,
-    });
-  }
-
-  reportMove(toMove:number[], notebook: Notebook, operation: string) {
+  reportChangeCellType(
+    index: number,
+    oldValue: CellType,
+    newValue: CellType,
+    notebook: Notebook
+  ): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
 
-    this._send('Action', {
-      'operation': operation,
-      'notebook-name': this._notebook_name(notebook.title.label),
-      'notebook-id': notebook.parent.id,
-      'moved-indexes': toMove,
-    });
+    const send: IChangeTypeAction = {
+      header: 'Action',
+      operation: 'changeCellType',
+      notebookName: this._notebookName(notebook.title.label),
+      notebookId: notebook.parent.id,
+      indexes: [index],
+      oldType: oldValue,
+      newType: newValue
+    };
+    this._send(send);
   }
 
-  reportChangeCellType(index:number, oldValue: CellType, newValue: CellType, notebook: Notebook) {
-    if (!this.config.enabled || !this.config.activity) {
-      return;
-    }
-
-    this._send('Action', {
-      'operation': 'changeCellType',
-      'notebook-name': this._notebook_name(notebook.title.label),
-      'notebook-id': notebook.parent.id,
-      'index': index,
-      'old-type': oldValue,
-      'new-type': newValue
-    });
-  }
-
-  reportInsertAfterRun(index:number, notebook: Notebook) {
-    if (!this.config.enabled || !this.config.activity) {
-      return;
-    }
-    this._send('Action', {
-      'operation': 'newCellAfterRun',
-      'notebook-name': this._notebook_name(notebook.title.label),
-      'notebook-id': notebook.parent.id,
-      'index': index,
-    });
-  }
-
-  reportPaste(index: number, toInsert:IBaseCell[], toDelete:number[], mode:string, notebook: Notebook) {
+  reportPaste(
+    index: number,
+    toInsert: IBaseCell[],
+    toDelete: number[],
+    mode: string,
+    notebook: Notebook
+  ): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
@@ -402,58 +507,66 @@ export class ExperimentManager {
       }
     }
 
-    this._send('Action', {
-      'operation': 'paste',
-      'notebook-name': this._notebook_name(notebook.title.label),
-      'notebook-id': notebook.parent.id,
-      'index': index,
-      'mode': mode,
-      'paste-count': toInsert.length,
-      'deleted-indexes': toDelete,
-      'codes': codes
-    });
+    const send: IPasteAction = {
+      header: 'Action',
+      operation: 'paste',
+      notebookName: this._notebookName(notebook.title.label),
+      notebookId: notebook.parent.id,
+      indexes: toDelete,
+      newIndexes: [index],
+      codes: codes,
+      info: mode,
+      pasteCount: toInsert.length
+    };
+    this._send(send);
   }
 
-  reportAction(notebook: Notebook, operation: string) {
+  reportAction(notebook: Notebook, operation: string): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
-    this._send('Action', {
-      'operation': operation,
-      'notebook-name': this._notebook_name(notebook.title.label),
-      'notebook-id': notebook.parent.id,
-    });
+    const send: INotebookBase = {
+      header: 'Action',
+      operation: operation,
+      notebookName: this._notebookName(notebook.title.label),
+      notebookId: notebook.parent.id
+    };
+    this._send(send);
   }
 
   /* End Actions */
-  
+
   /* Start Activities */
 
-  reportLoadConfig(nbPanel: NotebookPanel, checks: IJulynterLintOptions) {
+  reportLoadConfig(nbPanel: NotebookPanel, checks: IJulynterLintOptions): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
-    this._send('Activity', {
-      'operation': 'loadConfig',
-      'notebook-name': this._notebook_name(nbPanel.title.label),
-      'notebook-id': nbPanel.id,
-      'options': checks
-    });
-  } 
+    const send: IConfigActivity = {
+      header: 'Activity',
+      operation: 'loadConfig',
+      notebookName: this._notebookName(nbPanel.title.label),
+      notebookId: nbPanel.id,
+      options: checks
+    };
+    this._send(send);
+  }
 
-  reportSaveConfig(nbPanel: NotebookPanel, checks: IJulynterLintOptions) {
+  reportSaveConfig(nbPanel: NotebookPanel, checks: IJulynterLintOptions): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
-    this._send('Activity', {
-      'operation': 'saveConfig',
-      'notebook-name': this._notebook_name(nbPanel.title.label),
-      'notebook-id': nbPanel.id,
-      'options': checks
-    });
-  } 
+    const send: IConfigActivity = {
+      header: 'Activity',
+      operation: 'saveConfig',
+      notebookName: this._notebookName(nbPanel.title.label),
+      notebookId: nbPanel.id,
+      options: checks
+    };
+    this._send(send);
+  }
 
-  reportCloseNotebook(handler: NotebookHandler) {
+  reportCloseNotebook(handler: NotebookHandler): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
@@ -462,39 +575,49 @@ export class ExperimentManager {
       delete this.lastLint[handler.id];
     }
 
-    this._send('Activity', {
-      'operation': 'close',
-      'notebook-name': this._notebook_name(handler.name),
-      'notebook-id': handler.id
-    });
-  } 
+    const send: INotebookBase = {
+      header: 'Activity',
+      operation: 'close',
+      notebookName: this._notebookName(handler.name),
+      notebookId: handler.id
+    };
+    this._send(send);
+  }
 
-  reportKernelActivity(handler: NotebookHandler, operation: string, displayName: string) {
+  reportKernelActivity(
+    handler: NotebookHandler,
+    operation: string,
+    kernelName: string
+  ): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
 
-    this._send('Activity', {
-      'operation': operation,
-      'notebook-name': this._notebook_name(handler.name),
-      'notebook-id': handler.id,
-      'kernel-name': displayName
-    });
+    const send: IInfoNotebook = {
+      header: 'Activity',
+      operation: operation,
+      notebookName: this._notebookName(handler.name),
+      notebookId: handler.id,
+      info: kernelName
+    };
+    this._send(send);
   }
 
-  reportActivity(handler: NotebookHandler, operation: string) {
+  reportActivity(handler: NotebookHandler, operation: string): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
 
-    this._send('Activity', {
-      'operation': operation,
-      'notebook-name': this._notebook_name(handler.name),
-      'notebook-id': handler.id
-    });
+    const send: INotebookBase = {
+      header: 'Activity',
+      operation: operation,
+      notebookName: this._notebookName(handler.name),
+      notebookId: handler.id
+    };
+    this._send(send);
   }
 
-  reportVisibility(handler: NotebookHandler, visible:boolean) {
+  reportVisibility(handler: NotebookHandler, visible: boolean): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
@@ -502,70 +625,79 @@ export class ExperimentManager {
       return;
     }
 
-    this._send('Activity', {
-      'operation': 'visibility',
-      'notebook-name': this._notebook_name(handler.name),
-      'notebook-id': handler.id,
-      'visible': visible
-    });
+    const send: IInfoNotebook = {
+      header: 'Activity',
+      operation: 'visibility',
+      notebookName: this._notebookName(handler.name),
+      notebookId: handler.id,
+      info: visible.toString()
+    };
+    this._send(send);
   }
 
-  reportSetConfig(nbPanel: NotebookPanel, config: string, value: any) {
+  reportSetConfig(nbPanel: NotebookPanel, config: string, value: any): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
-    this._send('Activity', {
-      'operation': 'setConfig',
-      'notebook-name': this._notebook_name(nbPanel.title.label),
-      'notebook-id': nbPanel.id,
-      'config': config,
-      'value': value,
-    });
-  } 
+
+    const send: IParamNotebook = {
+      header: 'Activity',
+      operation: 'setConfig',
+      notebookName: this._notebookName(nbPanel.title.label),
+      notebookId: nbPanel.id,
+      param: config,
+      info: value.toString()
+    };
+    this._send(send);
+  }
 
   /* End Activities */
 
   /* Start code */
 
-  reportNotebookCode(handler: NotebookHandler) {
+  reportNotebookCode(handler: NotebookHandler): void {
     if (!this.config.enabled || !(this.config.code || this.config.execution)) {
       return;
     }
-    let cells: any[] = [];
+    const cells: any[] = [];
 
-    let nbcells = handler.nbPanel.content.widgets;
+    const nbcells = handler.nbPanel.content.widgets;
     for (let i = 0; i < nbcells.length; i++) {
-      let cell = nbcells[i];
-      let cellResult = this._collectCell(cell);
+      const cell = nbcells[i];
+      const cellResult = this._collectCell(cell);
       cells.push(cellResult);
     }
 
-    this._send('Code', {
-      'operation': 'code',
-      'notebook-name': this._notebook_name(handler.name),
-      'notebook-id': handler.id,
-      'cells': cells
-    });
+    const send: INotebookCells = {
+      header: 'Code',
+      operation: 'code',
+      notebookName: this._notebookName(handler.name),
+      notebookId: handler.id,
+      cells: cells
+    };
+    this._send(send);
   }
 
-  reportExecution(cell: Cell, sessionContext: ISessionContext) {
+  reportExecution(cell: Cell, sessionContext: ISessionContext): void {
     if (!this.config.enabled || !(this.config.code || this.config.execution)) {
       return;
     }
-    this._send("Execution", {
-      'operation': 'execute',
-      'notebook-name': this._notebook_name(sessionContext.path),
-      'notebook-id': cell.parent.parent.id,
-      'cell-index': (cell.parent as Notebook).widgets.indexOf(cell),
-      'cell': this._collectCell(cell) 
-    });
+    const send: INotebookExecution = {
+      header: 'Execution',
+      operation: 'execute',
+      notebookName: this._notebookName(sessionContext.path),
+      notebookId: cell.parent.parent.id,
+      cells: [this._collectCell(cell)],
+      indexes: [(cell.parent as Notebook).widgets.indexOf(cell)]
+    };
+    this._send(send);
   }
 
   /* End code */
 
   /* Start lint */
 
-  reportLinting(handler: NotebookHandler, reports:IReport[]) {
+  reportLinting(handler: NotebookHandler, reports: IReport[]): void {
     if (!this.config.enabled) {
       return;
     }
@@ -574,18 +706,18 @@ export class ExperimentManager {
       this.lastLint[handler.id] = [];
     }
 
-    let newReports = reports.filter(report => {
+    const newReports = reports.filter(report => {
       if (report.type === 'group') {
         return false;
       }
-      let same = this.lastLint[handler.id].find(other => {
+      const same = this.lastLint[handler.id].find(other => {
         return (
-          (other.text == report.text)
-          && (other.report_type == report.report_type)
-          && (other.cell_id == report.cell_id)
-          && (other.report_id == report.report_id)
+          other.text === report.text &&
+          other.reportType === report.reportType &&
+          other.cellId === report.cellId &&
+          other.reportId === report.reportId
         );
-      })
+      });
       if (same) {
         report.feedback = same.feedback;
         same.kept = true;
@@ -596,7 +728,7 @@ export class ExperimentManager {
       return true;
     });
 
-    let removedReports = this.lastLint[handler.id].filter(report => {
+    const removedReports = this.lastLint[handler.id].filter(report => {
       if (report.type === 'group') {
         return false;
       }
@@ -608,117 +740,125 @@ export class ExperimentManager {
 
     this.lastLint[handler.id] = reports;
 
-
     if (!(this.config.lintingMessages || this.config.lintingTypes)) {
       return;
     }
     if (newReports.length === 0 && removedReports.length === 0) {
       return;
     }
-    const mapfn = this.config.lintingMessages? this.selectMessages.bind(this) : this.selectTypes.bind(this); 
-    this._send("Lint", {
-      'operation': 'lint',
-      'notebook-name': this._notebook_name(handler.name),
-      'notebook-id': handler.id,
-      'new-reports-c': newReports.length,
-      'new-reports': newReports.map(mapfn),
-      'removed-reports-c': removedReports.length,
-      'removed-reports': removedReports.map(mapfn) 
-    });
-
+    const mapfn = this.config.lintingMessages
+      ? this.selectMessages.bind(this)
+      : this.selectTypes.bind(this);
+    const send: INotebookLint = {
+      header: 'Lint',
+      operation: 'lint',
+      notebookName: this._notebookName(handler.name),
+      notebookId: handler.id,
+      newReports: newReports.map(mapfn),
+      removedReports: removedReports.map(mapfn)
+    };
+    this._send(send);
   }
 
-  reportFeedback(handler: NotebookHandler, report:IReport, message: string) {
+  reportFeedback(
+    handler: NotebookHandler,
+    report: IReport,
+    message: string
+  ): void {
     if (!this.config.enabled) {
       return;
     }
-    const mapfn = this.config.lintingMessages? this.selectMessages.bind(this) : this.selectTypes.bind(this); 
-    let newReport = mapfn(report);
+    const mapfn = this.config.lintingMessages
+      ? this.selectMessages.bind(this)
+      : this.selectTypes.bind(this);
+    const newReport = mapfn(report);
 
-    this._send("Lint", {
-      'operation': 'feedback',
-      'notebook-name': this._notebook_name(handler.name),
-      'notebook-id': handler.id,
-      'report': newReport,
-      'message': message
-    });
-
+    const send: INotebookLintFeedback = {
+      header: 'Lint',
+      operation: 'feedback',
+      notebookName: this._notebookName(handler.name),
+      notebookId: handler.id,
+      report: newReport,
+      message: message
+    };
+    this._send(send);
   }
 
-  reportLintClick(handler: NotebookHandler, report:IReport) {
+  reportLintClick(handler: NotebookHandler, report: IReport): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
-    if (!this.config.lintingMessages || !this.config.lintingTypes) {
+    if (!this.config.lintingMessages && !this.config.lintingTypes) {
       return;
     }
-    
-    const mapfn = this.config.lintingMessages? this.selectMessages.bind(this) : this.selectTypes.bind(this); 
-    let newReport = mapfn(report);
+    const mapfn = this.config.lintingMessages
+      ? this.selectMessages.bind(this)
+      : this.selectTypes.bind(this);
+    const newReport = mapfn(report);
 
-    this._send("Lint", {
-      'operation': 'lintclick',
-      'notebook-name': this._notebook_name(handler.name),
-      'notebook-id': handler.id,
-      'report': newReport,
-    });
-  
+    const send: INotebookLintSubject = {
+      header: 'Lint',
+      operation: 'lintclick',
+      notebookName: this._notebookName(handler.name),
+      notebookId: handler.id,
+      report: newReport
+    };
+    this._send(send);
   }
 
-  private selectMessages(report: IReport) {
+  private selectMessages(report: IReport): IReportResult {
     return {
       text: report.text,
-      report_type: report.report_type,
-      report_id: report.report_id,
+      reportType: report.reportType,
+      reportId: report.reportId,
       suggestion: report.suggestion,
-      cell_id: report.cell_id,
+      cellId: report.cellId.toString(),
       visible: report.visible,
-      filtered_out: report.filtered_out,
-      type: report.type,
-    }
+      filteredOut: report.filteredOut,
+      type: report.type
+    };
   }
 
-  private selectTypes(report: IReport) {
+  private selectTypes(report: IReport): IReportResult {
     return {
-      report_type: report.report_type,
-      report_id: report.report_id,
-      cell_id: report.cell_id,
+      reportType: report.reportType,
+      reportId: report.reportId,
+      cellId: report.cellId.toString(),
       visible: report.visible,
-      filtered_out: report.filtered_out,
-      type: report.type,
-    }
+      filteredOut: report.filteredOut,
+      type: report.type
+    };
   }
 
   /* End lint */
 
-  private _collectCell(cell: Cell){
-    let model = cell.model;
-    let cellResult = {
-      'type': model.type,
-      'code': this.config.code? model.value.text : null,
-      'length': model.value.text.length,
-      'empty': model.value.text.trim().length == 0,
-      'executionCount': null as number | null,
-      'outputs': null as any | null
+  private _collectCell(cell: Cell): ICellResult {
+    const model = cell.model;
+    const cellResult: ICellResult = {
+      type: model.type,
+      code: this.config.code ? model.value.text : null,
+      length: model.value.text.length,
+      empty: model.value.text.trim().length === 0,
+      executionCount: null,
+      outputs: null
     };
-    if (this.config.execution && (model.type === 'code')) {
-      let outputs: any[] = [];
-      let codeModel = (model as ICodeCellModel);
-      let codeOutputs = codeModel.outputs.toJSON();
+    if (this.config.execution && model.type === 'code') {
+      const outputs: ICellOutput[] = [];
+      const codeModel = model as ICodeCellModel;
+      const codeOutputs = codeModel.outputs.toJSON();
       for (let j = 0; j < codeOutputs.length; j++) {
-        let codeOutput = codeOutputs[j];
-        let output = {
-          'type': codeOutput.output_type,
-          'mime': [] as string[],
-        }
-        if (output.type == 'stream') {
-          output['mime'] = [(codeOutput as IStream).name];
-        } else if (output.type == 'error') {
-          output['mime'] = [(codeOutput as IError).ename];
+        const codeOutput = codeOutputs[j];
+        const output: ICellOutput = {
+          type: codeOutput.output_type,
+          mime: []
+        };
+        if (output.type === 'stream') {
+          output.mime = [(codeOutput as IStream).name];
+        } else if (output.type === 'error') {
+          output.mime = [(codeOutput as IError).ename];
         } else if ({}.hasOwnProperty.call(codeOutput, 'data')) {
-          output['mime'] = Object.keys((codeOutput as any).data);
+          output.mime = Object.keys((codeOutput as any).data);
         }
-        
         outputs.push(output);
       }
       cellResult.executionCount = codeModel.executionCount;
@@ -727,7 +867,7 @@ export class ExperimentManager {
     return cellResult;
   }
 
-  private _getActiveIndexes(notebook: Notebook) {
+  private _getActiveIndexes(notebook: Notebook): number[] {
     const result: number[] = [];
     notebook.widgets.forEach((child, index) => {
       if (notebook.isSelectedOrActive(child)) {
@@ -737,13 +877,12 @@ export class ExperimentManager {
     return result;
   }
 
-  private _notebook_name(name: string) {
-    return this.config.name? name : '<redacted>'
+  private _notebookName(name: string): string {
+    return this.config.name ? name : '<redacted>';
   }
 
-  private _send(header: string, data: any){
+  private _send(data: AnyReport): Promise<any> {
     data['date'] = new Date();
-    data['header'] = header;
     return requestAPI<any>('experiment', {
       body: JSON.stringify(data),
       method: 'POST'
@@ -752,14 +891,6 @@ export class ExperimentManager {
         `The julynter server extension appears to be missing.\n${reason}`
       );
       return reason;
-    })
-    /*
-    console.log("Julynter:", header);
-    for (let key in data) {
-      let value = data[key];
-      console.log("  " + key + ":", value);
-    }
-    */
+    });
   }
-
 }

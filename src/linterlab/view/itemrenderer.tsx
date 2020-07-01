@@ -1,11 +1,15 @@
 import * as React from 'react';
+
 import { CommandRegistry } from '@lumino/commands';
 import { ContextMenu } from '@lumino/widgets';
+import { Clipboard, Dialog, showDialog } from '@jupyterlab/apputils';
+
 import { IReport } from '../../linter/interfaces';
 import { NotebookHandler } from '../notebookhandler';
-import { Dialog, Clipboard, showDialog } from '@jupyterlab/apputils';
-
-import { showTextDialog, FeedbackDialogRenderer } from './feedbackrenderer';
+import {
+  FeedbackDialogRenderer,
+  showTextDialog
+} from './feedbackrenderer'; /* eslint @typescript-eslint/no-unused-vars: 0 */
 
 interface IItemProps {
   item: IReport;
@@ -13,10 +17,9 @@ interface IItemProps {
 }
 
 export class ItemRenderer extends React.Component<IItemProps> {
-
   constructor(props: IItemProps) {
     super(props);
-    this.handleClick = this.handleClick.bind(this)
+    this.handleClick = this.handleClick.bind(this);
   }
 
   doClick(): void {
@@ -33,31 +36,35 @@ export class ItemRenderer extends React.Component<IItemProps> {
 
   doNegativeFeedback(): void {
     const notebook = this.props.notebook;
-    if (this.props.item.feedback & 2) {
-      notebook.experimentManager.reportFeedback(notebook, this.props.item, '<<negate-negative>>');
-      this.props.item.feedback -= 2;
+    const item = this.props.item;
+    const em = notebook.experimentManager;
+    if (item.feedback & 2) {
+      em.reportFeedback(notebook, item, '<<negate-negative>>');
+      item.feedback -= 2;
     } else {
-      notebook.experimentManager.reportFeedback(notebook, this.props.item, '<<negative>>');
-      this.props.item.feedback |= 2;
+      em.reportFeedback(notebook, item, '<<negative>>');
+      item.feedback |= 2;
     }
-    
+
     this.forceUpdate();
   }
-  
+
   negativeFeedback(event: React.SyntheticEvent<HTMLSpanElement>): void {
     event.preventDefault();
     event.stopPropagation();
     this.doNegativeFeedback();
-  }  
+  }
 
   doPositiveFeedback(): void {
     const notebook = this.props.notebook;
-    if (this.props.item.feedback & 4) {
-      notebook.experimentManager.reportFeedback(notebook, this.props.item, '<<negate-positive>>');
-      this.props.item.feedback -= 4;
+    const item = this.props.item;
+    const em = notebook.experimentManager;
+    if (item.feedback & 4) {
+      em.reportFeedback(notebook, item, '<<negate-positive>>');
+      item.feedback -= 4;
     } else {
-      notebook.experimentManager.reportFeedback(notebook, this.props.item, '<<positive>>');
-      this.props.item.feedback |= 4;
+      em.reportFeedback(notebook, item, '<<positive>>');
+      item.feedback |= 4;
     }
     this.forceUpdate();
   }
@@ -70,12 +77,16 @@ export class ItemRenderer extends React.Component<IItemProps> {
 
   doMessageFeedback(): void {
     let dialogResult = '';
-    const onChange = (event: React.SyntheticEvent<HTMLTextAreaElement>) => {
+    const onChange = (
+      event: React.SyntheticEvent<HTMLTextAreaElement>
+    ): void => {
       event.preventDefault();
       event.stopPropagation();
       dialogResult = event.currentTarget.value;
-    }
-    const body = <FeedbackDialogRenderer item={this.props.item} onChange={onChange}/>
+    };
+    const body = (
+      <FeedbackDialogRenderer item={this.props.item} onChange={onChange} />
+    );
     const notebook = this.props.notebook;
     showTextDialog({
       title: 'Send Feedback',
@@ -84,9 +95,13 @@ export class ItemRenderer extends React.Component<IItemProps> {
     }).then(result => {
       Promise.resolve(result.button.accept).then((ok: boolean) => {
         if (ok && dialogResult) {
-          notebook.experimentManager.reportFeedback(notebook, this.props.item, dialogResult);
+          notebook.experimentManager.reportFeedback(
+            notebook,
+            this.props.item,
+            dialogResult
+          );
         }
-      })
+      });
     });
   }
 
@@ -98,23 +113,25 @@ export class ItemRenderer extends React.Component<IItemProps> {
 
   onContextMenu(event: React.MouseEvent<HTMLDivElement>): void {
     const commands = new CommandRegistry();
-    const contextMenu = new ContextMenu({commands: commands});
+    const contextMenu = new ContextMenu({ commands: commands });
     const item = this.props.item;
 
     commands.addCommand('info', {
-      label: item.report_id == 'group'? item.text : item.report_id,
+      label: item.reportId === 'group' ? item.text : item.reportId,
       caption: item.action.title,
       className: 'julynter-context-info',
-      execute: null
+      execute: () => {
+        return;
+      }
     });
     contextMenu.addItem({
       command: 'info',
       selector: '*'
-    })
+    });
     contextMenu.addItem({
       type: 'separator',
       selector: '*'
-    })
+    });
     commands.addCommand('action', {
       label: item.action.label,
       caption: item.action.title,
@@ -123,57 +140,79 @@ export class ItemRenderer extends React.Component<IItemProps> {
     contextMenu.addItem({
       command: 'action',
       selector: '*'
-    })
+    });
     commands.addCommand('copy', {
       label: 'Copy lint',
       caption: 'Copy lint text',
       execute: () => {
-        Clipboard.copyToSystem(`ID: ${item.report_id}\nMessage: ${item.text}\nSuggestion: ${item.suggestion || 'N/A'}`)
+        const id = item.reportId;
+        const text = item.text;
+        const suggestion = item.suggestion || 'N/A';
+        Clipboard.copyToSystem(
+          `ID: ${id}\nMessage: ${text}\nSuggestion: ${suggestion}`
+        );
       }
     });
     contextMenu.addItem({
       command: 'copy',
       selector: '*'
-    })
+    });
+    let hideTitle = `Filter out lint ${item.reportId}`;
+    let hideMessage =
+      'Are you sure you want to filter out' +
+      `lints with the id "${item.reportId}"?`;
+    let hideExample = (
+      <div>
+        Example of instance:
+        <ul className="julynter-feedback-ul">
+          <li>Message: {item.text}</li>
+          <li>Suggestion: {item.suggestion}</li>
+        </ul>
+      </div>
+    );
+    if (item.reportId === 'group') {
+      hideTitle = `Filter out lint type ${item.text}`;
+      hideMessage =
+        'Are you sure you want to filter out' +
+        `lints with the type "${item.text}"?`;
+      hideExample = null;
+    }
+
     commands.addCommand('hide', {
       label: 'Filter out similar lints',
       caption: 'Filter out this type of lint',
       execute: () => {
         showDialog({
-          title: `Filter out lint ${item.report_id}`,
-          body: <div>
+          title: hideTitle,
+          body: (
             <div>
-              Are you sure you want to filter out lints with the id {item.report_id}?
+              <div> {hideMessage} </div>
+              {hideExample}
             </div>
-            <div>
-              Example of instance:
-              <ul className='julynter-feedback-ul'>
-                <li>Message: {item.text}</li>
-                <li>Suggestion: {item.suggestion}</li>
-              </ul>
-            </div>
-          </div>,
+          ),
           buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'Yes' })]
         }).then(result => {
-            Promise.resolve(result.button.accept).then((ok: boolean) => {
-              if (ok && (item.report_id !== 'group')) {
-                this.props.notebook.options.updateReport(item.report_id, false);
-              }
-            });
+          Promise.resolve(result.button.accept).then((ok: boolean) => {
+            if (ok && item.reportId !== 'group') {
+              this.props.notebook.options.updateReport(item.reportId, false);
+            } else if (ok) {
+              this.props.notebook.options.updateType(item.reportType, false);
+            }
+          });
         });
       }
     });
     contextMenu.addItem({
       command: 'hide',
       selector: '*'
-    })
+    });
 
     if (this.props.item.feedback) {
       contextMenu.addItem({
         type: 'separator',
         selector: '*'
-      })
-      const neg = item.feedback & 2? 'Undo': 'Send';
+      });
+      const neg = item.feedback & 2 ? 'Undo' : 'Send';
       commands.addCommand('negative', {
         label: `${neg} negative feedback`,
         caption: `${neg} feedback indicating that you do not like this lint`,
@@ -182,8 +221,8 @@ export class ItemRenderer extends React.Component<IItemProps> {
       contextMenu.addItem({
         command: 'negative',
         selector: '*'
-      })
-      const pos = item.feedback & 4? 'Undo': 'Send';
+      });
+      const pos = item.feedback & 4 ? 'Undo' : 'Send';
       commands.addCommand('positive', {
         label: `${pos} positive feedback`,
         caption: `${pos} feedback indicating that you like this lint`,
@@ -192,7 +231,7 @@ export class ItemRenderer extends React.Component<IItemProps> {
       contextMenu.addItem({
         command: 'positive',
         selector: '*'
-      })
+      });
       commands.addCommand('feedback', {
         label: 'Send feedback',
         caption: 'Send a textual feedback',
@@ -201,105 +240,111 @@ export class ItemRenderer extends React.Component<IItemProps> {
       contextMenu.addItem({
         command: 'feedback',
         selector: '*'
-      })
-
+      });
     }
 
-    
     contextMenu.open(event as any);
     event.preventDefault();
-    event.stopPropagation(); 
+    event.stopPropagation();
   }
-
-
 
   render(): JSX.Element | null {
     const item: IReport = this.props.item;
-    if (!item.visible || item.filtered_out) {
+    if (!item.visible || item.filteredOut) {
       return null;
     }
-    const report_div_class = item.has_parent ? 'julynter-report-div julynter-has-parent' : 'julynter-report-div';
+    const reportDivClass = item.hasParent
+      ? 'julynter-report-div julynter-has-parent'
+      : 'julynter-report-div';
     let twistButton = null;
     let fontSize = 'julynter-normal-size';
     let feedbackDiv = null;
 
     if (item.collapsed) {
-      fontSize = 'julynter-title-size'
+      fontSize = 'julynter-title-size';
       twistButton = (
-        <div className='julynter-collapse-button'>
-          <div className='julynter-twist-placeholder'>placeholder</div>
-          <div className='julynter-rightarrow-img julynter-arrow-img' />
+        <div className="julynter-collapse-button">
+          <div className="julynter-twist-placeholder">placeholder</div>
+          <div className="julynter-rightarrow-img julynter-arrow-img" />
         </div>
-      )
+      );
     } else if (item.collapsed === false) {
-      fontSize = 'julynter-title-size'
+      fontSize = 'julynter-title-size';
       twistButton = (
-        <div className='julynter-collapse-button'>
-          <div className='julynter-twist-placeholder'>placeholder</div>
-          <div className='julynter-downarrow-img julynter-arrow-img' />
+        <div className="julynter-collapse-button">
+          <div className="julynter-twist-placeholder">placeholder</div>
+          <div className="julynter-downarrow-img julynter-arrow-img" />
         </div>
-      )
+      );
     }
 
     if (item.feedback && this.props.notebook.experimentManager.config.enabled) {
+      const negativeClass =
+        'julynter-feedback-icon jp-julynter-feedback-negative-icon' +
+        (item.feedback & 2 ? ' julynter-feedback-icon-selected' : '');
+      const positiveClass =
+        'julynter-feedback-icon jp-julynter-feedback-positive-icon' +
+        (item.feedback & 4 ? ' julynter-feedback-icon-selected' : '');
 
-      const negativeSelected = item.feedback & 2? ' julynter-feedback-icon-selected' : '';
-      const positiveSelected = item.feedback & 4? ' julynter-feedback-icon-selected' : '';
+      feedbackDiv = (
+        <div className="julynter-feedback">
+          <span className="julynter-feedback-text">Experiment Feedback: </span>
+          <div className="julynter-feedback-buttons">
+            <div
+              className="julynter-feedback-button"
+              onClick={this.negativeFeedback.bind(this)}
+            >
+              <div
+                role="text"
+                aria-label="I do not like this lint"
+                title="I do not like this lint"
+                className={negativeClass}
+              />
+            </div>
+            <div
+              className="julynter-feedback-button"
+              onClick={this.positiveFeedback.bind(this)}
+            >
+              <div
+                role="text"
+                aria-label="I like this lint"
+                title="I like this lint"
+                className={positiveClass}
+              />
+            </div>
 
-      const negativeClass = 'julynter-feedback-icon jp-julynter-feedback-negative-icon' + negativeSelected;
-      const positiveClass = 'julynter-feedback-icon jp-julynter-feedback-positive-icon' + positiveSelected;
-
-      feedbackDiv = <div className='julynter-feedback'>
-        <span className='julynter-feedback-text'>Experiment Feedback: </span>
-        <div className='julynter-feedback-buttons'>
-          <div
-            className='julynter-feedback-button'
-            onClick={this.negativeFeedback.bind(this)}
-          >
             <div
-              role='text'
-              aria-label='I do not like this lint'
-              title='I do not like this lint'
-              className={negativeClass}
-            />
-          </div>
-          <div
-            className='julynter-feedback-button'
-            onClick={this.positiveFeedback.bind(this)}
-          >
-            <div
-              role='text'
-              aria-label='I like this lint'
-              title='I like this lint'
-              className={positiveClass}
-            />
-          </div>
-          
-          <div
-            className='julynter-feedback-button'
-            onClick={this.messageFeedback.bind(this)}
-          >
-            <div
-              role='text'
-              aria-label='Send a text feedback about this lint'
-              title='Send a text feedback about this lint'
-              className='julynter-feedback-icon jp-julynter-feedback-text-icon'
-            />
+              className="julynter-feedback-button"
+              onClick={this.messageFeedback.bind(this)}
+            >
+              <div
+                role="text"
+                aria-label="Send a text feedback about this lint"
+                title="Send a text feedback about this lint"
+                className="julynter-feedback-icon jp-julynter-feedback-text-icon"
+              />
+            </div>
           </div>
         </div>
-      </div>;
+      );
     }
-    const report_prompt_class = 'julynter-report-prompt ' + fontSize;
-    return <li onClick={this.handleClick}>
-      <div className='julynter-entry-holder' title={this.props.item.suggestion} onContextMenu={this.onContextMenu.bind(this)}>
-        {twistButton}
-        <div className={report_div_class}>
-          <div className={report_prompt_class}>
-            <div>{item.text}</div>
-            {feedbackDiv}
+    const reportPromptClass = 'julynter-report-prompt ' + fontSize;
+    return (
+      <li onClick={this.handleClick}>
+        <div
+          className="julynter-entry-holder"
+          title={this.props.item.suggestion}
+          onContextMenu={this.onContextMenu.bind(this)}
+        >
+          {twistButton}
+          <div className={reportDivClass}>
+            <div className={reportPromptClass}>
+              <div>{item.text}</div>
+              {feedbackDiv}
+            </div>
           </div>
         </div>
-      </div>
-    </li>;
+      </li>
+    );
   }
 }
