@@ -1,4 +1,4 @@
-import { ERROR_TYPES_MAP } from './errors';
+import { ERROR_TYPES_MAP } from './reports';
 import {
   ErrorTypeKey,
   ErrorTypeKeys,

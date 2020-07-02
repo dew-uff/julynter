@@ -118,6 +118,7 @@ export class Config {
     return requestAPI<any>('config').then(data => {
       const config = this.createDefault();
       this.loadData(config, null, data);
+      this.loadData(this.defaultOptions, this.experimentConfig as any, data);
       return config;
     });
   }

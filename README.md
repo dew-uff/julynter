@@ -1,13 +1,37 @@
-# julynter
+# Julynter
 
 ![Github Actions Status](https://github.com/dew-uff/julynter/workflows/Build/badge.svg)
 
-A quality checker for Jupyter.
+Julynter is a linter for Jupyter Notebooks that aims at improving their Quality and Reproducibility based on the following guidelines [1]:
 
-This extension is composed of a Python package named `julynter`
+- Use short titles with a restrict  charset (A-Z a-z 0-9 .-) for notebook  files and markdown headings for more detailed ones in the body.
+- Pay attention to the bottom of the  notebook. Check whether it can benefit from descriptive markdown cells or can have code cells executed or removed.
+- Abstract code into functions, classes, and modules and test them.
+- Declare the dependencies in  requirement files and pin the versions of all packages.
+- Use a clean environment for testing the dependencies to check if all of them are declared.
+- Put imports at the beginning of notebooks.
+- Use relative paths for accessing data in the repository.
+- Re-run notebooks top to bottom  before committing.
+
+
+This repository provides an extension for Jupyter Lab compose of two parts:  a Python package named `julynter`
 for the server extension and a NPM package named `julynter`
 for the frontend extension.
 
+
+
+## Team
+
+
+- João Felipe Pimentel (UFF) (main developer)
+- Leonardo Murta (UFF)
+- Vanessa Braganholo (UFF)
+- Juliana Freire (NYU)
+
+
+## Publications
+
+- [1] Pimentel, J. F., Murta, L., Braganholo, V., & Freire, J. (2019, May). A large-scale study about quality and reproducibility of jupyter notebooks. In 2019 IEEE/ACM 16th International Conference on Mining Software Repositories (MSR) (pp. 507-517). IEEE.
 
 ## Requirements
 

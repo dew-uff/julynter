@@ -4,7 +4,7 @@ import { renameDialog, IDocumentManager } from '@jupyterlab/docmanager';
 import { Notebook, NotebookPanel } from '@jupyterlab/notebook';
 import { IObservableJSON } from '@jupyterlab/observables';
 
-import { ERRORS } from '../linter/errors';
+import { ERRORS } from '../linter/reports';
 import {
   ErrorTypeKey,
   IItemGenerator,

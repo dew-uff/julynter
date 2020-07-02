@@ -14,7 +14,7 @@ import {
 import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { HTMLSelect } from '@jupyterlab/ui-components';
 
-import { ERRORS, ERROR_TYPES_MAP } from '../../linter/errors';
+import { ERRORS, ERROR_TYPES_MAP } from '../../linter/reports';
 import {
   ErrorTypeKey,
   ErrorTypeKeys,

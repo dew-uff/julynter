@@ -19,6 +19,7 @@ import { ExperimentManager } from './experimentmanager';
 import { ListRenderer } from './view/listrenderer';
 import { StatusRenderer, IJulynterStatus } from './view/statusrenderer';
 import { ToolbarRenderer } from './view/toolbarrenderer';
+import { ErrorHandler } from './errorhandler';
 
 /**
  * Timeout for throttling Julynter rendering.
@@ -44,6 +45,7 @@ export class Julynter extends Widget {
   private _config: Config;
   private _experimentManager: ExperimentManager;
   private _status: IJulynterStatus;
+  private _eh: ErrorHandler;
   public handlers: { [id: string]: Promise<NotebookHandler> };
 
   /**
@@ -52,12 +54,14 @@ export class Julynter extends Widget {
   constructor(
     docmanager: IDocumentManager,
     tracker: INotebookTracker,
-    labShell: ILabShell
+    labShell: ILabShell,
+    eh: ErrorHandler
   ) {
     super();
     this._docmanager = docmanager;
     this._labShell = labShell;
     this._tracker = tracker;
+    this._eh = eh;
     this.handlers = {};
 
     this._status = {
@@ -76,43 +80,45 @@ export class Julynter extends Widget {
 
   addNewNotebook(nbPanel: NotebookPanel): void {
     //A promise that resolves after the initialization of the handler is done.
-    const handlers = this.handlers;
-    const update = this.update.bind(this);
-    const experimentmanager = this._experimentManager;
-    const config = this._config;
-    const docManager = this._docmanager;
-    const status = this._status;
-    this.handlers[nbPanel.id] = new Promise((resolve, reject) => {
-      const session = nbPanel.sessionContext;
-      const handler = new NotebookHandler(
-        docManager,
-        session,
-        nbPanel,
-        config,
-        experimentmanager,
-        update
-      );
-      const scripts = session.ready.then(
-        handler.getKernelLanguage.bind(handler)
-      );
-      scripts.then((language: Languages.LanguageModel) => {
-        status.connectedOnce = true;
-        config.load(() => {
-          status.serverSide = true;
+    try {
+      const handlers = this.handlers;
+      const update = this.update.bind(this);
+      const experimentmanager = this._experimentManager;
+      const config = this._config;
+      const docManager = this._docmanager;
+      const status = this._status;
+      this.handlers[nbPanel.id] = new Promise((resolve, reject) => {
+        const session = nbPanel.sessionContext;
+        const handler = new NotebookHandler(
+          docManager,
+          session,
+          nbPanel,
+          config,
+          experimentmanager,
+          update
+        );
+        const scripts = session.ready.then(
+          handler.getKernelLanguage.bind(handler)
+        );
+        scripts.then((language: Languages.LanguageModel) => {
+          console.log(language.name);
+          status.connectedOnce = true;
           handler.configureHandler(language);
-          nbPanel.disposed.connect(() => {
-            delete handlers[nbPanel.id];
-            handler.dispose();
-          });
-          handler.ready.then(() => {
-            resolve(handler);
-          });
         });
+        scripts.catch((result: string) => {
+          this._eh.report(result, 'Julynter:addNewNotebook.session', [nbPanel.title.label, session.kernelDisplayName]);
+          reject(result);
+        });
+
+        nbPanel.disposed.connect(() => {
+          delete handlers[nbPanel.id];
+          handler.dispose();
+        });
+        resolve(handler);
       });
-      scripts.catch((result: string) => {
-        reject(result);
-      });
-    });
+    } catch (error) {
+      throw this._eh.report(error, 'Julynter:addNewNotebook', [nbPanel.title.label]);
+    }
   }
 
   changeActiveWidget(widget: Widget): void {

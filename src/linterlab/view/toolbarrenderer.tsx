@@ -7,7 +7,7 @@ import { showDialog, Dialog, showErrorMessage } from '@jupyterlab/apputils';
 import { PathExt } from '@jupyterlab/coreutils';
 import { INotebookTracker } from '@jupyterlab/notebook';
 
-import { ERROR_TYPES_MAP } from '../../linter/errors';
+import { ERROR_TYPES_MAP } from '../../linter/reports';
 import { ErrorTypeKey, ErrorTypeKeys } from '../../linter/interfaces';
 import { Config } from '../config';
 import { NotebookHandler } from '../notebookhandler';

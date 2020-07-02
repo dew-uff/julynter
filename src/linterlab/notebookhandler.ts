@@ -65,7 +65,13 @@ export class NotebookHandler implements IDisposable {
     this._experimentManager = em;
     this._update = update;
     this._panelId = this._nbPanel.id;
-    this._language = null;
+    this._language = Languages.GENERIC;
+    this.options = new OptionsManager(
+      this._nbPanel,
+      this._config,
+      this._experimentManager,
+      this._update
+    );
     this._attempts = 0;
     this.update = {};
     this.hasKernel = false;
@@ -100,17 +106,10 @@ export class NotebookHandler implements IDisposable {
   }
 
   configureHandler(language: Languages.LanguageModel): void {
-    this.options = new OptionsManager(
-      this._nbPanel,
-      this._config,
-      this._experimentManager,
-      this._update
-    );
-
     this._language = language;
 
     this._ready = this._session.ready.then(() => {
-      this._initOnKernel().then((msg: KernelMessage.IExecuteReplyMsg) => {
+      this._initOnKernel().then(() => {
         this._session.iopubMessage.connect(this._queryCall.bind(this));
         return;
       });
@@ -123,7 +122,7 @@ export class NotebookHandler implements IDisposable {
       // Emit restarting
 
       this._ready = kernelReady.then(() => {
-        this._initOnKernel().then((msg: KernelMessage.IExecuteReplyMsg) => {
+        this._initOnKernel().then(() => {
           this._session.iopubMessage.connect(this._queryCall.bind(this));
           this.performQuery();
         });
@@ -220,65 +219,86 @@ export class NotebookHandler implements IDisposable {
     return results;
   }
 
+  private _createPromise(error: any = null): Promise<any> {
+    return new Promise<any>((resolve, reject) => {
+      if (!error) {
+        resolve();
+      } else {
+        reject(error);
+      }
+    });
+  }
+
+  private executeLanguageCommand(
+    command: Languages.ExecutableCode, 
+    args: any[],
+    response: (
+      msg: KernelMessage.IExecuteRequestMsg['content'],
+      response: KernelMessage.IIOPubMessage
+    ) => void
+  ): Promise<void> {
+    /* eslint @typescript-eslint/camelcase: 0 */
+    if (this._language === null) {
+      this._error = 'Language not loaded';
+      return this._createPromise('Language not loaded');
+    }
+    if (this._language[command] === null) {
+      return this._createPromise();
+    }
+    const codefn = this._language[command];
+    let code: string;
+    if (codefn instanceof Function) {
+      code = (codefn as any)(...args);
+    } else {
+      code = codefn;
+    }
+    if (code === null) {
+      return this._createPromise();
+    }
+    const content: KernelMessage.IExecuteRequestMsg['content'] = {
+      code: code,
+      stop_on_error: false,
+      store_history: false
+    };
+    return this.sendToKernel(content, response);
+  }
+
   /**
    * Send a query command to the kernel
    */
   public performQuery(): void {
-    /* eslint @typescript-eslint/camelcase: 0 */
-    if (this._language === null) {
-      this._error = 'Language not loaded';
-      return;
-    }
-    const content: KernelMessage.IExecuteRequestMsg['content'] = {
-      code: this._language.queryCommand(this.options.checkRequirements()),
-      stop_on_error: false,
-      store_history: false
-    };
-    this.sendToKernel(content, this._handleQueryResponse.bind(this));
+    this.executeLanguageCommand(
+      'queryCommand',
+      [this.options.checkRequirements()],
+      this._handleQueryResponse.bind(this),
+    );
   }
 
   /**
    * Send message to kernel add a module
    */
   public addModule(module: string): void {
-    /* eslint @typescript-eslint/camelcase: 0 */
-    if (this._language === null) {
-      this._error = 'Language not loaded';
-      return;
-    }
-    const content: KernelMessage.IExecuteRequestMsg['content'] = {
-      code: this._language.addModuleCommand(
-        module,
-        this.options.checkRequirements()
-      ),
-      stop_on_error: false,
-      store_history: false
-    };
-    this.sendToKernel(content, this._handleQueryResponse.bind(this));
+    this.executeLanguageCommand(
+      'addModuleCommand', 
+      [module, this.options.checkRequirements()],
+      this._handleQueryResponse.bind(this),
+    );
   }
 
   /**
    * Initializes the kernel by running the set up script located at _initScriptPath.
    */
-  private _initOnKernel(): Promise<KernelMessage.IExecuteReplyMsg> {
-    /* eslint @typescript-eslint/camelcase: 0 */
-    if (this._language === null) {
-      this._error = 'Language not loaded';
-      return;
-    }
-    const content: KernelMessage.IExecuteRequestMsg['content'] = {
-      code: this._language.initScript,
-      stop_on_error: true,
-      silent: true
-    };
-
-    return this.sendToKernel(content, null);
+  private _initOnKernel(): Promise<void> {
+    return this.executeLanguageCommand('initScript', [], null);
   }
 
   /*
    * Handle query response
    */
-  private _handleQueryResponse(response: KernelMessage.IIOPubMessage): void {
+  private _handleQueryResponse(
+    msg: KernelMessage.IExecuteRequestMsg['content'],
+    response: KernelMessage.IIOPubMessage
+  ): void {
     const msgType = response.header.msg_type;
     let payload: IExecuteResult;
     let payloadError: IError;
@@ -288,6 +308,9 @@ export class NotebookHandler implements IDisposable {
       case 'display_data':
         payload = response.content as IExecuteResult;
         content = payload.data['text/plain'] as string;
+       /* if (!this._language.julynterCode(content)) {
+          break;
+        }*/
         if (content.slice(0, 1) === "'" || content.slice(0, 1) === '"') {
           content = content.slice(1, -1);
           content = content.replace(/\\"/g, '"').replace(/\\'/g, "'");
@@ -303,13 +326,13 @@ export class NotebookHandler implements IDisposable {
         if (payloadError.evalue.includes('julynter')) {
           this._attempts += 1;
           console.error(
-            'Failed to initialize scripts. Retrying ' + this._attempts + '/3'
+            `Failed to initialize scripts. Retrying ${this._attempts}/3`, payloadError
           );
           if (this._attempts <= 3) {
             this._inspected.emit({
               status: 'Retrying to init'
             } as IJulynterKernelUpdate);
-            this._initOnKernel().then((msg: KernelMessage.IExecuteReplyMsg) => {
+            this._initOnKernel().then(() => {
               this._session.iopubMessage.connect(this._queryCall.bind(this));
               this.performQuery();
             });
@@ -336,7 +359,7 @@ export class NotebookHandler implements IDisposable {
     switch (msgType) {
       case 'execute_input':
         code = (msg as KernelMessage.IExecuteInputMsg).content.code;
-        if (!this._language.disableQuery(code)) {
+        if (!this._language.julynterCode(code)) {
           this.performQuery();
         }
         break;
@@ -370,8 +393,11 @@ export class NotebookHandler implements IDisposable {
    */
   sendToKernel(
     content: KernelMessage.IExecuteRequestMsg['content'],
-    ioCallback: ((msg: KernelMessage.IIOPubMessage) => any) | null
-  ): Promise<KernelMessage.IExecuteReplyMsg> {
+    ioCallback: ((
+      content: KernelMessage.IExecuteRequestMsg['content'],
+      msg: KernelMessage.IIOPubMessage
+    ) => any) | null
+  ): Promise<void> {
     console.log('Send To Kernel', content);
     const kernel = this._session.session.kernel;
     if (!kernel) {
@@ -382,9 +408,9 @@ export class NotebookHandler implements IDisposable {
     const future = kernel.requestExecute(content, false);
     future.onIOPub = (msg: KernelMessage.IIOPubMessage): void => {
       if (ioCallback !== null) {
-        ioCallback(msg);
+        ioCallback(content, msg);
       }
     };
-    return future.done as Promise<KernelMessage.IExecuteReplyMsg>;
+    return future.done.then(() => { return; });
   }
 }

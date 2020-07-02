@@ -1,11 +1,13 @@
 export namespace Languages {
   export type LanguageModel = {
-    initScript: string;
-    queryCommand: (requirements: string) => string;
-    addModuleCommand: (module: string, requirements: string) => string;
-    disableQuery: (code: string) => boolean;
+    initScript: string | (() => string);
+    queryCommand: string | ((requirements: string) => string);
+    addModuleCommand: string | ((module: string, requirements: string) => string);
+    julynterCode: (code: string) => boolean;
     name: string;
   };
+
+  export type ExecutableCode = 'initScript' | 'queryCommand' | 'addModuleCommand';
 }
 
 export abstract class Languages {
@@ -23,16 +25,25 @@ export abstract class Languages {
       "','" +
       requirements +
       "')",
-    disableQuery: (code: string) => {
+    julynterCode: (code: string) => {
       return code.startsWith('julynter.kernel._jupyterlab_julynter');
     },
     name: 'python'
   };
 
+  static GENERIC: Languages.LanguageModel = {
+    initScript: null,
+    queryCommand: null,
+    addModuleCommand: null,
+    julynterCode: (code: string) => false,
+    name: 'generic'
+  }
+
   static scripts: { [index: string]: Languages.LanguageModel } = {
     python3: Languages.PYTHON,
     python2: Languages.PYTHON,
-    python: Languages.PYTHON
+    python: Languages.PYTHON,
+    generic: Languages.GENERIC
   };
 
   public static getScript(lang: string): Promise<Languages.LanguageModel> {
@@ -40,7 +51,7 @@ export abstract class Languages {
       if (lang in Languages.scripts) {
         resolve(Languages.scripts[lang]);
       } else {
-        reject(`Language ${lang} not supported yet!`);
+        resolve(Languages.scripts.generic);
       }
     });
   }

@@ -7,10 +7,10 @@ class _JulynterImportVisitor(ast.NodeVisitor):
         self.imports = []
     def visit_Import(self, node):
         for alias in node.names:
-            self.imports.append(alias.name.split(".")[0])
+            self.imports.append(alias.name.split('.')[0])
     def visit_ImportFrom(self, node):
         if node.module and not node.level:
-            self.imports.append(node.module.split(".")[0])
+            self.imports.append(node.module.split('.')[0])
 
 
 class _JulynterNameVisitor(ast.NodeVisitor):
@@ -19,10 +19,10 @@ class _JulynterNameVisitor(ast.NodeVisitor):
         self.name_usages = set()
     def visit_Import(self, node):
         for alias in node.names:
-            self.name_definitions.add(alias.asname or alias.name.split(".")[0])
+            self.name_definitions.add(alias.asname or alias.name.split('.')[0])
     def visit_ImportFrom(self, node):
         for alias in node.names:
-            self.name_definitions.add(alias.asname or alias.name.split(".")[0])
+            self.name_definitions.add(alias.asname or alias.name.split('.')[0])
     def visit_Name(self, node):
         if isinstance(node.ctx, (ast.Param, ast.Store)):
             self.name_definitions.add(node.id)
@@ -40,7 +40,7 @@ class _JulynterPathVisitor(ast.NodeVisitor):
     def __init__(self):
         self.absolute_paths = set()
     def visit_Str(self, node):
-        if os.path.abspath(node.s) == node.s and os.path.exists(node.s) and node.s != "/":
+        if os.path.abspath(node.s) == node.s and os.path.exists(node.s) and node.s != '/':
             self.absolute_paths.add(node.s)
 
 
@@ -61,7 +61,7 @@ def _julynter_dependencies(ip, hm):
         if lineno in processed:
             continue
         if inline.startswith("get_ipython().run_cell_magic(\\'time\\'"):
-            inline = inline[42:-2].encode('utf-8').decode("unicode_escape")
+            inline = inline[42:-2].encode('utf-8').decode('unicode_escape')
         processed.add(lineno)
         tree = ast.parse(inline)
         name_visitor = _JulynterNameVisitor()
@@ -109,18 +109,18 @@ _julynter_missing_requirements = defaultdict(dict)
 _julynter_requirements_checked = {}
 _julynter_has_imports = []
 _julynter_requirements_processed = set()
-_last_requirements_file = [""]
+_last_requirements_file = ['']
 
 
 def _julynter_get_package(module_name):
     if module_name not in sys.modules:
-        return (2, "Module not imported")
+        return (2, 'Module not imported')
     module = sys.modules[module_name]
     if not hasattr(module, '__file__'):
-        return (0, "Builtin module")
+        return (0, 'Builtin module')
     package_matches = re.findall('site-packages/(.*?)/', module.__file__)
     if not package_matches:
-        return (1, "Package not found")
+        return (1, 'Package not found')
     return (-1, package_matches[0])
 
 
@@ -132,22 +132,22 @@ def _julynter_check_package_version(module_name, requirements):
     found = None
     if not os.path.exists(requirements):
         return (3, "requirements.txt doesn't exist")
-    with open(requirements, "r") as f:
+    with open(requirements, 'r') as f:
         for line in f:
             if line.strip().startswith(package):
                 found = line
                 break
     if found is None:
-        return (3, "Module not found on requirements.txt")
+        return (3, 'Module not found on requirements.txt')
     try:
         distribution = pkg_resources.get_distribution(package)
     except pkg_resources.DistributionNotFound:
-        return (1, "Distribution not found")
+        return (1, 'Distribution not found')
     version = distribution.version
-    req_version = found.strip().split("==")[-1]
+    req_version = found.strip().split('==')[-1]
     if version != req_version:
-        return (3, "Version mismatch")
-    return (0, "Ok")
+        return (3, 'Version mismatch')
+    return (0, 'Ok')
 
 
 def _julynter_imports(ip, hm, requirements_file):
@@ -169,8 +169,8 @@ def _julynter_imports(ip, hm, requirements_file):
                 status, msg = _julynter_check_package_version(req, requirements_file)
                 if status >= 2:
                     missing_requirements[lineno][req] = {
-                        "status": status,
-                        "msg": msg
+                        'status': status,
+                        'msg': msg
                     }
                 checked[req] = status
     for session, lineno, inline in hm.get_range(raw=False, output=False):
@@ -187,25 +187,26 @@ def _julynter_imports(ip, hm, requirements_file):
                 status, msg = _julynter_check_package_version(req, requirements_file)
                 if status >= 2:
                     missing_requirements[lineno][req] = {
-                        "status": status,
-                        "msg": msg
+                        'status': status,
+                        'msg': msg
                     }
                 checked[req] = status
     return has_imports, missing_requirements
 
 
-def _jupyterlab_julynter_query(requirements_file="requirements.txt"):
+def _jupyterlab_julynter_query(requirements_file='requirements.txt'):
     ip = get_ipython()
     hm = ip.history_manager
     cell_dependencies, missing_dependencies = _julynter_dependencies(ip, hm)
     has_imports, missing_requirements = _julynter_imports(ip, hm, requirements_file)
     result = {
-        "executed_code": _julynter_history(ip, hm),
-        "cell_dependencies": cell_dependencies,
-        "missing_dependencies": missing_dependencies,
-        "absolute_paths": _julynter_absolute_paths(ip, hm),
-        "has_imports": has_imports,
-        "missing_requirements": missing_requirements,
+        'julynter_result': 'julynter.kernel._jupyterlab_julynter',
+        'executed_code': _julynter_history(ip, hm),
+        'cell_dependencies': cell_dependencies,
+        'missing_dependencies': missing_dependencies,
+        'absolute_paths': _julynter_absolute_paths(ip, hm),
+        'has_imports': has_imports,
+        'missing_requirements': missing_requirements,
     }
     return json.dumps(result, ensure_ascii=False)
 
@@ -217,23 +218,23 @@ def _jupyterlab_julynter_add_package_to_requirements(module_name, requirements):
     package = msg
     try:
         distribution = pkg_resources.get_distribution(package)
-        version = "=={}".format(distribution.version)
+        version = '=={}'.format(distribution.version)
     except pkg_resources.DistributionNotFound:
-        version = ""
+        version = ''
     lines = []
     found = False
     if os.path.exists(requirements):
-        with open(requirements, "r") as f:
+        with open(requirements, 'r') as f:
             for line in f:
                 if line.strip().startswith(package):
-                    lines.append("{}{}\\n".format(package, version))
+                    lines.append('{}{}\\n'.format(package, version))
                     found = True
                 else:
                     lines.append(line)
     if not found:
-        lines.append("{}{}\\n".format(package, version))
-    with open(requirements, "w") as f:
+        lines.append('{}{}\\n'.format(package, version))
+    with open(requirements, 'w') as f:
         f.writelines(lines)
     return _jupyterlab_julynter_query(requirements)
 
-print("ok-initialized")
+print('ok-initialized')
