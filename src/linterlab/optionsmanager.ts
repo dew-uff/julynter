@@ -81,7 +81,6 @@ export class OptionsManager extends AbstractOptionsManager {
     try {
       super.reloadOptions();
       this._experimentManager.reportLoadConfig(this._nbPanel, this.checks);
-  
     } catch (error) {
       throw this._eh.report(error, 'OptionsManager:reloadOptions', []);
     }
@@ -96,5 +95,4 @@ export class OptionsManager extends AbstractOptionsManager {
       throw this._eh.report(error, 'OptionsManager:saveOptions', []);
     }
   }
-
 }

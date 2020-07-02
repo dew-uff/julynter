@@ -65,6 +65,10 @@ Julynter connects to the kernel to perform some checks. When it is not able to c
 
 Currently, Julynter only supports the IPython kernel. If you are using a different kernel or programming language that you would like to be fully supported, please submit an issue. If your notebook is connected to a Python kernel, but Julynter still displays this status code, please submit an issue as well.
 
+### Different results
+
+Julynter sends a code to execute on the kernel after every code executed by the user. This code usually does not interfere with the results, since one cell produces a result that is independent from the other. However, it is technically possible to delay the output of a cell to the next cell (I noticed it in a bug related to matplotlib: https://github.com/jupyter/notebook/issues/5568). If it occurs, the delayed output may be received by Julynter and it will not appear on the next cell. Since I only noticed this behavior on this bug, I will not try to fix it now, but if you find a different result in another situation, please submit an issue.
+
 ### Frontend extesion is not working
 
 If you are seeing the frontend extension but it is not working, check
