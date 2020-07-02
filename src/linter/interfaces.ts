@@ -172,7 +172,6 @@ export interface ILintOptionsManager {
   updateType(key: ErrorTypeKey, value: boolean): void;
   updateMode(mode: ViewMode): void;
   updateRequirements(req: string): void;
-  updateWidget(): void;
   initializeOptions(checks: IJulynterLintOptions): void;
   reloadOptions(): void;
   saveOptions(): void;

@@ -1,0 +1,92 @@
+import {
+  ErrorTypeKey,
+  ErrorTypeKeys,
+  IJulynterLintOptions,
+  ILintOptionsManager,
+  ReportId,
+  ReportIds,
+  ViewMode
+} from './interfaces';
+
+export abstract class AbstractOptionsManager implements ILintOptionsManager {
+  public checks: IJulynterLintOptions;
+  public default: IJulynterLintOptions;
+
+  abstract loadKey<T>(key: string, def: T): T;
+  abstract saveKey(key: string, value: any, ereport: boolean): void;
+
+  checkReport(key: ReportId): boolean {
+    return this.checks.reports[key];
+  }
+
+  checkType(key: ErrorTypeKey): boolean {
+    return this.checks.types[key];
+  }
+
+  checkMode(): ViewMode {
+    return this.checks.mode;
+  }
+
+  checkRequirements(): string {
+    return this.checks.requirements;
+  }
+
+  updateReport(key: ReportId, value: boolean): void {
+    this.checks.reports[key] = value;
+    this.saveKey('report-' + key, value, true);
+  }
+
+  updateType(key: ErrorTypeKey, value: boolean): void {
+    this.checks.types[key] = value;
+    this.saveKey('type-' + key, value, true);
+  }
+
+  updateMode(mode: ViewMode): void {
+    this.checks.mode = mode;
+    this.saveKey('mode', mode, true);
+  }
+
+  updateRequirements(req: string): void {
+    this.checks.requirements = req;
+    this.saveKey('requirements', req, true);
+  }
+
+  // initialize options, will NOT change notebook metadata
+  initializeOptions(checks: IJulynterLintOptions): void {
+    this.checks = checks;
+  }
+
+  reloadOptions(): void {
+    this.initializeOptions({
+      mode: this.loadKey('mode', this.default.mode),
+      requirements: this.loadKey('requirements', this.default.requirements),
+      reports: ReportIds.reduce(
+        (previous, key) => {
+          const rkey = 'report-' + key;
+          previous[key] = this.loadKey(rkey, this.default.reports[key]);
+          return previous;
+        },
+        { ...this.default.reports }
+      ),
+      types: ErrorTypeKeys.reduce(
+        (previous, key) => {
+          const tkey = 'type-' + key;
+          previous[key] = this.loadKey(tkey, this.default.types[key]);
+          return previous;
+        },
+        { ...this.default.types }
+      )
+    });
+  }
+
+  saveOptions(): void {
+    this.saveKey('mode', this.checks.mode, false);
+    this.saveKey('requirements', this.checks.requirements, false);
+    for (const key of ErrorTypeKeys) {
+      this.saveKey('type-' + key, this.checks.types[key], false);
+    }
+    for (const key of ReportIds) {
+      this.saveKey('report-' + key, this.checks.reports[key], false);
+    }
+  }
+}

@@ -20,6 +20,7 @@ import { Config } from './config';
 import { ExperimentManager } from './experimentmanager';
 import { GroupGenerator, ItemGenerator } from './itemgenerator';
 import { OptionsManager } from './optionsmanager';
+import { ErrorHandler } from './errorhandler';
 
 export interface IJulynterKernelUpdate {
   status: string;
@@ -40,7 +41,6 @@ export class NotebookHandler implements IDisposable {
   private _attempts: number;
   private _session: ISessionContext;
   private _docManager: IDocumentManager;
-  private _config: Config;
   private _update: () => void;
   private _experimentManager: ExperimentManager;
   private _error: string;
@@ -56,20 +56,21 @@ export class NotebookHandler implements IDisposable {
     nbPanel: NotebookPanel,
     config: Config,
     em: ExperimentManager,
+    eh: ErrorHandler,
     update: () => void
   ) {
     this._docManager = docManager;
     this._session = session;
     this._nbPanel = nbPanel;
-    this._config = config;
     this._experimentManager = em;
     this._update = update;
     this._panelId = this._nbPanel.id;
     this._language = Languages.GENERIC;
     this.options = new OptionsManager(
       this._nbPanel,
-      this._config,
+      config,
       this._experimentManager,
+      eh,
       this._update
     );
     this._attempts = 0;

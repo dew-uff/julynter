@@ -87,6 +87,7 @@ export class Julynter extends Widget {
       const config = this._config;
       const docManager = this._docmanager;
       const status = this._status;
+      const errorhandler = this._eh;
       this.handlers[nbPanel.id] = new Promise((resolve, reject) => {
         const session = nbPanel.sessionContext;
         const handler = new NotebookHandler(
@@ -95,6 +96,7 @@ export class Julynter extends Widget {
           nbPanel,
           config,
           experimentmanager,
+          errorhandler,
           update
         );
         const scripts = session.ready.then(
