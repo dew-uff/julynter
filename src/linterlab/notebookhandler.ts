@@ -101,7 +101,13 @@ export class NotebookHandler implements IDisposable {
 
   getKernelLanguage(): Promise<Languages.LanguageModel> {
     return this._session.session.kernel.info.then((infoReply: IInfoReply) => {
-      return Languages.getScript(infoReply.language_info.name);
+      const model = Languages.getScript(infoReply.language_info.name);
+      this._experimentManager.reportNotebookKernel(
+        this,
+        this._session.session.kernel.name,
+        infoReply.language_info.name
+      );
+      return model;
     });
   }
 
@@ -128,7 +134,6 @@ export class NotebookHandler implements IDisposable {
         });
       });
     });
-    this._experimentManager.reportNotebookCode(this);
   }
 
   disconnectHandler(): void {
@@ -230,7 +235,7 @@ export class NotebookHandler implements IDisposable {
   }
 
   private executeLanguageCommand(
-    command: Languages.ExecutableCode, 
+    command: Languages.ExecutableCode,
     args: any[],
     response: (
       msg: KernelMessage.IExecuteRequestMsg['content'],
@@ -270,7 +275,7 @@ export class NotebookHandler implements IDisposable {
     this.executeLanguageCommand(
       'queryCommand',
       [this.options.checkRequirements()],
-      this._handleQueryResponse.bind(this),
+      this._handleQueryResponse.bind(this)
     );
   }
 
@@ -279,9 +284,9 @@ export class NotebookHandler implements IDisposable {
    */
   public addModule(module: string): void {
     this.executeLanguageCommand(
-      'addModuleCommand', 
+      'addModuleCommand',
       [module, this.options.checkRequirements()],
-      this._handleQueryResponse.bind(this),
+      this._handleQueryResponse.bind(this)
     );
   }
 
@@ -308,7 +313,7 @@ export class NotebookHandler implements IDisposable {
       case 'display_data':
         payload = response.content as IExecuteResult;
         content = payload.data['text/plain'] as string;
-       /* if (!this._language.julynterCode(content)) {
+        /* if (!this._language.julynterCode(content)) {
           break;
         }*/
         if (content.slice(0, 1) === "'" || content.slice(0, 1) === '"') {
@@ -326,7 +331,8 @@ export class NotebookHandler implements IDisposable {
         if (payloadError.evalue.includes('julynter')) {
           this._attempts += 1;
           console.error(
-            `Failed to initialize scripts. Retrying ${this._attempts}/3`, payloadError
+            `Failed to initialize scripts. Retrying ${this._attempts}/3`,
+            payloadError
           );
           if (this._attempts <= 3) {
             this._inspected.emit({
@@ -393,10 +399,12 @@ export class NotebookHandler implements IDisposable {
    */
   sendToKernel(
     content: KernelMessage.IExecuteRequestMsg['content'],
-    ioCallback: ((
-      content: KernelMessage.IExecuteRequestMsg['content'],
-      msg: KernelMessage.IIOPubMessage
-    ) => any) | null
+    ioCallback:
+      | ((
+          content: KernelMessage.IExecuteRequestMsg['content'],
+          msg: KernelMessage.IIOPubMessage
+        ) => any)
+      | null
   ): Promise<void> {
     console.log('Send To Kernel', content);
     const kernel = this._session.session.kernel;
@@ -411,6 +419,8 @@ export class NotebookHandler implements IDisposable {
         ioCallback(content, msg);
       }
     };
-    return future.done.then(() => { return; });
+    return future.done.then(() => {
+      return;
+    });
   }
 }

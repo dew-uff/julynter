@@ -651,6 +651,26 @@ export class ExperimentManager {
     this._send(send);
   }
 
+  reportNotebookKernel(
+    handler: NotebookHandler,
+    kernel: string,
+    language: string
+  ): void {
+    if (!this.config.enabled || !this.config.activity) {
+      return;
+    }
+
+    const send: IParamNotebook = {
+      header: 'Activity',
+      operation: 'loadKernel',
+      notebookName: this._notebookName(handler.name),
+      notebookId: handler.id,
+      param: language,
+      info: kernel
+    };
+    this._send(send);
+  }
+
   /* End Activities */
 
   /* Start code */

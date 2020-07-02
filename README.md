@@ -14,10 +14,9 @@ Julynter is a linter for Jupyter Notebooks that aims at improving their Quality 
 - Re-run notebooks top to bottom  before committing.
 
 
-This repository provides an extension for Jupyter Lab compose of two parts:  a Python package named `julynter`
+This repository provides an extension for Jupyter Lab compose of two parts: a Python package named `julynter`
 for the server extension and a NPM package named `julynter`
 for the frontend extension.
-
 
 
 ## Team
@@ -48,12 +47,34 @@ jupyter lab build
 
 ## Troubleshoot
 
+Known issues:
+
+### Linting list does not update
+
+Sometimes Julynter does not update the linting list after an action. If it occurs, click on the notebook name in the Julynter tab to force a reload.
+
+### External and global options are not recognized
+
+Julynter loads settings from `.julynter/config.json` at the initialization of Jupyter Lab. For reloading it, click on the configuration icon, select `Project settings` in the top and click on `Load`.
+
+User and Project Settings will not apply for existing notebooks that have their individual settings stored as metadata. For updating the settings of these notebooks, click on the configuration icon, select `Project settings` in the top, click on `Load`, select `Notebook settings` in the top, and click on `Save`.
+
+### Some linting messages never appear
+
+Julynter connects to the kernel to perform some checks. When it is not able to connect to kernel, it indicates "Kernel not found" in the status icon and it does not perform all the checks.
+
+Currently, Julynter only supports the IPython kernel. If you are using a different kernel or programming language that you would like to be fully supported, please submit an issue. If your notebook is connected to a Python kernel, but Julynter still displays this status code, please submit an issue as well.
+
+### Frontend extesion is not working
+
 If you are seeing the frontend extension but it is not working, check
 that the server extension is enabled:
 
 ```bash
 jupyter serverextension list
 ```
+
+### Server extension is installed and enables, but Julynter does not appear
 
 If the server extension is installed and enabled but you are not seeing
 the frontend, check the frontend is installed:
@@ -70,6 +91,8 @@ jupyter lab build
 ```
 
 ## Contributing
+
+Pull requests for bugfixes and new features are welcome! 
 
 ### Install
 

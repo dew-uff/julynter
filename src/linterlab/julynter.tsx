@@ -106,7 +106,10 @@ export class Julynter extends Widget {
           handler.configureHandler(language);
         });
         scripts.catch((result: string) => {
-          this._eh.report(result, 'Julynter:addNewNotebook.session', [nbPanel.title.label, session.kernelDisplayName]);
+          this._eh.report(result, 'Julynter:addNewNotebook.session', [
+            nbPanel.title.label,
+            session.kernelDisplayName
+          ]);
           reject(result);
         });
 
@@ -114,116 +117,145 @@ export class Julynter extends Widget {
           delete handlers[nbPanel.id];
           handler.dispose();
         });
+        experimentmanager.reportNotebookCode(handler);
         resolve(handler);
       });
     } catch (error) {
-      throw this._eh.report(error, 'Julynter:addNewNotebook', [nbPanel.title.label]);
+      throw this._eh.report(error, 'Julynter:addNewNotebook', [
+        nbPanel.title.label
+      ]);
     }
   }
 
   changeActiveWidget(widget: Widget): void {
-    this._currentWidget = widget;
-    const future = this.handlers[widget.id];
-    if (future !== undefined) {
-      future.then((source: NotebookHandler) => {
-        this.currentHandler = source;
-      });
-    } else if (this._currentHandler !== null) {
-      this.currentHandler = null;
+    try {
+      this._currentWidget = widget;
+      const future = this.handlers[widget.id];
+      if (future !== undefined) {
+        future.then((source: NotebookHandler) => {
+          this.currentHandler = source;
+        });
+      } else if (this._currentHandler !== null) {
+        this.currentHandler = null;
+      }
+    } catch (error) {
+      throw this._eh.report(error, 'Julynter:changeActiveWidget', [
+        widget.title.label
+      ]);
     }
   }
 
   titleClick(): void {
-    this.updateJulynter();
+    try {
+      this.updateJulynter();
+    } catch (error) {
+      throw this._eh.report(error, 'Julynter:titleClick', []);
+    }
   }
 
   updateJulynter(): void {
-    let title = 'Julynter';
-    let listRenderer: JSX.Element = null;
-    let toolbarRenderer: JSX.Element = null;
-    let renderedJSX: JSX.Element = null;
-    this.title.iconClass = 'julynter-main-icon jp-SideBar-tabIcon';
-    this._status.connectedNow = false;
-    this._status.hasKernel = false;
+    try {
+      let title = 'Julynter';
+      let listRenderer: JSX.Element = null;
+      let toolbarRenderer: JSX.Element = null;
+      let renderedJSX: JSX.Element = null;
+      this.title.iconClass = 'julynter-main-icon jp-SideBar-tabIcon';
+      this._status.connectedNow = false;
+      this._status.hasKernel = false;
 
-    if (this.currentHandler) {
-      this._status.connectedNow = true;
-      this._status.hasKernel = this.currentHandler.hasKernel;
-      const reports: IReport[] = this.currentHandler.lint();
-      this._visibleWidget = this.currentHandler.nbPanel;
-      if (reports.length > 0) {
-        this.title.iconClass = 'julynter-main-new-icon jp-SideBar-tabIcon';
+      if (this.currentHandler) {
+        this._status.connectedNow = true;
+        this._status.hasKernel = this.currentHandler.hasKernel;
+        const reports: IReport[] = this.currentHandler.lint();
+        this._visibleWidget = this.currentHandler.nbPanel;
+        if (reports.length > 0) {
+          this.title.iconClass = 'julynter-main-new-icon jp-SideBar-tabIcon';
+        }
+        title = this._currentHandler.name;
+        listRenderer = (
+          <ListRenderer reports={reports} notebook={this.currentHandler} />
+        );
+        toolbarRenderer = (
+          <ToolbarRenderer
+            tracker={this._tracker}
+            handlers={this.handlers}
+            config={this._config}
+            notebook={this.currentHandler}
+            labShell={this._labShell}
+          />
+        );
+      } else {
+        listRenderer = (
+          <div className="julynter-error-desc"> No notebooks to lint </div>
+        );
       }
-      title = this._currentHandler.name;
-      listRenderer = (
-        <ListRenderer reports={reports} notebook={this.currentHandler} />
+      renderedJSX = (
+        <div className="jp-Julynter">
+          <header>
+            <div
+              className="julynter-title"
+              onClick={this.titleClick.bind(this)}
+              title="Click to reload"
+            >
+              {title}
+            </div>
+            <StatusRenderer {...this._status} />
+          </header>
+          {toolbarRenderer}
+          {listRenderer}
+        </div>
       );
-      toolbarRenderer = (
-        <ToolbarRenderer
-          tracker={this._tracker}
-          handlers={this.handlers}
-          config={this._config}
-          notebook={this.currentHandler}
-          labShell={this._labShell}
-        />
-      );
-    } else {
-      listRenderer = (
-        <div className="julynter-error-desc"> No notebooks to lint </div>
-      );
+      ReactDOM.render(renderedJSX, this.node);
+    } catch (error) {
+      throw this._eh.report(error, 'Julynter:updateJulynter', []);
     }
-    renderedJSX = (
-      <div className="jp-Julynter">
-        <header>
-          <div
-            className="julynter-title"
-            onClick={this.titleClick.bind(this)}
-            title="Click to reload"
-          >
-            {title}
-          </div>
-          <StatusRenderer {...this._status} />
-        </header>
-        {toolbarRenderer}
-        {listRenderer}
-      </div>
-    );
-    ReactDOM.render(renderedJSX, this.node);
   }
 
   /**
    * Rerender after showing.
    */
   protected onAfterShow(msg: Message): void {
-    this._experimentManager.reportVisibility(this._currentHandler, true);
-    this.update();
+    try {
+      this._experimentManager.reportVisibility(this._currentHandler, true);
+      this.update();
+    } catch (error) {
+      throw this._eh.report(error, 'Julynter:onAfterShow', []);
+    }
   }
 
   /**
    * Notify after hide.
    */
   protected onAfterHide(msg: Message): void {
-    this._experimentManager.reportVisibility(this._currentHandler, false);
+    try {
+      this._experimentManager.reportVisibility(this._currentHandler, false);
+    } catch (error) {
+      throw this._eh.report(error, 'Julynter:onAfterHide', []);
+    }
   }
 
   /**
    * Handle an update request.
    */
   protected onUpdateRequest(msg: Message): void {
-    // Don't bother if the Julynter is not visible
-    /* if (!this.isVisible) {
-      return;
-    } */
-    this.updateJulynter();
+    try {
+      this.updateJulynter();
+    } catch (error) {
+      throw this._eh.report(error, 'Julynter:onUpdateRequest', []);
+    }
   }
 
   dispose(): void {
-    if (this.isDisposed) {
-      return;
+    try {
+      if (this.isDisposed) {
+        return;
+      }
+      this._currentHandler.disconnectHandler();
+      this._currentHandler = null;
+      super.dispose();
+    } catch (error) {
+      throw this._eh.report(error, 'Julynter:dispose', []);
     }
-    this._currentHandler.disconnectHandler();
-    this._currentHandler = null;
-    super.dispose();
   }
 
   get currentHandler(): NotebookHandler {
@@ -231,41 +263,47 @@ export class Julynter extends Widget {
   }
 
   set currentHandler(newHandler: NotebookHandler) {
-    const widget = this._currentWidget;
-    if (this._currentHandler !== newHandler) {
-      if (this._currentHandler !== null) {
-        this._currentHandler.disconnectHandler();
+    try {
+      const widget = this._currentWidget;
+      if (this._currentHandler !== newHandler) {
+        if (this._currentHandler !== null) {
+          this._currentHandler.disconnectHandler();
+        }
+        this._currentHandler = newHandler;
+        if (this._currentHandler !== null) {
+          this._currentHandler.connectHandler();
+        }
       }
-      this._currentHandler = newHandler;
-      if (this._currentHandler !== null) {
-        this._currentHandler.connectHandler();
+      if (!newHandler || widget !== newHandler.nbPanel) {
+        this.updateJulynter();
+        return;
       }
-    }
-    if (!newHandler || widget !== newHandler.nbPanel) {
+      if (this._tracker.has(widget) && widget !== this._visibleWidget) {
+        // Dispose an old activity monitor if it existsd
+        if (this._monitor) {
+          this._monitor.dispose();
+          this._monitor = null;
+        }
+
+        // Find the document model associated with the widget.
+        const context = this._docmanager.contextForWidget(widget);
+        if (!context || !context.model) {
+          throw Error('Could not find a context for Julynter');
+        }
+
+        // Throttle the rendering rate of julynter.
+        this._monitor = new ActivityMonitor({
+          signal: context.model.contentChanged,
+          timeout: RENDER_TIMEOUT
+        });
+        this._monitor.activityStopped.connect(this.update, this);
+        this._experimentManager.reportVisibility(this._currentHandler, true);
+      }
       this.updateJulynter();
-      return;
+    } catch (error) {
+      throw this._eh.report(error, 'Julynter:set currentHandler', [
+        newHandler.name
+      ]);
     }
-    if (this._tracker.has(widget) && widget !== this._visibleWidget) {
-      // Dispose an old activity monitor if it existsd
-      if (this._monitor) {
-        this._monitor.dispose();
-        this._monitor = null;
-      }
-
-      // Find the document model associated with the widget.
-      const context = this._docmanager.contextForWidget(widget);
-      if (!context || !context.model) {
-        throw Error('Could not find a context for Julynter');
-      }
-
-      // Throttle the rendering rate of julynter.
-      this._monitor = new ActivityMonitor({
-        signal: context.model.contentChanged,
-        timeout: RENDER_TIMEOUT
-      });
-      this._monitor.activityStopped.connect(this.update, this);
-      this._experimentManager.reportVisibility(this._currentHandler, true);
-    }
-    this.updateJulynter();
   }
 }

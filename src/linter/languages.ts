@@ -2,12 +2,17 @@ export namespace Languages {
   export type LanguageModel = {
     initScript: string | (() => string);
     queryCommand: string | ((requirements: string) => string);
-    addModuleCommand: string | ((module: string, requirements: string) => string);
+    addModuleCommand:
+      | string
+      | ((module: string, requirements: string) => string);
     julynterCode: (code: string) => boolean;
     name: string;
   };
 
-  export type ExecutableCode = 'initScript' | 'queryCommand' | 'addModuleCommand';
+  export type ExecutableCode =
+    | 'initScript'
+    | 'queryCommand'
+    | 'addModuleCommand';
 }
 
 export abstract class Languages {
@@ -37,7 +42,7 @@ export abstract class Languages {
     addModuleCommand: null,
     julynterCode: (code: string) => false,
     name: 'generic'
-  }
+  };
 
   static scripts: { [index: string]: Languages.LanguageModel } = {
     python3: Languages.PYTHON,
