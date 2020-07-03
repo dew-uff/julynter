@@ -14,6 +14,7 @@ import {
   ReportType
 } from '../linter/interfaces';
 import { NotebookHandler } from './notebookhandler';
+import { ErrorHandler } from './errorhandler';
 
 function isNumber(value: string | number): boolean {
   return value !== null && !isNaN(Number(value.toString()));
@@ -28,11 +29,17 @@ export class ItemGenerator implements IItemGenerator {
   _nbPanel: NotebookPanel;
   _notebookContent: Notebook;
   _handler: NotebookHandler;
+  _eh: ErrorHandler;
 
-  constructor(docManager: IDocumentManager, handler: NotebookHandler) {
+  constructor(
+    docManager: IDocumentManager,
+    handler: NotebookHandler,
+    eh: ErrorHandler
+  ) {
     this._docManager = docManager;
     this._handler = handler;
     this._notebookContent = handler.nbPanel.content;
+    this._eh = eh;
   }
 
   create(
@@ -41,63 +48,106 @@ export class ItemGenerator implements IItemGenerator {
     messageId: ReportId,
     args: any[]
   ): IReport {
-    const message = ERRORS[messageId];
-    return {
-      text: message.label(...args),
-      reportType: message.type,
-      reportId: messageId,
-      suggestion: message.suggestion,
-      cellId: cellId,
-      visible: true,
-      filteredOut: false,
-      type: type,
-      action: message.action,
-      boundAction: message.action.execute(this, ...args)
-    };
+    try {
+      const message = ERRORS[messageId];
+      return {
+        text: message.label(...args),
+        reportType: message.type,
+        reportId: messageId,
+        suggestion: message.suggestion,
+        cellId: cellId,
+        visible: true,
+        filteredOut: false,
+        type: type,
+        action: message.action,
+        boundAction: message.action.execute(this, ...args)
+      };
+    } catch (error) {
+      throw this._eh.report(error, 'ItemGenerator:create', [
+        cellId,
+        type,
+        messageId,
+        args
+      ]);
+    }
   }
 
   renameNotebook(): void {
-    renameDialog(this._docManager, this._handler.nbPanel.context.path);
+    try {
+      renameDialog(this._docManager, this._handler.nbPanel.context.path);
+    } catch (error) {
+      throw this._eh.report(error, 'ItemGenerator:renameNotebook', [
+        this._handler.nbPanel.context.path
+      ]);
+    }
   }
 
   goToCell(index: number): void {
-    const cell = this._notebookContent.widgets[index];
-    this._notebookContent.activeCellIndex = index;
-    cell.node.scrollIntoView();
+    try {
+      const cell = this._notebookContent.widgets[index];
+      this._notebookContent.activeCellIndex = index;
+      cell.node.scrollIntoView();
+    } catch (error) {
+      throw this._eh.report(error, 'ItemGenerator:goToCell', [index]);
+    }
   }
 
   addModule(index: number, module: string): void {
-    const handler = this._handler;
-    showDialog({
-      title: 'Add requirement',
-      body: `Add "${module}" to requirements?`,
-      buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'Add' })]
-    }).then(result => {
-      Promise.resolve(result.button.accept).then((ok: boolean) => {
-        if (ok) {
-          handler.addModule(module);
-        }
+    try {
+      const handler = this._handler;
+      showDialog({
+        title: 'Add requirement',
+        body: `Add "${module}" to requirements?`,
+        buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'Add' })]
+      }).then(result => {
+        Promise.resolve(result.button.accept).then((ok: boolean) => {
+          try {
+            if (ok) {
+              handler.addModule(module);
+            }
+          } catch (error) {
+            throw this._eh.report(error, 'ItemGenerator:addModule.ok', [
+              index,
+              module,
+              ok
+            ]);
+          }
+        });
       });
-    });
-    this.goToCell(index);
+      this.goToCell(index);
+    } catch (error) {
+      throw this._eh.report(error, 'ItemGenerator:addModule', [index, module]);
+    }
   }
 
   restoreCell(index: number, executionCount: number, code: string): void {
-    const cell = this._notebookContent.model.contentFactory.createCodeCell({});
-    cell.value.text = code;
-    cell.executionCount = executionCount;
-    this._notebookContent.model.cells.insert(index, cell);
-    this.goToCell(index);
+    try {
+      const cell = this._notebookContent.model.contentFactory.createCodeCell(
+        {}
+      );
+      cell.value.text = code;
+      cell.executionCount = executionCount;
+      this._notebookContent.model.cells.insert(index, cell);
+      this.goToCell(index);
+    } catch (error) {
+      throw this._eh.report(error, 'ItemGenerator:restoreCell', [
+        index,
+        executionCount,
+        code
+      ]);
+    }
   }
 }
 
 export class GroupGenerator implements IGroupGenerator {
   _nbPanel: NotebookPanel;
   _update: () => void;
+  _eh: ErrorHandler;
 
-  constructor(nbPanel: NotebookPanel, update: () => void) {
+  constructor(nbPanel: NotebookPanel, update: () => void, eh: ErrorHandler) {
     this._nbPanel = nbPanel;
     this._update = update;
+    this._eh = eh;
   }
 
   create(
@@ -105,68 +155,84 @@ export class GroupGenerator implements IGroupGenerator {
     reportType: ErrorTypeKey,
     elements: IReport[]
   ): IReport {
-    let strTitle: string;
-    let metavar: IObservableJSON;
-    let metaname: string;
-    if (isNumber(title)) {
-      strTitle = 'Cell ' + title;
-      const cell: Cell = this._nbPanel.content.widgets[Number(title)];
-      metavar = cell.model.metadata;
-      metaname = 'julynter-cellgroup-collapsed';
-    } else {
-      strTitle = capitalizeFirstLetter(String(title));
-      metavar = this._nbPanel.model.metadata;
-      metaname =
-        'julynter-cellgroup-' +
-        strTitle.replace(' ', '-').toLowerCase() +
-        '-collapsed';
-    }
-    let collapsed = metavar.get(metaname) as boolean;
-    collapsed = collapsed !== undefined ? collapsed : false;
-    elements.forEach(element => {
-      element.visible = !collapsed;
-      element.hasParent = true;
-    });
+    try {
+      let strTitle: string;
+      let metavar: IObservableJSON;
+      let metaname: string;
+      if (isNumber(title)) {
+        strTitle = 'Cell ' + title;
+        const cell: Cell = this._nbPanel.content.widgets[Number(title)];
+        metavar = cell.model.metadata;
+        metaname = 'julynter-cellgroup-collapsed';
+      } else {
+        strTitle = capitalizeFirstLetter(String(title));
+        metavar = this._nbPanel.model.metadata;
+        metaname =
+          'julynter-cellgroup-' +
+          strTitle.replace(' ', '-').toLowerCase() +
+          '-collapsed';
+      }
+      let collapsed = metavar.get(metaname) as boolean;
+      collapsed = collapsed !== undefined ? collapsed : false;
+      elements.forEach(element => {
+        element.visible = !collapsed;
+        element.hasParent = true;
+      });
 
-    const result: IReport = {
-      text: strTitle,
-      reportType: reportType,
-      reportId: 'group',
-      cellId: 'group',
-      suggestion: null,
-      visible: true,
-      filteredOut: false,
-      collapsed: collapsed,
-      type: 'group',
-      hasParent: true,
-      action: null,
-      boundAction: () => {
-        return;
-      }
-    };
-    const onClickFactory = (line: number) => {
-      return (): void => {
-        elements.forEach(element => {
-          element.visible = result.collapsed;
-        });
-        result.collapsed = !result.collapsed;
-        result.action.label = result.collapsed
-          ? 'Expand category'
-          : 'Collapse category';
-        metavar.set(metaname, !collapsed);
-        this._update();
-      };
-    };
-    result.boundAction = onClickFactory(0);
-    result.action = {
-      label: result.collapsed ? 'Expand category' : 'Collapse category',
-      title: 'Collapse or expand lints of this type',
-      execute: (ItemGenerator: IItemGenerator, ...args: any[]) => {
-        return (): void => {
+      const result: IReport = {
+        text: strTitle,
+        reportType: reportType,
+        reportId: 'group',
+        cellId: 'group',
+        suggestion: null,
+        visible: true,
+        filteredOut: false,
+        collapsed: collapsed,
+        type: 'group',
+        hasParent: true,
+        action: null,
+        boundAction: () => {
           return;
+        }
+      };
+      const onClickFactory = (line: number) => {
+        return (): void => {
+          try {
+            elements.forEach(element => {
+              element.visible = result.collapsed;
+            });
+            result.collapsed = !result.collapsed;
+            result.action.label = result.collapsed
+              ? 'Expand category'
+              : 'Collapse category';
+            metavar.set(metaname, !collapsed);
+            this._update();
+          } catch (error) {
+            throw this._eh.report(error, 'GroupGenerator:create.click', [
+              title,
+              reportType,
+              elements
+            ]);
+          }
         };
-      }
-    };
-    return result;
+      };
+      result.boundAction = onClickFactory(0);
+      result.action = {
+        label: result.collapsed ? 'Expand category' : 'Collapse category',
+        title: 'Collapse or expand lints of this type',
+        execute: (ItemGenerator: IItemGenerator, ...args: any[]) => {
+          return (): void => {
+            return;
+          };
+        }
+      };
+      return result;
+    } catch (error) {
+      throw this._eh.report(error, 'GroupGenerator:create', [
+        title,
+        reportType,
+        elements
+      ]);
+    }
   }
 }

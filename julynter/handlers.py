@@ -103,6 +103,13 @@ class ExperimentData(APIHandler):
         
         input_data = self.get_json_body()
         pprint(input_data)
+
+class ErrorData(APIHandler):
+    
+    @tornado.web.authenticated
+    def post(self):
+        input_data = self.get_json_body()
+        pprint(input_data)
         # ToDo: save input_data
 
 def setup_handlers(web_app):
@@ -113,5 +120,6 @@ def setup_handlers(web_app):
         (url_path_join(base_url, "julynter", "config"), ProjectConfig),
         (url_path_join(base_url, "julynter", "userconfig"), UserConfig),
         (url_path_join(base_url, "julynter", "experiment"), ExperimentData),
+        (url_path_join(base_url, "julynter", "error"), ErrorData),
     ]
     web_app.add_handlers(host_pattern, handlers)

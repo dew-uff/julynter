@@ -75,7 +75,7 @@ export class Julynter extends Widget {
     this._currentHandler = null;
     this._visibleWidget = null;
     this._experimentManager = new ExperimentManager(docmanager);
-    this._config = new Config(this._experimentManager.config, this._status);
+    this._config = new Config(this._experimentManager.config, this._status, eh);
   }
 
   addNewNotebook(nbPanel: NotebookPanel): void {
@@ -103,7 +103,6 @@ export class Julynter extends Widget {
           handler.getKernelLanguage.bind(handler)
         );
         scripts.then((language: Languages.LanguageModel) => {
-          console.log(language.name);
           status.connectedOnce = true;
           handler.configureHandler(language);
         });

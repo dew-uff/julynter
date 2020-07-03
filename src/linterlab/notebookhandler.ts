@@ -144,21 +144,25 @@ export class NotebookHandler implements IDisposable {
         });
       });
 
-      this._kernelRestarted.connect((sender: any, kernelReady: Promise<void>) => {
-        this._inspected.emit({
-          status: 'Restarting Kernel...'
-        } as IJulynterKernelUpdate);
-        // Emit restarting
+      this._kernelRestarted.connect(
+        (sender: any, kernelReady: Promise<void>) => {
+          this._inspected.emit({
+            status: 'Restarting Kernel...'
+          } as IJulynterKernelUpdate);
+          // Emit restarting
 
-        this._ready = kernelReady.then(() => {
-          this._initOnKernel().then(() => {
-            this._session.iopubMessage.connect(this._queryCall.bind(this));
-            this.performQuery();
+          this._ready = kernelReady.then(() => {
+            this._initOnKernel().then(() => {
+              this._session.iopubMessage.connect(this._queryCall.bind(this));
+              this.performQuery();
+            });
           });
-        });
-      });
+        }
+      );
     } catch (error) {
-      throw this._eh.report(error, 'NotebookHandler:configureHandler', [language.name]);
+      throw this._eh.report(error, 'NotebookHandler:configureHandler', [
+        language.name
+      ]);
     }
   }
 
@@ -243,11 +247,16 @@ export class NotebookHandler implements IDisposable {
    */
   public lint(): IReport[] {
     try {
-      const groupGenerator = new GroupGenerator(this._nbPanel, this._update);
-      const itemGenerator = new ItemGenerator(this._docManager, this);
+      const groupGenerator = new GroupGenerator(
+        this._nbPanel,
+        this._update,
+        this._eh
+      );
+      const itemGenerator = new ItemGenerator(this._docManager, this, this._eh);
       const notebookMetadata: IGenericNotebookMetadata = {
         title: this.nbPanel.title.label,
-        cells: (this.nbPanel.content.widgets as unknown) as IGenericCellMetadata[]
+        cells: (this.nbPanel.content
+          .widgets as unknown) as IGenericCellMetadata[]
       };
       const linter = new Linter(this.options, this.update, this.hasKernel);
       const results = linter.generate(
@@ -305,7 +314,9 @@ export class NotebookHandler implements IDisposable {
       };
       return this.sendToKernel(content, response);
     } catch (error) {
-      throw this._eh.report(error, 'NotebookHandler:executeLanguageCommand', [command]);
+      throw this._eh.report(error, 'NotebookHandler:executeLanguageCommand', [
+        command
+      ]);
     }
   }
 
@@ -398,7 +409,10 @@ export class NotebookHandler implements IDisposable {
           break;
       }
     } catch (error) {
-      throw this._eh.report(error, 'NotebookHandler:_handleQueryResponse', [msg.code, response.content]);
+      throw this._eh.report(error, 'NotebookHandler:_handleQueryResponse', [
+        msg.code,
+        response.content
+      ]);
     }
   }
 
@@ -424,7 +438,9 @@ export class NotebookHandler implements IDisposable {
           break;
       }
     } catch (error) {
-      throw this._eh.report(error, 'NotebookHandler:_queryCall', [args.content]);
+      throw this._eh.report(error, 'NotebookHandler:_queryCall', [
+        args.content
+      ]);
     }
   }
 
@@ -445,6 +461,7 @@ export class NotebookHandler implements IDisposable {
    * Handle disposed signals.
    */
   protected onSourceDisposed(sender: any, args: void): void {
+    return;
   }
 
   /**

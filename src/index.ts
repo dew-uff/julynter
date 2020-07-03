@@ -40,7 +40,6 @@ function activateJulynter(
   try {
     // Create the widget.
     const julynter = new Julynter(docmanager, notebookTracker, labShell, eh);
-
     // Add the julynter to the left area.
     julynter.title.iconClass = 'julynter-main-icon jp-SideBar-tabIcon';
     julynter.title.caption = 'Julynter';
