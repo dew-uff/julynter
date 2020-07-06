@@ -141,3 +141,19 @@ pip uninstall julynter
 jupyter labextension uninstall julynter
 ```
 
+### Publishing Package
+
+(Self notes)
+
+Publish NPM package:
+
+```bash
+npm login
+npm publish --access public
+```
+
+Publish PyPI package:
+```bash
+python setup.py bdist_wheel
+twine upload dist/*
+```

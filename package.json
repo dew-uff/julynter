@@ -1,5 +1,5 @@
 {
-  "name": "julynter",
+  "name": "@julynter/labextension",
   "version": "0.2.0",
   "description": "A quality checker for Jupyter",
   "keywords": [
@@ -22,7 +22,7 @@
   "style": "style/index.css",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dew-uff/julynter.git"
+    "url": "git+https://github.com/dew-uff/julynter.git"
   },
   "scripts": {
     "build": "jlpm run build:lib",
@@ -82,5 +82,8 @@
       }
     },
     "extension": true
+  },
+  "directories": {
+    "lib": "lib"
   }
 }

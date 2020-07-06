@@ -2,7 +2,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import { Token } from '@lumino/coreutils';
 import { Message } from '@lumino/messaging';
 import { Widget } from '@lumino/widgets';
 
@@ -25,11 +24,6 @@ import { ErrorHandler } from './errorhandler';
  * Timeout for throttling Julynter rendering.
  */
 const RENDER_TIMEOUT = 1000;
-
-/**
- * The Julynter token.
- */
-export const IJulynter = new Token<Julynter>('jupyterlab-julynter:IJulynter');
 
 /**
  * A widget for hosting a notebook julynter.

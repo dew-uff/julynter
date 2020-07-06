@@ -20,7 +20,7 @@ import { ErrorHandler } from './linterlab/errorhandler';
  * Initialization data for the julynter extension.
  */
 const extension: JupyterFrontEndPlugin<void> = {
-  id: 'jupyterlab-julynter',
+  id: 'jupyterlab-extension:julynter',
   autoStart: true,
   requires: [IDocumentManager, ILabShell, ILayoutRestorer, INotebookTracker],
   activate: activateJulynter,
