@@ -5,7 +5,7 @@ import {
   ILintOptionsManager,
   ReportId,
   ReportIds,
-  ViewMode
+  ViewMode,
 } from './interfaces';
 
 export abstract class AbstractOptionsManager implements ILintOptionsManager {
@@ -13,7 +13,11 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
   public default: IJulynterLintOptions;
 
   abstract loadKey<T>(key: string, def: T): T;
-  abstract saveKey(key: string, value: any, ereport: boolean): void;
+  abstract saveKey(
+    key: string,
+    value: boolean | string,
+    ereport: boolean
+  ): void;
 
   checkReport(key: ReportId): boolean {
     return this.checks.reports[key];
@@ -75,7 +79,7 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
           return previous;
         },
         { ...this.default.types }
-      )
+      ),
     });
   }
 

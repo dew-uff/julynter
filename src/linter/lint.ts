@@ -9,7 +9,7 @@ import {
   IItemGenerator,
   ILintOptionsManager,
   IQueryResult,
-  IReport
+  IReport,
 } from './interfaces';
 
 export class Linter {
@@ -139,7 +139,7 @@ export class Linter {
             headings.push(
               itemGenerator.create(i, cell.model.type, 'c2', [
                 i,
-                executionCountNumber
+                executionCountNumber,
               ])
             );
           }
@@ -147,7 +147,7 @@ export class Linter {
             headings.push(
               itemGenerator.create(i, cell.model.type, 'h3', [
                 i,
-                executionCountNumber
+                executionCountNumber,
               ])
             );
           }
@@ -180,7 +180,7 @@ export class Linter {
           headings.push(
             itemGenerator.create(index, cell.model.type, 'p1', [
               index,
-              absolutePaths[currentCount].map(x => "'" + x + "'").join(', ')
+              absolutePaths[currentCount].map((x) => "'" + x + "'").join(', '),
             ])
           );
         }
@@ -190,7 +190,7 @@ export class Linter {
               headings.push(
                 itemGenerator.create(index, cell.model.type, 'i2', [
                   index,
-                  module
+                  module,
                 ])
               );
             }
@@ -214,7 +214,7 @@ export class Linter {
         if (hasKernel) {
           const dependencies = cellDependencies[currentCount];
           if (dependencies !== undefined) {
-            Object.keys(dependencies).forEach(variable => {
+            Object.keys(dependencies).forEach((variable) => {
               const number = Number(dependencies[variable]);
               if (!{}.hasOwnProperty.call(executionCounts, number)) {
                 headings.push(
@@ -222,7 +222,7 @@ export class Linter {
                     index,
                     number,
                     executedCode[number].replace('\\n', '\n'),
-                    variable
+                    variable,
                   ])
                 );
               }
@@ -233,7 +233,7 @@ export class Linter {
             headings.push(
               itemGenerator.create(index, cell.model.type, 'h6', [
                 index,
-                missing.map(x => "'" + x + "'").join(', ')
+                missing.map((x) => "'" + x + "'").join(', '),
               ])
             );
           }
@@ -252,7 +252,7 @@ export class Linter {
       if (model.type !== 'markdown') {
         headings.push(
           itemGenerator.create(emptyTail - 1, cell.model.type, 'c5', [
-            emptyTail - 1
+            emptyTail - 1,
           ])
         );
       }
@@ -297,7 +297,7 @@ export class Linter {
   private filterByReportType(headings: IReport[]): IReport[] {
     const options = this.options;
     const newHeadings: IReport[] = [];
-    headings.forEach(element => {
+    headings.forEach((element) => {
       if (
         options.checkType(element.reportType) &&
         (element.reportId === 'group' || options.checkReport(element.reportId))
@@ -314,7 +314,7 @@ export class Linter {
     groupGenerator: IGroupGenerator
   ): IReport[] {
     const groups: { [id: string]: IReport[] } = {};
-    headings.forEach(element => {
+    headings.forEach((element) => {
       if (element.cellId in groups) {
         groups[element.cellId].push(element);
       } else {
@@ -337,7 +337,7 @@ export class Linter {
     groupGenerator: IGroupGenerator
   ): IReport[] {
     const groups: { [id in ErrorTypeKey]?: IReport[] } = {};
-    headings.forEach(element => {
+    headings.forEach((element) => {
       if (element.reportType in groups) {
         groups[element.reportType].push(element);
       } else {

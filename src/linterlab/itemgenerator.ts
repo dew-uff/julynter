@@ -11,7 +11,7 @@ import {
   IGroupGenerator,
   IReport,
   ReportId,
-  ReportType
+  ReportType,
 } from '../linter/interfaces';
 import { NotebookHandler } from './notebookhandler';
 import { ErrorHandler } from './errorhandler';
@@ -60,14 +60,14 @@ export class ItemGenerator implements IItemGenerator {
         filteredOut: false,
         type: type,
         action: message.action,
-        boundAction: message.action.execute(this, ...args)
+        boundAction: message.action.execute(this, ...args),
       };
     } catch (error) {
       throw this._eh.report(error, 'ItemGenerator:create', [
         cellId,
         type,
         messageId,
-        args
+        args,
       ]);
     }
   }
@@ -77,7 +77,7 @@ export class ItemGenerator implements IItemGenerator {
       renameDialog(this._docManager, this._handler.nbPanel.context.path);
     } catch (error) {
       throw this._eh.report(error, 'ItemGenerator:renameNotebook', [
-        this._handler.nbPanel.context.path
+        this._handler.nbPanel.context.path,
       ]);
     }
   }
@@ -98,8 +98,8 @@ export class ItemGenerator implements IItemGenerator {
       showDialog({
         title: 'Add requirement',
         body: `Add "${module}" to requirements?`,
-        buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'Add' })]
-      }).then(result => {
+        buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'Add' })],
+      }).then((result) => {
         Promise.resolve(result.button.accept).then((ok: boolean) => {
           try {
             if (ok) {
@@ -109,7 +109,7 @@ export class ItemGenerator implements IItemGenerator {
             throw this._eh.report(error, 'ItemGenerator:addModule.ok', [
               index,
               module,
-              ok
+              ok,
             ]);
           }
         });
@@ -133,7 +133,7 @@ export class ItemGenerator implements IItemGenerator {
       throw this._eh.report(error, 'ItemGenerator:restoreCell', [
         index,
         executionCount,
-        code
+        code,
       ]);
     }
   }
@@ -174,7 +174,7 @@ export class GroupGenerator implements IGroupGenerator {
       }
       let collapsed = metavar.get(metaname) as boolean;
       collapsed = collapsed !== undefined ? collapsed : false;
-      elements.forEach(element => {
+      elements.forEach((element) => {
         element.visible = !collapsed;
         element.hasParent = true;
       });
@@ -193,12 +193,12 @@ export class GroupGenerator implements IGroupGenerator {
         action: null,
         boundAction: () => {
           return;
-        }
+        },
       };
       const onClickFactory = (line: number) => {
         return (): void => {
           try {
-            elements.forEach(element => {
+            elements.forEach((element) => {
               element.visible = result.collapsed;
             });
             result.collapsed = !result.collapsed;
@@ -211,7 +211,7 @@ export class GroupGenerator implements IGroupGenerator {
             throw this._eh.report(error, 'GroupGenerator:create.click', [
               title,
               reportType,
-              elements
+              elements,
             ]);
           }
         };
@@ -224,14 +224,14 @@ export class GroupGenerator implements IGroupGenerator {
           return (): void => {
             return;
           };
-        }
+        },
       };
       return result;
     } catch (error) {
       throw this._eh.report(error, 'GroupGenerator:create', [
         title,
         reportType,
-        elements
+        elements,
       ]);
     }
   }

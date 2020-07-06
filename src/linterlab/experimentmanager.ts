@@ -18,12 +18,12 @@ export const IExperimentConfigAttributes = [
   'activity',
   'code',
   'name',
-  'enabled'
+  'enabled',
 ] as const;
 export type IExperimentConfigAttribute = typeof IExperimentConfigAttributes[number];
 
 export type IExperimentConfig = {
-  [id in IExperimentConfigAttribute]: boolean | 'maybe'
+  [id in IExperimentConfigAttribute]: boolean | 'maybe';
 };
 
 type headers = 'Action' | 'Activity' | 'Code' | 'Execution' | 'Lint';
@@ -149,7 +149,7 @@ export class ExperimentManager {
       activity: 'maybe',
       code: 'maybe',
       name: 'maybe',
-      enabled: true
+      enabled: true,
     };
     this.lastLint = {};
     this._overrideJupyterLab(docmanager);
@@ -161,7 +161,7 @@ export class ExperimentManager {
       oldPath: string,
       newPath: string
     ): Promise<Contents.IModel> => {
-      return oldRename(oldPath, newPath).then(result => {
+      return oldRename(oldPath, newPath).then((result) => {
         this.reportRename(oldPath, newPath);
         return result;
       });
@@ -173,7 +173,7 @@ export class ExperimentManager {
       sessionContext: ISessionContext,
       metadata?: JSONObject
     ): Promise<KernelMessage.IExecuteReplyMsg | void> => {
-      return oldExecute(cell, sessionContext, metadata).then(msg => {
+      return oldExecute(cell, sessionContext, metadata).then((msg) => {
         this.reportExecution(cell, sessionContext);
         return msg;
       });
@@ -390,7 +390,7 @@ export class ExperimentManager {
       header: 'Action',
       operation: 'rename',
       oldName: oldName,
-      newName: newName
+      newName: newName,
     };
     this._send(send);
   }
@@ -416,7 +416,7 @@ export class ExperimentManager {
       notebookId: notebook.parent.id,
       indexes: [oldIndex],
       newIndexes: [newIndex],
-      codes: codes
+      codes: codes,
     };
     this._send(send);
   }
@@ -439,7 +439,7 @@ export class ExperimentManager {
       notebookId: notebook.parent.id,
       indexes: toMerge,
       newIndexes: [newIndex],
-      codes: [code]
+      codes: [code],
     };
     this._send(send);
   }
@@ -458,7 +458,7 @@ export class ExperimentManager {
       operation: operation,
       notebookName: this._notebookName(notebook.title.label),
       notebookId: notebook.parent.id,
-      indexes: indexes
+      indexes: indexes,
     };
     this._send(send);
   }
@@ -480,7 +480,7 @@ export class ExperimentManager {
       notebookId: notebook.parent.id,
       indexes: [index],
       oldType: oldValue,
-      newType: newValue
+      newType: newValue,
     };
     this._send(send);
   }
@@ -516,7 +516,7 @@ export class ExperimentManager {
       newIndexes: [index],
       codes: codes,
       info: mode,
-      pasteCount: toInsert.length
+      pasteCount: toInsert.length,
     };
     this._send(send);
   }
@@ -529,7 +529,7 @@ export class ExperimentManager {
       header: 'Action',
       operation: operation,
       notebookName: this._notebookName(notebook.title.label),
-      notebookId: notebook.parent.id
+      notebookId: notebook.parent.id,
     };
     this._send(send);
   }
@@ -547,7 +547,7 @@ export class ExperimentManager {
       operation: 'loadConfig',
       notebookName: this._notebookName(nbPanel.title.label),
       notebookId: nbPanel.id,
-      options: checks
+      options: checks,
     };
     this._send(send);
   }
@@ -561,7 +561,7 @@ export class ExperimentManager {
       operation: 'saveConfig',
       notebookName: this._notebookName(nbPanel.title.label),
       notebookId: nbPanel.id,
-      options: checks
+      options: checks,
     };
     this._send(send);
   }
@@ -579,7 +579,7 @@ export class ExperimentManager {
       header: 'Activity',
       operation: 'close',
       notebookName: this._notebookName(handler.name),
-      notebookId: handler.id
+      notebookId: handler.id,
     };
     this._send(send);
   }
@@ -598,7 +598,7 @@ export class ExperimentManager {
       operation: operation,
       notebookName: this._notebookName(handler.name),
       notebookId: handler.id,
-      info: kernelName
+      info: kernelName,
     };
     this._send(send);
   }
@@ -612,7 +612,7 @@ export class ExperimentManager {
       header: 'Activity',
       operation: operation,
       notebookName: this._notebookName(handler.name),
-      notebookId: handler.id
+      notebookId: handler.id,
     };
     this._send(send);
   }
@@ -630,12 +630,16 @@ export class ExperimentManager {
       operation: 'visibility',
       notebookName: this._notebookName(handler.name),
       notebookId: handler.id,
-      info: visible.toString()
+      info: visible.toString(),
     };
     this._send(send);
   }
 
-  reportSetConfig(nbPanel: NotebookPanel, config: string, value: any): void {
+  reportSetConfig(
+    nbPanel: NotebookPanel,
+    config: string,
+    value: boolean | string
+  ): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
@@ -646,7 +650,7 @@ export class ExperimentManager {
       notebookName: this._notebookName(nbPanel.title.label),
       notebookId: nbPanel.id,
       param: config,
-      info: value.toString()
+      info: value.toString(),
     };
     this._send(send);
   }
@@ -666,7 +670,7 @@ export class ExperimentManager {
       notebookName: this._notebookName(handler.name),
       notebookId: handler.id,
       param: language,
-      info: kernel
+      info: kernel,
     };
     this._send(send);
   }
@@ -693,7 +697,7 @@ export class ExperimentManager {
       operation: 'code',
       notebookName: this._notebookName(handler.name),
       notebookId: handler.id,
-      cells: cells
+      cells: cells,
     };
     this._send(send);
   }
@@ -708,7 +712,7 @@ export class ExperimentManager {
       notebookName: this._notebookName(sessionContext.path),
       notebookId: cell.parent.parent.id,
       cells: [this._collectCell(cell)],
-      indexes: [(cell.parent as Notebook).widgets.indexOf(cell)]
+      indexes: [(cell.parent as Notebook).widgets.indexOf(cell)],
     };
     this._send(send);
   }
@@ -726,11 +730,11 @@ export class ExperimentManager {
       this.lastLint[handler.id] = [];
     }
 
-    const newReports = reports.filter(report => {
+    const newReports = reports.filter((report) => {
       if (report.type === 'group') {
         return false;
       }
-      const same = this.lastLint[handler.id].find(other => {
+      const same = this.lastLint[handler.id].find((other) => {
         return (
           other.text === report.text &&
           other.reportType === report.reportType &&
@@ -748,7 +752,7 @@ export class ExperimentManager {
       return true;
     });
 
-    const removedReports = this.lastLint[handler.id].filter(report => {
+    const removedReports = this.lastLint[handler.id].filter((report) => {
       if (report.type === 'group') {
         return false;
       }
@@ -775,7 +779,7 @@ export class ExperimentManager {
       notebookName: this._notebookName(handler.name),
       notebookId: handler.id,
       newReports: newReports.map(mapfn),
-      removedReports: removedReports.map(mapfn)
+      removedReports: removedReports.map(mapfn),
     };
     this._send(send);
   }
@@ -799,7 +803,7 @@ export class ExperimentManager {
       notebookName: this._notebookName(handler.name),
       notebookId: handler.id,
       report: newReport,
-      message: message
+      message: message,
     };
     this._send(send);
   }
@@ -821,7 +825,7 @@ export class ExperimentManager {
       operation: 'lintclick',
       notebookName: this._notebookName(handler.name),
       notebookId: handler.id,
-      report: newReport
+      report: newReport,
     };
     this._send(send);
   }
@@ -835,7 +839,7 @@ export class ExperimentManager {
       cellId: report.cellId.toString(),
       visible: report.visible,
       filteredOut: report.filteredOut,
-      type: report.type
+      type: report.type,
     };
   }
 
@@ -846,7 +850,7 @@ export class ExperimentManager {
       cellId: report.cellId.toString(),
       visible: report.visible,
       filteredOut: report.filteredOut,
-      type: report.type
+      type: report.type,
     };
   }
 
@@ -860,7 +864,7 @@ export class ExperimentManager {
       length: model.value.text.length,
       empty: model.value.text.trim().length === 0,
       executionCount: null,
-      outputs: null
+      outputs: null,
     };
     if (this.config.execution && model.type === 'code') {
       const outputs: ICellOutput[] = [];
@@ -870,7 +874,7 @@ export class ExperimentManager {
         const codeOutput = codeOutputs[j];
         const output: ICellOutput = {
           type: codeOutput.output_type,
-          mime: []
+          mime: [],
         };
         if (output.type === 'stream') {
           output.mime = [(codeOutput as IStream).name];
@@ -905,8 +909,8 @@ export class ExperimentManager {
     data['date'] = new Date();
     return requestAPI<any>('experiment', {
       body: JSON.stringify(data),
-      method: 'POST'
-    }).catch(reason => {
+      method: 'POST',
+    }).catch((reason) => {
       console.error(
         `The julynter server extension appears to be missing.\n${reason}`
       );

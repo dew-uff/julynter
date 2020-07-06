@@ -23,7 +23,7 @@ export const ErrorTypeKeys = [
   'hiddenstate',
   'confusenotebook',
   'import',
-  'absolutepath'
+  'absolutepath',
 ] as const;
 export type ErrorTypeKey = typeof ErrorTypeKeys[number];
 
@@ -51,7 +51,7 @@ export const ReportIds = [
   't4',
   't5',
   't6',
-  't7'
+  't7',
 ] as const;
 export type ReportId = typeof ReportIds[number];
 
@@ -176,6 +176,7 @@ export interface ILintOptionsManager {
   reloadOptions(): void;
   saveOptions(): void;
   checks: IJulynterLintOptions;
+  default: IJulynterLintOptions;
 }
 
 /**

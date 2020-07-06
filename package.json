@@ -33,36 +33,36 @@
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
     "clean:labextension": "rimraf julynter/labextension",
     "clean:all": "jlpm run clean:lib && jlpm run clean:labextension",
-
     "eslint": "eslint . --ext .ts,.tsx --fix",
     "eslint:check": "eslint . --ext .ts,.tsx",
     "prepare": "jlpm run clean && jlpm run build",
     "watch": "tsc -w"
   },
   "dependencies": {
-    "@jupyterlab/coreutils": "^4.0.0",
-    "@jupyterlab/services": "^5.0.0",
     "@jupyterlab/application": "^2.0.0",
+    "@jupyterlab/coreutils": "^4.0.0",
     "@jupyterlab/docmanager": "^2.0.0",
     "@jupyterlab/fileeditor": "^2.0.0",
-    "@jupyterlab/notebook": "^2.0.0",
     "@jupyterlab/nbformat": "^2.0.0",
-    "@lumino/disposable": "^1.4.0",
+    "@jupyterlab/notebook": "^2.0.0",
+    "@jupyterlab/services": "^5.0.0",
+    "@lumino/coreutils": "^1.5.2",
+    "@lumino/disposable": "^1.4.2",
     "react": "~16.9.0",
     "react-dom": "~16.9.0"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^2.25.0",
-    "@typescript-eslint/parser": "^2.25.0",
-    "eslint": "^6.8.0",
-    "eslint-config-prettier": "^6.10.1",
-    "eslint-plugin-prettier": "^3.1.2",
-    "mkdirp": "^1.0.3", 
     "@types/react": "~16.9.0",
     "@types/react-dom": "~16.9.0",
-    "prettier": "1.16.4",
-    "rimraf": "^2.6.1",
-    "typescript": "~3.7.0"
+    "@typescript-eslint/eslint-plugin": "^3.5.0",
+    "@typescript-eslint/parser": "^3.5.0",
+    "eslint": "^7.4.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-prettier": "^3.1.2",
+    "mkdirp": "^1.0.3",
+    "prettier": "2.0.5",
+    "rimraf": "^3.0.2",
+    "typescript": "~3.9.6"
   },
   "resolutions": {
     "@types/react": "~16.9.0"
@@ -70,17 +70,17 @@
   "sideEffects": [
     "style/*.css"
   ],
-  "jupyterlab": { 
+  "jupyterlab": {
     "discovery": {
-        "server": {
-          "managers": [
-            "pip"
-          ],
-          "base": {
-            "name": "julynter"
-          }
+      "server": {
+        "managers": [
+          "pip"
+        ],
+        "base": {
+          "name": "julynter"
         }
-    }, 
+      }
+    },
     "extension": true
   }
 }

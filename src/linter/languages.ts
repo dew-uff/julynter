@@ -31,9 +31,9 @@ export abstract class Languages {
       requirements +
       "')",
     julynterCode: (code: string) => {
-      return code.startsWith('julynter.kernel._jupyterlab_julynter');
+      return code.includes('julynter.kernel._jupyterlab_julynter');
     },
-    name: 'python'
+    name: 'python',
   };
 
   static GENERIC: Languages.LanguageModel = {
@@ -41,14 +41,14 @@ export abstract class Languages {
     queryCommand: null,
     addModuleCommand: null,
     julynterCode: (code: string) => false,
-    name: 'generic'
+    name: 'generic',
   };
 
   static scripts: { [index: string]: Languages.LanguageModel } = {
     python3: Languages.PYTHON,
     python2: Languages.PYTHON,
     python: Languages.PYTHON,
-    generic: Languages.GENERIC
+    generic: Languages.GENERIC,
   };
 
   public static getScript(lang: string): Promise<Languages.LanguageModel> {

@@ -4,14 +4,14 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin,
   ILayoutRestorer,
-  ILabShell
+  ILabShell,
 } from '@jupyterlab/application';
 
 import { NotebookPanel, INotebookTracker } from '@jupyterlab/notebook';
 
 import { IDocumentManager } from '@jupyterlab/docmanager';
 
-import { Julynter, IJulynter } from './linterlab/julynter';
+import { Julynter } from './linterlab/julynter';
 
 import '../style/index.css';
 import { ErrorHandler } from './linterlab/errorhandler';
@@ -19,12 +19,11 @@ import { ErrorHandler } from './linterlab/errorhandler';
 /**
  * Initialization data for the julynter extension.
  */
-const extension: JupyterFrontEndPlugin<Julynter> = {
+const extension: JupyterFrontEndPlugin<void> = {
   id: 'jupyterlab-julynter',
   autoStart: true,
-  provides: IJulynter,
   requires: [IDocumentManager, ILabShell, ILayoutRestorer, INotebookTracker],
-  activate: activateJulynter
+  activate: activateJulynter,
 };
 
 // VariableInspectionHandler -> JulynterHandler
@@ -35,7 +34,7 @@ function activateJulynter(
   labShell: ILabShell,
   restorer: ILayoutRestorer,
   notebookTracker: INotebookTracker
-): Julynter {
+): void {
   const eh = new ErrorHandler();
   try {
     // Create the widget.
@@ -68,7 +67,7 @@ function activateJulynter(
 
     console.log('JupyterLab extension julynter is activated!');
 
-    return julynter;
+    //return julynter;
   } catch (error) {
     throw eh.report(error, 'activateJulynter', []);
   }

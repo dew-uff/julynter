@@ -12,6 +12,7 @@ import { ErrorTypeKey, ErrorTypeKeys } from '../../linter/interfaces';
 import { Config } from '../config';
 import { NotebookHandler } from '../notebookhandler';
 import { createJulynterConfigWidget } from './julynterconfigwidget';
+import { ErrorHandler } from '../errorhandler';
 
 interface IToolbarProps {
   notebook: NotebookHandler;
@@ -19,6 +20,7 @@ interface IToolbarProps {
   tracker: INotebookTracker;
   config: Config;
   handlers: { [id: string]: Promise<NotebookHandler> };
+  errorHandler: ErrorHandler;
 }
 
 export class ToolbarRenderer extends React.Component<IToolbarProps> {
@@ -30,152 +32,187 @@ export class ToolbarRenderer extends React.Component<IToolbarProps> {
   }
 
   toggle(key: ErrorTypeKey): void {
-    const options = this.props.notebook.options;
-    options.updateType(key, !options.checkType(key));
+    try {
+      const options = this.props.notebook.options;
+      options.updateType(key, !options.checkType(key));
+    } catch (error) {
+      throw this.props.errorHandler.report(error, 'ToolbarRenderer:toggle', [
+        key,
+      ]);
+    }
   }
 
   toggleMode(): void {
-    let mode = this.props.notebook.options.checkMode();
-    if (mode === 'list') {
-      mode = 'cell';
-    } else if (mode === 'cell') {
-      mode = 'type';
-    } else {
-      mode = 'list';
+    try {
+      let mode = this.props.notebook.options.checkMode();
+      if (mode === 'list') {
+        mode = 'cell';
+      } else if (mode === 'cell') {
+        mode = 'type';
+      } else {
+        mode = 'list';
+      }
+      this.props.notebook.options.updateMode(mode);
+    } catch (error) {
+      throw this.props.errorHandler.report(
+        error,
+        'ToolbarRenderer:toggleMode',
+        []
+      );
     }
-    this.props.notebook.options.updateMode(mode);
   }
 
   changeRequirements(): Promise<Dialog.IResult<string>> {
-    const options = this.props.notebook.options;
-    return showDialog({
-      title: 'Set requirements file',
-      body: new RequirementsHandler(options.checkRequirements()),
-      focusNodeSelector: 'input',
-      buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'Set' })]
-    }).then(result => {
-      if (!result.value) {
-        return;
-      }
-      const name: string = result.value as string;
-      if (name.length === 0 || name.includes(':')) {
-        void showErrorMessage(
-          'Set Requirements Error',
-          Error(
-            `"${result.value}" is not a valid name for a file. ` +
-              'Names must have nonzero length, ' +
-              'and cannot include ":"'
-          )
-        );
-        return null;
-      }
-      options.updateRequirements(name);
-    });
+    try {
+      const options = this.props.notebook.options;
+      return showDialog({
+        title: 'Set requirements file',
+        body: new RequirementsHandler(options.checkRequirements()),
+        focusNodeSelector: 'input',
+        buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'Set' })],
+      }).then((result) => {
+        if (!result.value) {
+          return;
+        }
+        const name: string = result.value as string;
+        if (name.length === 0 || name.includes(':')) {
+          void showErrorMessage(
+            'Set Requirements Error',
+            Error(
+              `"${result.value}" is not a valid name for a file. ` +
+                'Names must have nonzero length, ' +
+                'and cannot include ":"'
+            )
+          );
+          return null;
+        }
+        options.updateRequirements(name);
+      });
+    } catch (error) {
+      throw this.props.errorHandler.report(
+        error,
+        'ToolbarRenderer:changeRequirements',
+        []
+      );
+    }
   }
 
   configure(): void {
-    this.props.labShell.add(
-      createJulynterConfigWidget(
-        this.props.tracker,
-        this.props.handlers,
-        this.props.config,
-        this.props.notebook
-      ),
-      'main'
-    );
+    try {
+      this.props.labShell.add(
+        createJulynterConfigWidget(
+          this.props.tracker,
+          this.props.handlers,
+          this.props.config,
+          this.props.notebook,
+          this.props.errorHandler
+        ),
+        'main'
+      );
+    } catch (error) {
+      throw this.props.errorHandler.report(
+        error,
+        'ToolbarRenderer:configure',
+        []
+      );
+    }
   }
 
   render(): JSX.Element {
-    let i = 0;
-    const listing: JSX.Element[] = ErrorTypeKeys.map(key => {
-      const element = ERROR_TYPES_MAP[key];
-      const toggleClass =
-        element.icon +
-        ' ' +
-        (this.props.notebook.options.checkType(key)
-          ? 'julynter-toolbar-icon-selected'
-          : 'julynter-toolbar-icon');
-      const buttonClass = 'julynter-toolbar-button';
-      const label = element.label;
-      return (
+    try {
+      let i = 0;
+      const listing: JSX.Element[] = ErrorTypeKeys.map((key) => {
+        const element = ERROR_TYPES_MAP[key];
+        const toggleClass =
+          element.icon +
+          ' ' +
+          (this.props.notebook.options.checkType(key)
+            ? 'julynter-toolbar-icon-selected'
+            : 'julynter-toolbar-icon');
+        const buttonClass = 'julynter-toolbar-button';
+        const label = element.label;
+        return (
+          <div
+            key={`toolbar-${key}-${i++}`}
+            className={buttonClass}
+            onClick={(): void => this.toggle(key)}
+          >
+            <div
+              role="text"
+              aria-label={label}
+              title={label}
+              className={toggleClass}
+            />
+          </div>
+        );
+      });
+
+      let toggleClass = 'julynter-toolbar-icon';
+      const mode = this.props.notebook.options.checkMode();
+      if (mode === 'list') {
+        toggleClass += ' julynter-toolbar-list-icon';
+      } else if (mode === 'cell') {
+        toggleClass += ' julynter-toolbar-cell-icon';
+      } else if (mode === 'type') {
+        toggleClass += ' julynter-toolbar-type-icon';
+      }
+      const modeToggle = (
         <div
-          key={`toolbar-${key}-${i++}`}
-          className={buttonClass}
-          onClick={(): void => this.toggle(key)}
+          key="toolbar-mode"
+          className="julynter-toolbar-button"
+          onClick={this.toggleMode}
         >
           <div
             role="text"
-            aria-label={label}
-            title={label}
+            aria-label="Alternate Mode"
+            title="Alternate Mode"
             className={toggleClass}
           />
         </div>
       );
-    });
 
-    let toggleClass = 'julynter-toolbar-icon';
-    const mode = this.props.notebook.options.checkMode();
-    if (mode === 'list') {
-      toggleClass += ' julynter-toolbar-list-icon';
-    } else if (mode === 'cell') {
-      toggleClass += ' julynter-toolbar-cell-icon';
-    } else if (mode === 'type') {
-      toggleClass += ' julynter-toolbar-type-icon';
-    }
-    const modeToggle = (
-      <div
-        key="toolbar-mode"
-        className="julynter-toolbar-button"
-        onClick={this.toggleMode}
-      >
+      const reqConfig = (
         <div
-          role="text"
-          aria-label="Alternate Mode"
-          title="Alternate Mode"
-          className={toggleClass}
-        />
-      </div>
-    );
-
-    const reqConfig = (
-      <div
-        key="toolbar-req"
-        className="julynter-toolbar-button"
-        onClick={this.changeRequirements}
-      >
-        <div
-          role="text"
-          aria-label="Change requirements location"
-          title="Change requirements location"
-          className="julynter-toolbar-icon julynter-toolbar-rename-icon"
-        />
-      </div>
-    );
-
-    const configure = (
-      <div
-        key="toolbar-config"
-        className="julynter-toolbar-button"
-        onClick={this.configure.bind(this)}
-      >
-        <div
-          role="text"
-          aria-label="Configure Julynter"
-          title="Configure Julynter"
-          className="julynter-toolbar-icon julynter-toolbar-config-icon"
-        />
-      </div>
-    );
-    return (
-      <div>
-        <div className={'julynter-toolbar'}>
-          {listing}
-          {modeToggle}
-          {reqConfig}
-          {configure}
+          key="toolbar-req"
+          className="julynter-toolbar-button"
+          onClick={this.changeRequirements}
+        >
+          <div
+            role="text"
+            aria-label="Change requirements location"
+            title="Change requirements location"
+            className="julynter-toolbar-icon julynter-toolbar-rename-icon"
+          />
         </div>
-      </div>
-    );
+      );
+
+      const configure = (
+        <div
+          key="toolbar-config"
+          className="julynter-toolbar-button"
+          onClick={this.configure.bind(this)}
+        >
+          <div
+            role="text"
+            aria-label="Configure Julynter"
+            title="Configure Julynter"
+            className="julynter-toolbar-icon julynter-toolbar-config-icon"
+          />
+        </div>
+      );
+      return (
+        <div>
+          <div className={'julynter-toolbar'}>
+            {listing}
+            {modeToggle}
+            {reqConfig}
+            {configure}
+          </div>
+        </div>
+      );
+    } catch (error) {
+      throw this.props.errorHandler.report(error, 'ToolbarRenderer:render', []);
+    }
   }
 }
 

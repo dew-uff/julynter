@@ -580,3 +580,13 @@
 .julynter-context-info {
   font-weight: bold;
 }
+
+.julynter-error-display:hover {
+  cursor: pointer !important;
+}
+
+.julynter-error-text {
+  min-width: 400px;
+  width: 99%;
+  min-height: 200px;
+}

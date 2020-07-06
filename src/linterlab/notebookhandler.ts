@@ -12,7 +12,7 @@ import {
   IGenericNotebookMetadata,
   IGenericCellMetadata,
   IQueryResult,
-  IReport
+  IReport,
 } from '../linter/interfaces';
 import { Languages } from '../linter/languages';
 import { Linter } from '../linter/lint';
@@ -104,7 +104,7 @@ export class NotebookHandler implements IDisposable {
       );
     } catch (error) {
       throw this._eh.report(error, 'NotebookHandler:constructor', [
-        nbPanel.title.label
+        nbPanel.title.label,
       ]);
     }
   }
@@ -147,7 +147,7 @@ export class NotebookHandler implements IDisposable {
       this._kernelRestarted.connect(
         (sender: any, kernelReady: Promise<void>) => {
           this._inspected.emit({
-            status: 'Restarting Kernel...'
+            status: 'Restarting Kernel...',
           } as IJulynterKernelUpdate);
           // Emit restarting
 
@@ -161,7 +161,7 @@ export class NotebookHandler implements IDisposable {
       );
     } catch (error) {
       throw this._eh.report(error, 'NotebookHandler:configureHandler', [
-        language.name
+        language.name,
       ]);
     }
   }
@@ -256,7 +256,7 @@ export class NotebookHandler implements IDisposable {
       const notebookMetadata: IGenericNotebookMetadata = {
         title: this.nbPanel.title.label,
         cells: (this.nbPanel.content
-          .widgets as unknown) as IGenericCellMetadata[]
+          .widgets as unknown) as IGenericCellMetadata[],
       };
       const linter = new Linter(this.options, this.update, this.hasKernel);
       const results = linter.generate(
@@ -289,7 +289,6 @@ export class NotebookHandler implements IDisposable {
       response: KernelMessage.IIOPubMessage
     ) => void
   ): Promise<void> {
-    /* eslint @typescript-eslint/camelcase: 0 */
     try {
       if (this._language === null) {
         return this._createPromise('Language not loaded');
@@ -310,12 +309,12 @@ export class NotebookHandler implements IDisposable {
       const content: KernelMessage.IExecuteRequestMsg['content'] = {
         code: code,
         stop_on_error: false,
-        store_history: false
+        store_history: false,
       };
       return this.sendToKernel(content, response);
     } catch (error) {
       throw this._eh.report(error, 'NotebookHandler:executeLanguageCommand', [
-        command
+        command,
       ]);
     }
   }
@@ -377,20 +376,21 @@ export class NotebookHandler implements IDisposable {
           this._inspected.emit({
             status: '',
             kernelName: this._session.kernelDisplayName || '',
-            result: JSON.parse(content) as IQueryResult
+            result: JSON.parse(content) as IQueryResult,
           });
           break;
         case 'error':
           payloadError = response.content as IError;
           if (payloadError.evalue.includes('julynter')) {
             this._attempts += 1;
-            console.error(
-              `Failed to initialize scripts. Retrying ${this._attempts}/3`,
-              payloadError
+            this._eh.report(
+              `Failed to initialize scripts. Retrying ${this._attempts}/3\n${payloadError}`,
+              'NotebookHandler:_handleQueryResponse',
+              [msg.code, response.content]
             );
             if (this._attempts <= 3) {
               this._inspected.emit({
-                status: 'Retrying to init'
+                status: 'Retrying to init',
               } as IJulynterKernelUpdate);
               this._initOnKernel().then(() => {
                 this._session.iopubMessage.connect(this._queryCall.bind(this));
@@ -411,7 +411,7 @@ export class NotebookHandler implements IDisposable {
     } catch (error) {
       throw this._eh.report(error, 'NotebookHandler:_handleQueryResponse', [
         msg.code,
-        response.content
+        response.content,
       ]);
     }
   }
@@ -439,7 +439,7 @@ export class NotebookHandler implements IDisposable {
       }
     } catch (error) {
       throw this._eh.report(error, 'NotebookHandler:_queryCall', [
-        args.content
+        args.content,
       ]);
     }
   }
@@ -447,7 +447,10 @@ export class NotebookHandler implements IDisposable {
   /**
    * Handle kernel signals.
    */
-  protected onQueryUpdate(sender: any, update: IJulynterKernelUpdate): void {
+  protected onQueryUpdate(
+    sender: NotebookHandler,
+    update: IJulynterKernelUpdate
+  ): void {
     if (update.status !== '') {
       this.update = {};
       this.hasKernel = false;
@@ -460,7 +463,7 @@ export class NotebookHandler implements IDisposable {
   /**
    * Handle disposed signals.
    */
-  protected onSourceDisposed(sender: any, args: void): void {
+  protected onSourceDisposed(sender: NotebookHandler, args: void): void {
     return;
   }
 

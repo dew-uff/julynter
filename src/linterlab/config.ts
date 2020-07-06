@@ -2,11 +2,11 @@ import { requestAPI } from '../server';
 import {
   ErrorTypeKeys,
   IJulynterLintOptions,
-  ReportIds
+  ReportIds,
 } from '../linter/interfaces';
 import {
   IExperimentConfig,
-  IExperimentConfigAttributes
+  IExperimentConfigAttributes,
 } from './experimentmanager';
 import { IJulynterStatus } from './view/statusrenderer';
 import { ErrorHandler } from './errorhandler';
@@ -38,7 +38,7 @@ export class Config {
         hiddenstate: true,
         confusenotebook: true,
         import: true,
-        absolutepath: true
+        absolutepath: true,
       },
       reports: {
         c1: true,
@@ -61,8 +61,8 @@ export class Config {
         t4: true,
         t5: true,
         t6: true,
-        t7: true
-      }
+        t7: true,
+      },
     };
   }
 
@@ -71,6 +71,7 @@ export class Config {
     experiment: IExperimentConfig,
     data: any
   ): void {
+    /* eslint @typescript-eslint/explicit-module-boundary-types: 0 */
     try {
       if (options) {
         this.merge(options, data.options);
@@ -96,7 +97,7 @@ export class Config {
       throw this._eh.report(error, 'Config:loadData', [
         options,
         experiment,
-        data
+        data,
       ]);
     }
   }
@@ -104,7 +105,7 @@ export class Config {
   load(onSuccess?: (data: any) => void, onError?: (reason: any) => void): void {
     try {
       requestAPI<any>('config')
-        .then(data => {
+        .then((data) => {
           this.loadData(
             this.defaultOptions,
             this.experimentConfig as any,
@@ -114,9 +115,8 @@ export class Config {
             onSuccess(data);
           }
         })
-        .catch(reason => {
+        .catch((reason) => {
           this.status.serverSide = false;
-          this.status.overrideMessage = `The julynter server extension appears to be missing.\n${reason}`;
           this._eh.report(
             `The julynter server extension appears to be missing.\n${reason}`,
             'Config:loadData',
@@ -133,7 +133,7 @@ export class Config {
 
   loadUser(): Promise<IJulynterLintOptions> {
     try {
-      return requestAPI<any>('userconfig').then(data => {
+      return requestAPI<any>('userconfig').then((data) => {
         const config = this.createDefault();
         this.loadData(config, null, data);
         return config;
@@ -145,7 +145,7 @@ export class Config {
 
   loadProject(): Promise<IJulynterLintOptions> {
     try {
-      return requestAPI<any>('config').then(data => {
+      return requestAPI<any>('config').then((data) => {
         const config = this.createDefault();
         this.loadData(config, null, data);
         this.loadData(this.defaultOptions, this.experimentConfig as any, data);
@@ -161,7 +161,7 @@ export class Config {
       this.defaultOptions = options;
       return requestAPI<any>('config', {
         body: JSON.stringify({ options: options }),
-        method: 'POST'
+        method: 'POST',
       });
     } catch (error) {
       throw this._eh.report(error, 'Config:saveProject', [options]);
@@ -172,8 +172,8 @@ export class Config {
     try {
       return requestAPI<any>('userconfig', {
         body: JSON.stringify({ options: options }),
-        method: 'POST'
-      }).then(data => {
+        method: 'POST',
+      }).then((data) => {
         this.load();
         return data;
       });

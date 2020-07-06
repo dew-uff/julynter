@@ -70,7 +70,6 @@ export class Julynter extends Widget {
       serverSide: false,
       hasKernel: false,
       experiment: false,
-      overrideMessage: null
     };
     this._currentHandler = null;
     this._visibleWidget = null;
@@ -109,7 +108,7 @@ export class Julynter extends Widget {
         scripts.catch((result: string) => {
           this._eh.report(result, 'Julynter:addNewNotebook.session', [
             nbPanel.title.label,
-            session.kernelDisplayName
+            session.kernelDisplayName,
           ]);
           reject(result);
         });
@@ -123,7 +122,7 @@ export class Julynter extends Widget {
       });
     } catch (error) {
       throw this._eh.report(error, 'Julynter:addNewNotebook', [
-        nbPanel.title.label
+        nbPanel.title.label,
       ]);
     }
   }
@@ -141,7 +140,7 @@ export class Julynter extends Widget {
       }
     } catch (error) {
       throw this._eh.report(error, 'Julynter:changeActiveWidget', [
-        widget.title.label
+        widget.title.label,
       ]);
     }
   }
@@ -174,7 +173,11 @@ export class Julynter extends Widget {
         }
         title = this._currentHandler.name;
         listRenderer = (
-          <ListRenderer reports={reports} notebook={this.currentHandler} />
+          <ListRenderer
+            reports={reports}
+            notebook={this.currentHandler}
+            errorHandler={this._eh}
+          />
         );
         toolbarRenderer = (
           <ToolbarRenderer
@@ -183,6 +186,7 @@ export class Julynter extends Widget {
             config={this._config}
             notebook={this.currentHandler}
             labShell={this._labShell}
+            errorHandler={this._eh}
           />
         );
       } else {
@@ -200,7 +204,7 @@ export class Julynter extends Widget {
             >
               {title}
             </div>
-            <StatusRenderer {...this._status} />
+            <StatusRenderer {...this._status} errorHandler={this._eh} />
           </header>
           {toolbarRenderer}
           {listRenderer}
@@ -295,7 +299,7 @@ export class Julynter extends Widget {
         // Throttle the rendering rate of julynter.
         this._monitor = new ActivityMonitor({
           signal: context.model.contentChanged,
-          timeout: RENDER_TIMEOUT
+          timeout: RENDER_TIMEOUT,
         });
         this._monitor.activityStopped.connect(this.update, this);
         this._experimentManager.reportVisibility(this._currentHandler, true);
@@ -303,7 +307,7 @@ export class Julynter extends Widget {
       this.updateJulynter();
     } catch (error) {
       throw this._eh.report(error, 'Julynter:set currentHandler', [
-        newHandler.name
+        newHandler.name,
       ]);
     }
   }

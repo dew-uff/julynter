@@ -47,7 +47,7 @@ export class OptionsManager extends AbstractOptionsManager {
     }
   }
 
-  saveKey(key: string, value: any, ereport = true): void {
+  saveKey(key: string, value: boolean | string, ereport = true): void {
     try {
       if (this._nbPanel) {
         this._nbPanel.model.metadata.set('julynter-check-' + key, value);
@@ -60,7 +60,7 @@ export class OptionsManager extends AbstractOptionsManager {
       throw this._eh.report(error, 'OptionsManager:loadKey', [
         key,
         value,
-        ereport
+        ereport,
       ]);
     }
   }
@@ -72,7 +72,7 @@ export class OptionsManager extends AbstractOptionsManager {
       this._update();
     } catch (error) {
       throw this._eh.report(error, 'OptionsManager:initializeOptions', [
-        checks
+        checks,
       ]);
     }
   }
