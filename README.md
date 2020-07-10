@@ -152,6 +152,12 @@ npm login
 npm publish --access public
 ```
 
+Create local Julynterlab:
+```bash
+./create_julynterlab.sh
+```
+
+
 Publish PyPI package:
 ```bash
 python setup.py bdist_wheel

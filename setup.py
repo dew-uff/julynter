@@ -6,6 +6,7 @@ import os
 from jupyter_packaging import (
     create_cmdclass, install_npm, ensure_targets,
     combine_commands, ensure_python, get_version,
+    BaseCommand
 )
 import setuptools
 
@@ -58,13 +59,18 @@ setup_args = dict(
     url="https://github.com/dew-uff/julynter",
     author="Joao Felipe Pimentel",
     description="A quality checker for Jupyter.",
-    long_description= long_description,
+    long_description=long_description,
     long_description_content_type="text/markdown",
-    cmdclass= cmdclass,
+    cmdclass=cmdclass,
     packages=setuptools.find_packages(),
     install_requires=[
         "jupyterlab~=2.0",
     ],
+    entry_points={
+        "console_scripts": [
+            "julynter = julynter.cmd:main"
+        ]
+    },
     zip_safe=False,
     include_package_data=True,
     license="BSD-3-Clause",

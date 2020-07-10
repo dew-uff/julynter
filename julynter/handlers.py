@@ -1,94 +1,54 @@
 import json
 import os
+from threading import Lock
+from datetime import date
 from pathlib import Path
 from pprint import pprint
 
 from notebook.base.handlers import APIHandler
 from notebook.utils import url_path_join
+from .config import load_config, save_config, add_experiment, merge
+from .config import home_config_path, load_home_config, load_project_config
+from .config import save_home_config, save_project_config
 import tornado
 
-def load_config(base):
-    """ Load julynter config file """
-    data = {}
-    try:
-        if base.is_dir() and (base / 'config.json').is_file():
-            with open(str(base / 'config.json'), 'r') as f:
-                data = json.load(f)
-        elif base.is_file():
-            with open(str(base), 'r') as f:
-                data = json.load(f)
-    except json.JSONDecodeError as e:
-        print("Julynter Config ({}) decode error:".format(base), e)
-    return data
+
+LOG_LOCK = Lock()
 
 
-def save_config(base, data):
-    """ Save julynter config file """
-    try:
-        if base.is_file():
-            with open(str(base), 'w') as f:
-                json.dump(data, f)
-        else:
-            base.mkdir(parents=True, exist_ok=True)
-            with open(str(base / 'config.json'), 'w') as f:
-                json.dump(data, f)
+def log(data, folder="errors"):
+    today = date.today()
+    path = home_config_path() / folder / "{}{}".format(today.year, today.month)
+    path.mkdir(parents=True, exist_ok=True)
+    with LOG_LOCK:
+        with open(str(path / "{}.log".format(today.day)), 'a') as f:
+            f.write('\n')
+            json.dump(data, f)
 
-        return True
-    except json.JSONEncodeError as e:
-        print("Julynter Config ({}) encode error:".format(base), e)
-    return False
-
-def merge(old, new):
-    """ Merge dicts """
-    for key, value in new.items():
-        if key in old and isinstance(old[key], dict):
-            old[key] = merge(old[key], value)
-        else:
-            old[key] = value
-    return old
-        
-
-def add_experiment(data):
-    if "experiment" not in data:
-        data["experiment"] = {
-            'id': '<unset>',
-            'lintingMessage': False,
-            'lintingTypes': False,
-            'execution': False,
-            'code': False,
-            'enabled': False
-        }
 
 class ProjectConfig(APIHandler):
     @tornado.web.authenticated
     def get(self):
-        data = load_config(Path.home() / '.julynter')
-        new_data = load_config(Path.cwd() / '.julynter')
-        data = merge(data, new_data)
-        add_experiment(data)
-        self.finish(json.dumps(data))
+        self.finish(json.dumps(load_project_config()))
 
     @tornado.web.authenticated
     def post(self):
-        data = load_config(Path.cwd() / '.julynter')
+        config = load_project_config(merge_home=False)
         input_data = self.get_json_body()
-        data = merge(data, input_data)
-        if save_config(Path.cwd() / '.julynter', data):
+        if save_project_config(merge(config, input_data)):
             self.finish(json.dumps({'result': 'ok'}))
+
 
 class UserConfig(APIHandler):
     @tornado.web.authenticated
     def get(self):
-        data = load_config(Path.home() / '.julynter')
-        add_experiment(data)
-        self.finish(json.dumps(data))
+        self.finish(json.dumps(load_home_config()))
     
     @tornado.web.authenticated
     def post(self):
-        data = load_config(Path.home() / '.julynter')
+        config = load_home_config()
         input_data = self.get_json_body()
-        data = merge(data, input_data)
-        if save_config(Path.home() / '.julynter', data):
+        if save_home_config(merge(config, input_data)):
             self.finish(json.dumps({'result': 'ok'}))
 
 
@@ -96,21 +56,21 @@ class ExperimentData(APIHandler):
     
     @tornado.web.authenticated
     def post(self):
-        config = load_config(Path.home() / '.julynter')
-        new_config = load_config(Path.cwd() / '.julynter')
-        config = merge(config, new_config)
-        add_experiment(config)
+        config = load_project_config()
         
         input_data = self.get_json_body()
-        pprint(input_data)
+        if config['experiment']['enabled']:
+            input_data["experiment_id"] = config["experiment"]["id"]
+            log(input_data, 'experiment')
+
 
 class ErrorData(APIHandler):
     
     @tornado.web.authenticated
     def post(self):
         input_data = self.get_json_body()
-        pprint(input_data)
-        # ToDo: save input_data
+        log(input_data)
+
 
 def setup_handlers(web_app):
     host_pattern = ".*$"
