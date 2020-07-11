@@ -1,4 +1,8 @@
-from ..config import load_home_config, save_home_config
+import zipfile
+import os
+from ..config import load_home_config, save_home_config, home_config_path
+import shutil
+from pathlib import Path
 
 
 
@@ -94,12 +98,23 @@ def start_experiment_cmd(args, rest):
     print("Experiment started! Do not forget to use `jupyter lab` or `julynter lab` during the next week")
 
 
-def end_experiment_cmd(args, rest):
-    print("ToDo End")
 
+
+def end_experiment_cmd(args, rest):
+    data = load_home_config()
+    data['experiment']['id'] = '<unset>'
+    data['experiment']['enabled'] = False    
+    save_home_config(data)
+    print("Experiment stoped!")
+
+    if not args.prevent_zip:
+        zip_experiment_cmd(args, rest)
+    
 
 def zip_experiment_cmd(args, rest):
-    print("ToDo zip")
+    shutil.make_archive(args.dir, 'zip', home_config_path())
+    print("Experiment pack {}.zip created!".format(args.dir))
+    print("Please, send it to jpimentel@ic.uff.br")
 
 
 def create_subparsers(subparsers):
@@ -153,6 +168,19 @@ def create_subparsers(subparsers):
         "stop", help="Stop Julynter experiment"
     )
     expparser_stop.set_defaults(expfunc=end_experiment_cmd)
-    
+    expparser_stop.add_argument(
+        '-z', '--prevent-zip', action="store_true",
+        help='Prevent it from generating pack'
+    )
+    expparser_stop.add_argument(
+        '-d', '--dir', type=str, default="julynter_experiment",
+        help='Output path for experiment pack'
+    )
+
+
     expparser_zip = expparser_sub.add_parser("zip", help="Zip current experiment results")
     expparser_zip.set_defaults(expfunc=zip_experiment_cmd)
+    expparser_zip.add_argument(
+        '-d', '--dir', type=str, default="julynter_experiment",
+        help='Output path for experiment pack'
+    )
