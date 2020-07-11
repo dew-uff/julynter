@@ -98,8 +98,6 @@ def start_experiment_cmd(args, rest):
     print("Experiment started! Do not forget to use `jupyter lab` or `julynter lab` during the next week")
 
 
-
-
 def end_experiment_cmd(args, rest):
     data = load_home_config()
     data['experiment']['id'] = '<unset>'
