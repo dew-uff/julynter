@@ -218,6 +218,10 @@
   background-color: #565656;
 }
 
+.julynter-toolbar-icon-selected:hover, .julynter-toolbar-icon:hover {
+  cursor: pointer;
+}
+
 [data-jp-theme-light='true'] .jp-julynter-feedback-positive-icon {
   background-image: url('img/plus.svg');
   
@@ -416,10 +420,12 @@
 
 [data-jp-theme-light='true'] .julynter-feedback-icon:hover {
   background-color: var(--jp-input-background);
+  cursor: pointer;
 }
 
 [data-jp-theme-light='false'] .julynter-feedback-icon:hover {
   background-color: #3a3a3a;
+  cursor: pointer;
 }
 
 [data-jp-theme-light='true'] .julynter-feedback-icon-selected {

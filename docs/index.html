@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en" class="h-100">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="Joao Felipe Pimentel, Leonardo Murta, Vanessa Braganholo, and Juliana Freire">
+    <title>Julynter</title>
+    <!-- Bootstrap core CSS -->
+    <link href="bootstrap-4.5.0-dist/css/bootstrap.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/sticky-footer-navbar.css" rel="stylesheet">
+  </head>
+  <body class="d-flex flex-column h-100">
+    <header>
+  <!-- Fixed navbar -->
+  <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    <a class="navbar-brand" href="#">Julynter</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarCollapse">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Experiment
+          </a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <a class="dropdown-item" href="experiment.html">Start Experiment</a>
+              <a class="dropdown-item" href="expconfig.html">Configure Julynter</a>
+              <a class="dropdown-item" href="expstop.html">Stop Experiment</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="tfic.html">Term of Free and Informed Consent</a>
+          </div>
+        </li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a class="nav-link" href="https://github.com/dew-uff/julynter"><span class="hidden-xs-down"> View on GitHub </span><svg version="1.1" width="16" height="16" viewBox="0 0 16 16" class="octicon octicon-mark-github" aria-hidden="true"><path id="githublogo" fill="rgb(157, 157, 157)" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg></a></li>
+      </ul>
+    </div>
+  </nav>
+</header>
+
+<!-- Begin page content -->
+<main role="main" class="flex-shrink-0">
+  <div class="container">
+    <h1 class="mt-5">Julynter</h1>
+    <p class="lead"> Julynter is a linter for Jupyter Notebooks that aims at improving their Quality and Reproducibility based on the following guidelines <a href="#paper1">[1]</a>: </p>
+    <ul>
+      <li> Use short titles with a restrict  charset (A-Z a-z 0-9 .-) for notebook  files and markdown headings for more detailed ones in the body.</li>
+      <li> Pay attention to the bottom of the  notebook. Check whether it can benefit from descriptive markdown cells or can have code cells executed or removed.</li>
+      <li> Abstract code into functions, classes, and modules and test them.</li>
+      <li> Declare the dependencies in  requirement files and pin the versions of all packages.</li>
+      <li> Use a clean environment for testing the dependencies to check if all of them are declared.</li>
+      <li> Put imports at the beginning of the notebooks.</li>
+      <li> Use relative paths for accessing data in the repository.</li>
+      <li> Re-run notebooks top to bottom  before committing.</li>
+    </ul>
+
+    <p><img src="img/screenshot.png" title="Julynter example" class="container-image"/></p>
+
+    <p> For installation and usage instructions, please <a href="https://github.com/dew-uff/julynter"><span class="hidden-xs-down"> check the repository </span><svg version="1.1" width="16" height="16" viewBox="0 0 16 16" class="octicon octicon-mark-github" aria-hidden="true"><path id="githublogo" fill="rgb(157, 157, 157)" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg></a></p>
+
+    <h2> Authors </h2>
+    <ul>
+      <li> João Felipe Pimentel (UFF) </li> 
+      <li> Leonardo Murta (UFF) </li> 
+      <li> Vanessa Braganholo (UFF) </li>
+      <li> Juliana Freire (NYU) </li> 
+    </ul>
+
+    <h2> Publications </h2>
+    <ul>
+      <li>
+        <a id="paper1" href="http://www.ic.uff.br/~leomurta/papers/pimentel2019a.pdf">
+        [1] Pimentel, J. F., Murta, L., Braganholo, V., & Freire, J. (2019, May). A large-scale study about quality and reproducibility of jupyter notebooks. In 2019 IEEE/ACM 16th International Conference on Mining Software Repositories (MSR) (pp. 507-517). IEEE.
+        </a>
+      </li>
+    </ul>
+  </div>
+</main>
+
+<footer class="footer mt-auto py-3">
+  <div class="container">
+      <img height="50" alt="Universidade Federal Fluminense - Instituto da Computa&ccedil;&atilde;o"  title="Universidade Federal Fluminense - Instituto da Computa&ccedil;&atilde;o" src="img/ic.jpg">
+      <img height="50" alt="New York University - Tandom School of Engineering" title="New York University - Tandom School of Engineering" src="img/nyu.png">
+  </div>
+</footer>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+      <script>window.jQuery || document.write('<script src="bootstrap-4.5.0-dist/js/vendor/jquery.slim.min.js"><\/script>')</script><script src="bootstrap-4.5.0-dist/js/bootstrap.bundle.js"></script></body>
+</html>

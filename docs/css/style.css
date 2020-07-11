@@ -1,0 +1,39 @@
+.bd-placeholder-img {
+  font-size: 1.125rem;
+  text-anchor: middle;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+@media (min-width: 768px) {
+  .bd-placeholder-img-lg {
+    font-size: 3.5rem;
+  }
+}
+
+.container-image {
+  width: 100%;
+}
+
+#githublogo {
+	fill: rgb(157, 157, 157);
+}
+
+.githublink {
+  color: white;
+}
+
+footer {
+	border-top: 1px solid black;
+  text-align: center;
+  background-color: white !important;
+}
+.expcontainer {
+  max-width: 700px;
+}
+
+.expcontainer p {
+  margin: 0 35px;
+}
