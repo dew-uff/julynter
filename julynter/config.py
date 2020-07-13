@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 
 
-DEFAULT_EXPERIMENT_SERVER = "julynter.npimentel.net"
+DEFAULT_EXPERIMENT_SERVER = "https://julynter.npimentel.net"
 CONFIG_DIR = '.julynter'
 
 
@@ -76,6 +76,7 @@ def add_experiment(data):
     exp['code'] = exp.get('code', False)
     exp['name'] = exp.get('name', False)
     exp['enabled'] = exp.get('enabled', False)
+    exp['sendServer'] = exp.get('sendServer', False)
     exp["server"] = exp.get("server", DEFAULT_EXPERIMENT_SERVER)
 
 

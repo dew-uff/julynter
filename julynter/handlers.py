@@ -10,20 +10,9 @@ from notebook.utils import url_path_join
 from .config import load_config, save_config, add_experiment, merge
 from .config import home_config_path, load_home_config, load_project_config
 from .config import save_home_config, save_project_config
+from .util import log
 import tornado
 
-
-LOG_LOCK = Lock()
-
-
-def log(data, folder="errors"):
-    today = date.today()
-    path = home_config_path() / folder / "{}{}".format(today.year, today.month)
-    path.mkdir(parents=True, exist_ok=True)
-    with LOG_LOCK:
-        with open(str(path / "{}.log".format(today.day)), 'a') as f:
-            f.write('\n')
-            json.dump(data, f)
 
 
 class ProjectConfig(APIHandler):
@@ -60,8 +49,7 @@ class ExperimentData(APIHandler):
         
         input_data = self.get_json_body()
         if config['experiment']['enabled']:
-            input_data["experiment_id"] = config["experiment"]["id"]
-            log(input_data, 'experiment')
+            log(input_data, 'experiment', config)
 
 
 class ErrorData(APIHandler):
