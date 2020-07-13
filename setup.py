@@ -66,6 +66,7 @@ setup_args = dict(
     install_requires=[
         "jupyterlab~=2.0",
         "requests",
+        "requests_futures",
     ],
     entry_points={
         "console_scripts": [
