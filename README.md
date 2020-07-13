@@ -37,10 +37,6 @@ Would you like to participate on a [Julynter experiment](https://dew-uff.github.
 
 - [1] [Pimentel, J. F., Murta, L., Braganholo, V., & Freire, J. (2019, May). A large-scale study about quality and reproducibility of jupyter notebooks. In 2019 IEEE/ACM 16th International Conference on Mining Software Repositories (MSR) (pp. 507-517). IEEE](http://www.ic.uff.br/~leomurta/papers/pimentel2019a.pdf).
 
-## Requirements
-
-* JupyterLab >= 2.0
-
 ## Install
 
 Just install the python package:
