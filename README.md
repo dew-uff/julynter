@@ -182,12 +182,14 @@ npm publish --access public
 
 Create local Julynterlab:
 ```bash
+rm -rf julynter/julynterlab
 ./create_julynterlab.sh
 ```
 
 
 Publish PyPI package:
 ```bash
+rm -rf build
 python setup.py bdist_wheel
 twine upload dist/*
 ```

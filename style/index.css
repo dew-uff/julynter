@@ -419,21 +419,21 @@
 }
 
 [data-jp-theme-light='true'] .julynter-feedback-icon:hover {
-  background-color: var(--jp-input-background);
+  background-color: white;
   cursor: pointer;
 }
 
 [data-jp-theme-light='false'] .julynter-feedback-icon:hover {
-  background-color: #3a3a3a;
+  background-color: black;
   cursor: pointer;
 }
 
 [data-jp-theme-light='true'] .julynter-feedback-icon-selected {
-  background-color: var(--jp-input-background) !important
+  background-color: white !important
 }
 
 [data-jp-theme-light='false'] .julynter-feedback-icon-selected {
-  background-color: #3a3a3a !important;
+  background-color: black !important;
 }
 
 .julynter-feedback-ul {

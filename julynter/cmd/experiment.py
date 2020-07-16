@@ -85,16 +85,6 @@ def start_experiment_cmd(args, rest):
             "Can we collect the types of linting messages?",
             experiment["lintingTypes"] if args.keep else None
         )
-    experiment["activity"] = yes_no(
-        args.activity,
-        "Can we collect activity information (i.e., Julynter filters, notebook opening and closing)?",
-        experiment["activity"] if args.keep else None
-    )
-    experiment["execution"] = yes_no(
-        args.execution,
-        "Can we collect execution information (i.e., size of executed cells, type of execution output)?",
-        experiment["execution"] if args.keep else None
-    )
     experiment["name"] = yes_no(
         args.name,
         "Can we collect the notebook name?",
@@ -104,6 +94,16 @@ def start_experiment_cmd(args, rest):
         args.code,
         "Can we collect the notebook code?",
         experiment["code"] if args.keep else None
+    )
+    experiment["execution"] = yes_no(
+        args.execution,
+        "Can we collect execution information (i.e., size of executed cells, type of execution output)?",
+        experiment["execution"] if args.keep else None
+    )
+    experiment["activity"] = yes_no(
+        args.activity,
+        "Can we collect activity information (i.e., Julynter filters, notebook opening and closing)?",
+        experiment["activity"] if args.keep else None
     )
     experiment["sendServer"] = yes_no(
         args.send,
