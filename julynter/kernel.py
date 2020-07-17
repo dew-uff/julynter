@@ -1,6 +1,8 @@
 import json, ast, os, sys, pkg_resources, re, builtins
+from ipykernel.comm import Comm
 from collections import defaultdict
 
+COMM = None
 
 class _JulynterImportVisitor(ast.NodeVisitor):
     def __init__(self):
@@ -60,7 +62,7 @@ def _julynter_dependencies(ip, hm):
     for i, (session, lineno, inline) in enumerate(hm.get_range(raw=False, output=False)):
         if lineno in processed:
             continue
-        if inline.startswith("get_ipython().run_cell_magic(\\'time\\'"):
+        if inline.startswith("get_ipython().run_cell_magic(\'time\'"):
             inline = inline[42:-2].encode('utf-8').decode('unicode_escape')
         processed.add(lineno)
         tree = ast.parse(inline)
@@ -114,7 +116,7 @@ _last_requirements_file = ['']
 
 def _julynter_get_package(module_name):
     if module_name not in sys.modules:
-        return (2, 'Module not imported')
+        return (2, 'Module {} not imported'.format(module_name))
     module = sys.modules[module_name]
     if not hasattr(module, '__file__'):
         return (0, 'Builtin module')
@@ -194,13 +196,12 @@ def _julynter_imports(ip, hm, requirements_file):
     return has_imports, missing_requirements
 
 
-def _jupyterlab_julynter_query(requirements_file='requirements.txt'):
-    ip = get_ipython()
+def julynter_query(ip, requirements_file='requirements.txt'):
     hm = ip.history_manager
     cell_dependencies, missing_dependencies = _julynter_dependencies(ip, hm)
     has_imports, missing_requirements = _julynter_imports(ip, hm, requirements_file)
     result = {
-        'julynter_result': 'julynter.kernel._jupyterlab_julynter',
+        'operation': 'queryResult',
         'executed_code': _julynter_history(ip, hm),
         'cell_dependencies': cell_dependencies,
         'missing_dependencies': missing_dependencies,
@@ -208,10 +209,11 @@ def _jupyterlab_julynter_query(requirements_file='requirements.txt'):
         'has_imports': has_imports,
         'missing_requirements': missing_requirements,
     }
-    return json.dumps(result, ensure_ascii=False)
+    return result
 
 
-def _jupyterlab_julynter_add_package_to_requirements(module_name, requirements):
+def add_package_to_requirements(ip, module_name, requirements):
+    module_name = module_name.strip()
     status, msg = _julynter_get_package(module_name)
     if status != -1:
         return (status, msg)
@@ -227,14 +229,63 @@ def _jupyterlab_julynter_add_package_to_requirements(module_name, requirements):
         with open(requirements, 'r') as f:
             for line in f:
                 if line.strip().startswith(package):
-                    lines.append('{}{}\\n'.format(package, version))
+                    lines.append('{}{}\n'.format(package, version))
                     found = True
                 else:
                     lines.append(line)
     if not found:
-        lines.append('{}{}\\n'.format(package, version))
+        lines.append('{}{}\n'.format(package, version))
     with open(requirements, 'w') as f:
         f.writelines(lines)
-    return _jupyterlab_julynter_query(requirements)
+    return (status, msg)
 
-print('ok-initialized')
+
+class JulynterComm(object):
+
+    def __init__(self):
+        self.ip = get_ipython()
+        self.name = 'julynter.comm'
+        self.comm = None
+
+    def register(self):
+        self.comm = Comm(self.name)
+        self.comm.on_msg(self.receive)
+        self.send({'operation': 'init'})
+
+    def receive(self, msg):
+        print('aaaaaaaaaaa')
+        data = msg['content']['data']
+        operation = data.get('operation', '<undefined>')
+        try:
+            if operation == 'query':
+                req = data.get('requirements', 'requirements.txt')
+                self.send(julynter_query(self.ip, req))
+            elif operation == 'addModule':
+                req = data.get('requirements', 'requirements.txt')
+                module = data.get('module', '<undefined>')
+                result = add_package_to_requirements(self.ip, module, req)
+                if result[0] <= 0:
+                    self.send(julynter_query(self.ip, req))
+                else:
+                    self.send({
+                        'operation': 'error',
+                        'command': operation,
+                        'message': result[1],
+                        'errorid': result[0],
+                    })
+        except Exception as e:
+            self.send({
+                'operation': 'error',
+                'command': operation,
+                'message': repr(e)
+            })
+
+    def send(self, data):
+        self.comm.send(data)
+
+
+def init():
+    global COMM
+    COMM = JulynterComm()
+    COMM.register()
+    

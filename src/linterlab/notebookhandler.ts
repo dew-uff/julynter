@@ -1,3 +1,4 @@
+import { JSONObject } from '@lumino/coreutils';
 import { IDisposable } from '@lumino/disposable';
 import { Signal, ISignal } from '@lumino/signaling';
 
@@ -6,7 +7,7 @@ import { IDocumentManager } from '@jupyterlab/docmanager';
 import { NotebookPanel } from '@jupyterlab/notebook';
 import { KernelMessage } from '@jupyterlab/services';
 import { IInfoReply } from '@jupyterlab/services/lib/kernel/messages';
-import { IError, IExecuteResult } from '@jupyterlab/nbformat';
+import { IComm } from '@jupyterlab/services/lib/kernel/kernel';
 
 import {
   IGenericNotebookMetadata,
@@ -38,17 +39,21 @@ export class NotebookHandler implements IDisposable {
   private _ready: Promise<void>;
   private _panelId: string;
   private _nbPanel: NotebookPanel;
-  private _attempts: number;
   private _session: ISessionContext;
   private _docManager: IDocumentManager;
   private _update: () => void;
   private _experimentManager: ExperimentManager;
   private _eh: ErrorHandler;
   private _reportedStart: boolean;
+  private _icomm: IComm;
 
   public options: OptionsManager;
   public update: IQueryResult | null;
   public hasKernel: boolean;
+  _boundQueryCall: (
+    sess: ISessionContext,
+    args: KernelMessage.IMessage<KernelMessage.MessageType>
+  ) => void;
 
   constructor(
     docManager: IDocumentManager,
@@ -69,10 +74,11 @@ export class NotebookHandler implements IDisposable {
       this._panelId = this._nbPanel.id;
       this._language = Languages.GENERIC;
       this.options = new OptionsManager(nbPanel, config, em, eh, update);
-      this._attempts = 0;
       this.update = {};
       this.hasKernel = false;
       this._reportedStart = false;
+      this._icomm = null;
+      this._boundQueryCall = this._queryCall.bind(this);
 
       em.reportActivity(this, 'open');
       session.statusChanged.connect(
@@ -133,15 +139,23 @@ export class NotebookHandler implements IDisposable {
     }
   }
 
+  createComm(): void {
+    const kernel = this._session.session.kernel;
+    if (kernel) {
+      kernel.registerCommTarget('julynter.comm', (comm, msg) => {
+        this._icomm = comm;
+        this._icomm.onMsg = this._receiveJulynterQuery.bind(this);
+        // console.log('ICOMM!', this._icomm.commId);
+      });
+    }
+  }
+
   configureHandler(language: Languages.LanguageModel): void {
     try {
       this._language = language;
-
       this._ready = this._session.ready.then(() => {
-        this._initOnKernel().then(() => {
-          this._session.iopubMessage.connect(this._queryCall.bind(this));
-          return;
-        });
+        this.createComm();
+        this._initOnKernel();
       });
 
       this._kernelRestarted.connect(
@@ -152,10 +166,8 @@ export class NotebookHandler implements IDisposable {
           // Emit restarting
 
           this._ready = kernelReady.then(() => {
-            this._initOnKernel().then(() => {
-              this._session.iopubMessage.connect(this._queryCall.bind(this));
-              this.performQuery();
-            });
+            this.createComm();
+            this._initOnKernel();
           });
         }
       );
@@ -281,28 +293,12 @@ export class NotebookHandler implements IDisposable {
     });
   }
 
-  private executeLanguageCommand(
-    command: Languages.ExecutableCode,
-    args: any[],
-    response: (
-      msg: KernelMessage.IExecuteRequestMsg['content'],
-      response: KernelMessage.IIOPubMessage
-    ) => void
-  ): Promise<void> {
+  private initScript(): Promise<void> {
     try {
       if (this._language === null) {
         return this._createPromise('Language not loaded');
       }
-      if (this._language[command] === null) {
-        return this._createPromise();
-      }
-      const codefn = this._language[command];
-      let code: string;
-      if (codefn instanceof Function) {
-        code = (codefn as any)(...args);
-      } else {
-        code = codefn;
-      }
+      const code = this._language.initScript;
       if (code === null) {
         return this._createPromise();
       }
@@ -310,12 +306,35 @@ export class NotebookHandler implements IDisposable {
         code: code,
         stop_on_error: false,
         store_history: false,
+        silent: true,
       };
-      return this.sendToKernel(content, response);
+      const kernel = this._session.session.kernel;
+      if (!kernel) {
+        return Promise.reject(
+          new Error('Require kernel to perform advanced julynter operations!')
+        );
+      }
+      const future = kernel.requestExecute(content, false);
+      future.onIOPub = (msg: KernelMessage.IIOPubMessage): void => {
+        this.performQuery();
+      };
+      return future.done.then(() => {
+        return;
+      });
     } catch (error) {
-      throw this._eh.report(error, 'NotebookHandler:executeLanguageCommand', [
-        command,
-      ]);
+      throw this._eh.report(error, 'NotebookHandler:initScript', []);
+    }
+  }
+
+  public send(data: JSONObject): void {
+    const session = this._session.session;
+    if (
+      this._icomm &&
+      session &&
+      session.kernel &&
+      session.kernel.hasComm(this._icomm.commId)
+    ) {
+      this._icomm.send(data);
     }
   }
 
@@ -323,95 +342,59 @@ export class NotebookHandler implements IDisposable {
    * Send a query command to the kernel
    */
   public performQuery(): void {
-    this.executeLanguageCommand(
-      'queryCommand',
-      [this.options.checkRequirements()],
-      this._handleQueryResponse.bind(this)
-    );
+    this.send({
+      operation: 'query',
+      requirements: this.options.checkRequirements(),
+    });
   }
 
   /**
    * Send message to kernel add a module
    */
   public addModule(module: string): void {
-    this.executeLanguageCommand(
-      'addModuleCommand',
-      [module, this.options.checkRequirements()],
-      this._handleQueryResponse.bind(this)
-    );
+    this.send({
+      operation: 'addModule',
+      module: module,
+      requirements: this.options.checkRequirements(),
+    });
   }
 
   /**
    * Initializes the kernel by running the set up script located at _initScriptPath.
    */
   private _initOnKernel(): Promise<void> {
-    return this.executeLanguageCommand('initScript', [], null);
+    return this.initScript().then(() => {
+      this._session.iopubMessage.disconnect(this._boundQueryCall);
+      this._session.iopubMessage.connect(this._boundQueryCall);
+    });
   }
 
   /*
    * Handle query response
    */
-  private _handleQueryResponse(
-    msg: KernelMessage.IExecuteRequestMsg['content'],
-    response: KernelMessage.IIOPubMessage
-  ): void {
+  private _receiveJulynterQuery(
+    msg: KernelMessage.ICommMsgMsg
+  ): void | PromiseLike<void> {
     try {
-      const msgType = response.header.msg_type;
-      let payload: IExecuteResult;
-      let payloadError: IError;
-      let content: string;
-      switch (msgType) {
-        case 'execute_result':
-        case 'display_data':
-          payload = response.content as IExecuteResult;
-          content = payload.data['text/plain'] as string;
-          if (!this._language.julynterCode(content)) {
-            // A bug in Jupyter makes it return the wrong cell
-            break;
-          }
-          if (content.slice(0, 1) === "'" || content.slice(0, 1) === '"') {
-            content = content.slice(1, -1);
-            content = content.replace(/\\"/g, '"').replace(/\\'/g, "'");
-          }
-          this._inspected.emit({
-            status: '',
-            kernelName: this._session.kernelDisplayName || '',
-            result: JSON.parse(content) as IQueryResult,
-          });
-          break;
-        case 'error':
-          payloadError = response.content as IError;
-          if (payloadError.evalue.includes('julynter')) {
-            this._attempts += 1;
-            this._eh.report(
-              `Failed to initialize scripts. Retrying ${this._attempts}/3\n${payloadError}`,
-              'NotebookHandler:_handleQueryResponse',
-              [msg.code, response.content]
-            );
-            if (this._attempts <= 3) {
-              this._inspected.emit({
-                status: 'Retrying to init',
-              } as IJulynterKernelUpdate);
-              this._initOnKernel().then(() => {
-                this._session.iopubMessage.connect(this._queryCall.bind(this));
-                this.performQuery();
-              });
-            } else {
-              this._eh.report(
-                'Failed to initialize scripts after 3 attempts',
-                'NotebookHandler:_handleQueryResponse',
-                [msg.code, response.content]
-              );
-            }
-          }
-          break;
-        default:
-          break;
+      const operation = msg.content.data.operation;
+      if (operation === 'queryResult') {
+        this._inspected.emit({
+          status: '',
+          kernelName: this._session.kernelDisplayName || '',
+          result: msg.content.data as IQueryResult,
+        });
+      } else if (operation === 'error') {
+        this._eh.report(
+          'Failed to run ICOMM command',
+          'NotebookHandler:_receiveJulynterQuery',
+          [msg]
+        );
+      } else if (operation === 'init') {
+        this.performQuery();
       }
     } catch (error) {
-      throw this._eh.report(error, 'NotebookHandler:_handleQueryResponse', [
-        msg.code,
-        response.content,
+      throw this._eh.report(error, 'NotebookHandler:_receiveJulynterQuery', [
+        msg,
       ]);
     }
   }
@@ -426,13 +409,9 @@ export class NotebookHandler implements IDisposable {
     try {
       const msg: KernelMessage.IIOPubMessage = args as KernelMessage.IIOPubMessage;
       const msgType = msg.header.msg_type;
-      let code: string;
       switch (msgType) {
         case 'execute_input':
-          code = (msg as KernelMessage.IExecuteInputMsg).content.code;
-          if (!this._language.julynterCode(code)) {
-            this.performQuery();
-          }
+          this.performQuery();
           break;
         default:
           break;
@@ -465,38 +444,5 @@ export class NotebookHandler implements IDisposable {
    */
   protected onSourceDisposed(sender: NotebookHandler, args: void): void {
     return;
-  }
-
-  /**
-   * Executes the given request on the kernel associated with the connector.
-   */
-  sendToKernel(
-    content: KernelMessage.IExecuteRequestMsg['content'],
-    ioCallback:
-      | ((
-          content: KernelMessage.IExecuteRequestMsg['content'],
-          msg: KernelMessage.IIOPubMessage
-        ) => any)
-      | null
-  ): Promise<void> {
-    try {
-      const kernel = this._session.session.kernel;
-      if (!kernel) {
-        return Promise.reject(
-          new Error('Require kernel to perform advanced julynter operations!')
-        );
-      }
-      const future = kernel.requestExecute(content, false);
-      future.onIOPub = (msg: KernelMessage.IIOPubMessage): void => {
-        if (ioCallback !== null) {
-          ioCallback(content, msg);
-        }
-      };
-      return future.done.then(() => {
-        return;
-      });
-    } catch (error) {
-      throw this._eh.report(error, 'NotebookHandler:sendToKernel', [content]);
-    }
   }
 }

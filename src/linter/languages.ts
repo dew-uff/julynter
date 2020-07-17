@@ -1,18 +1,8 @@
 export namespace Languages {
   export type LanguageModel = {
-    initScript: string | (() => string);
-    queryCommand: string | ((requirements: string) => string);
-    addModuleCommand:
-      | string
-      | ((module: string, requirements: string) => string);
-    julynterCode: (code: string) => boolean;
+    initScript: string;
     name: string;
   };
-
-  export type ExecutableCode =
-    | 'initScript'
-    | 'queryCommand'
-    | 'addModuleCommand';
 }
 
 export abstract class Languages {
@@ -21,26 +11,12 @@ export abstract class Languages {
    */
 
   static PYTHON: Languages.LanguageModel = {
-    initScript: 'import julynter.kernel',
-    queryCommand: (requirements: string) =>
-      "julynter.kernel._jupyterlab_julynter_query('" + requirements + "')",
-    addModuleCommand: (module: string, requirements: string) =>
-      "julynter.kernel._jupyterlab_julynter_add_package_to_requirements('" +
-      module +
-      "','" +
-      requirements +
-      "')",
-    julynterCode: (code: string) => {
-      return code.includes('julynter.kernel._jupyterlab_julynter');
-    },
+    initScript: 'import julynter.kernel; julynter.kernel.init()',
     name: 'python',
   };
 
   static GENERIC: Languages.LanguageModel = {
     initScript: null,
-    queryCommand: null,
-    addModuleCommand: null,
-    julynterCode: (code: string) => false,
     name: 'generic',
   };
 
