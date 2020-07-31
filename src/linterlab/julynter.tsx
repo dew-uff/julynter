@@ -1,8 +1,6 @@
 /* eslint @typescript-eslint/no-unused-vars: 0 */
-import * as ReactDOM from 'react-dom';
-
 import { Message } from '@lumino/messaging';
-import { Widget, Panel } from '@lumino/widgets';
+import { Widget, Panel, PanelLayout } from '@lumino/widgets';
 
 import { ILabShell } from '@jupyterlab/application';
 import { ActivityMonitor } from '@jupyterlab/coreutils';
@@ -14,11 +12,12 @@ import { Languages } from '../linter/languages';
 import { Config } from './config';
 import { NotebookHandler } from './notebookhandler';
 import { ExperimentManager } from './experimentmanager';
-import { EmptyListWidget, LuminoList } from './view/listrenderer';
+import { EmptyListWidget, ListWidget } from './view/listwidget';
 import { IJulynterStatus } from './view/statusrenderer';
 import { LuminoToolbar } from './view/toolbarrenderer';
 import { ErrorHandler } from './errorhandler';
 import { HeaderWidget } from './view/headerwidget';
+import { CellWidget } from './view/cellwidget';
 
 /**
  * Timeout for throttling Julynter rendering.
@@ -158,11 +157,10 @@ export class Julynter extends Panel {
       this._status.hasKernel = false;
 
       if (this.currentHandler) {
-        this._currentHandler.cellLints.forEach(element => {
-          ReactDOM.unmountComponentAtNode(element);
-          element.remove();
-        });
-        this._currentHandler.cellLints = [];
+        for (let cellLint of Object.values(this._currentHandler.cellLints)) {
+          cellLint.dispose();
+        }
+        this._currentHandler.cellLints = {};
         this._status.connectedNow = true;
         this._status.hasKernel = this.currentHandler.hasKernel;
         const reports: IReport[] = this.currentHandler.lint();
@@ -170,6 +168,14 @@ export class Julynter extends Panel {
         if (reports.length > 0) {
           this.title.iconClass = 'julynter-main-new-icon jp-SideBar-tabIcon';
         }
+        reports.forEach((report) => {
+          if (typeof report.cellId === 'number') {
+            let cell = this._currentHandler.nbPanel.content.widgets[report.cellId];
+            this._currentHandler.cellLints[report.cellId] = new CellWidget(cell);
+            (cell.layout as PanelLayout).insertWidget(0, this._currentHandler.cellLints[report.cellId]);
+          }
+        })
+
 
         title = this._currentHandler.name;
         const listOptions = {
@@ -178,7 +184,7 @@ export class Julynter extends Panel {
           errorHandler: this._eh,
           cellLints: this._currentHandler.cellLints,
         }
-        listWidget = new LuminoList(listOptions);
+        listWidget = new ListWidget(listOptions);
         const toolbarOptions = {
           tracker:this._tracker,
           handlers: this.handlers,
@@ -200,17 +206,6 @@ export class Julynter extends Panel {
       }
       this._mainWidget.addWidget(listWidget);
       this.addWidget(this._mainWidget);
-
-      /*
-      renderedJSX = (
-        <div className="jp-Julynter">
-          
-          {toolbarRenderer}
-          {listRenderer}
-        </div>
-      );
-      ReactDOM.render(renderedJSX, this.node);
-      */
     } catch (error) {
       throw this._eh.report(error, 'Julynter:updateJulynter', []);
     }

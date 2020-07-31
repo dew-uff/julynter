@@ -22,6 +22,7 @@ import { ExperimentManager } from './experimentmanager';
 import { GroupGenerator, ItemGenerator } from './itemgenerator';
 import { OptionsManager } from './optionsmanager';
 import { ErrorHandler } from './errorhandler';
+import { CellWidget } from './view/cellwidget';
 
 export interface IJulynterKernelUpdate {
   status: string;
@@ -50,7 +51,7 @@ export class NotebookHandler implements IDisposable {
   public options: OptionsManager;
   public update: IQueryResult | null;
   public hasKernel: boolean;
-  public cellLints: HTMLElement[];
+  public cellLints: { [num:string]: CellWidget };
 
   _boundQueryCall: (
     sess: ISessionContext,
@@ -68,7 +69,7 @@ export class NotebookHandler implements IDisposable {
   ) {
     this._eh = eh;
     try {
-      this.cellLints = [];
+      this.cellLints = {};
       this._docManager = docManager;
       this._session = session;
       this._nbPanel = nbPanel;

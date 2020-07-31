@@ -31,7 +31,7 @@
   background-color: var(--jp-layout-color1);
 }
 
-.jp-Julynter-content li {
+.jp-Julynter-content .julynter-list-item {
   display: flex;
   flex-direction: row;
   padding: 4px 12px;
@@ -44,7 +44,7 @@
   padding-bottom: 8px;
 }
 
-.jp-Julynter-content li:hover {
+.jp-Julynter-content .julynter-list-item:hover {
   background: var(--jp-layout-color2);
 }
 
@@ -581,6 +581,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
+  margin: 10px 0;
 }
 
 .julynter-context-info {
@@ -595,4 +596,15 @@
   min-width: 400px;
   width: 99%;
   min-height: 200px;
+}
+
+.julynter-cell-mod {
+  position: absolute;
+  left: 17px;
+  top: 12px;
+  z-index: 10;
+}
+
+.julynter-cell-mod:hover {
+  cursor: pointer !important;
 }
