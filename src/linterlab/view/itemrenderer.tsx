@@ -11,11 +11,14 @@ import {
   showTextDialog,
 } from './feedbackrenderer'; /* eslint @typescript-eslint/no-unused-vars: 0 */
 import { ErrorHandler } from '../errorhandler';
+import { ERROR_TYPES_MAP } from '../../linter/reports';
+import ReactDOM from 'react-dom';
 
 interface IItemProps {
   item: IReport;
   notebook: NotebookHandler;
   errorHandler: ErrorHandler;
+  cellLints: HTMLElement[];
 }
 
 export class ItemRenderer extends React.Component<IItemProps> {
@@ -149,19 +152,62 @@ export class ItemRenderer extends React.Component<IItemProps> {
     this.doMessageFeedback();
   }
 
+  doWhy(): void {
+    try {
+      const item = this.props.item;
+      let suggestion = null;
+      if (this.props.item.suggestion) {
+        suggestion = <li>Suggestion: {this.props.item.suggestion}</li>;
+      }
+      const body = (
+        <div>
+          <ul className="julynter-feedback-ul">
+            <li>{this.props.item.reason}</li>
+            <li><br/></li>
+            { suggestion }
+          </ul>
+        </div>
+      );
+      showDialog({
+        title: (item.reportId === 'group' ? item.text : item.reportId + ' - ' + item.text),
+        body: body,
+        buttons: [Dialog.cancelButton(), Dialog.okButton({ label: this.props.item.action.label })],
+      }).then((result) => {
+        Promise.resolve(result.button.accept).then((ok: boolean) => {
+          try {
+            if (ok) {
+              this.doClick();
+            }
+          } catch (error) {
+            throw this.props.errorHandler.report(
+              error,
+              'ItemRenderer:doWhy.then',
+              [ok]
+            );
+          }
+        });
+      });
+    } catch (error) {
+      throw this.props.errorHandler.report(
+        error,
+        'ItemRenderer:doWhy',
+        []
+      );
+    }
+  }
+
   onContextMenu(event: React.MouseEvent<HTMLDivElement>): void {
     try {
       const commands = new CommandRegistry();
       const contextMenu = new ContextMenu({ commands: commands });
       const item = this.props.item;
 
+      
       commands.addCommand('info', {
-        label: item.reportId === 'group' ? item.text : item.reportId,
-        caption: item.action.title,
+        label: (item.reportId === 'group' ? item.text : item.reportId) + ' - Why?',
+        caption: 'Why is this lint showing?',
         className: 'julynter-context-info',
-        execute: () => {
-          return;
-        },
+        execute: this.doWhy.bind(this),
       });
       contextMenu.addItem({
         command: 'info',
@@ -171,6 +217,7 @@ export class ItemRenderer extends React.Component<IItemProps> {
         type: 'separator',
         selector: '*',
       });
+
       commands.addCommand('action', {
         label: item.action.label,
         caption: item.action.title,
@@ -400,6 +447,34 @@ export class ItemRenderer extends React.Component<IItemProps> {
           </div>
         );
       }
+      let cell = null;
+      // ToDo: add option to not show
+      // ToDo: move to Julynter.tsx
+      if (typeof this.props.item.cellId === 'number') {
+        console.log(this.props.item.cellId, this.props.notebook.nbPanel.content.widgets.length);
+        let c = this.props.notebook.nbPanel.content.widgets[this.props.item.cellId];
+        let div = document.createElement("div");
+
+        let dom = <div
+          className="julynter-toolbar-button"
+          onClick={(): void => this.doWhy()}
+          onContextMenu={this.onContextMenu.bind(this)}
+        >
+          <div
+            role="text"
+            aria-label={this.props.item.text}
+            title={this.props.item.text}
+            className={ERROR_TYPES_MAP[this.props.item.reportType].icon + ' julynter-toolbar-icon'}
+          />
+        </div>
+        ReactDOM.render(dom, div);
+        this.props.cellLints.push(div);
+
+        c.node.insertBefore(div, c.node.firstChild);
+       
+        //cell = c.editorWidget.node.cloneNode(true);
+        console.log(cell);
+      }
       const reportPromptClass = 'julynter-report-prompt ' + fontSize;
       return (
         <li onClick={this.handleClick}>
@@ -408,11 +483,13 @@ export class ItemRenderer extends React.Component<IItemProps> {
             title={this.props.item.suggestion}
             onContextMenu={this.onContextMenu.bind(this)}
           >
+            
             {twistButton}
             <div className={reportDivClass}>
               <div className={reportPromptClass}>
                 <div>{item.text}</div>
                 {feedbackDiv}
+                {cell}
               </div>
             </div>
           </div>

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Widget } from '@lumino/widgets';
 
 import { ILabShell } from '@jupyterlab/application';
-import { showDialog, Dialog, showErrorMessage } from '@jupyterlab/apputils';
+import { showDialog, Dialog, showErrorMessage, ReactWidget } from '@jupyterlab/apputils';
 import { PathExt } from '@jupyterlab/coreutils';
 import { INotebookTracker } from '@jupyterlab/notebook';
 
@@ -259,5 +259,20 @@ class RequirementsHandler extends Widget {
    */
   getValue(): string {
     return this.inputNode.value;
+  }
+}
+
+
+export class LuminoToolbar extends ReactWidget {
+  
+  props: IToolbarProps;
+
+  constructor(options: IToolbarProps) {
+    super();
+    this.props = options;
+  }
+
+  protected render(): React.ReactElement<any, string | ((props: any) => React.ReactElement<any, string | any | (new (props: any) => React.Component<any, any, any>)>) | (new (props: any) => React.Component<any, any, any>)> | React.ReactElement<any, string | ((props: any) => React.ReactElement<any, string | any | (new (props: any) => React.Component<any, any, any>)>) | (new (props: any) => React.Component<any, any, any>)>[] {
+    return <ToolbarRenderer {...this.props}/>;
   }
 }

@@ -50,6 +50,8 @@ export class NotebookHandler implements IDisposable {
   public options: OptionsManager;
   public update: IQueryResult | null;
   public hasKernel: boolean;
+  public cellLints: HTMLElement[];
+
   _boundQueryCall: (
     sess: ISessionContext,
     args: KernelMessage.IMessage<KernelMessage.MessageType>
@@ -66,6 +68,7 @@ export class NotebookHandler implements IDisposable {
   ) {
     this._eh = eh;
     try {
+      this.cellLints = [];
       this._docManager = docManager;
       this._session = session;
       this._nbPanel = nbPanel;
