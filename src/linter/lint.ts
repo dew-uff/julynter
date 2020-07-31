@@ -114,10 +114,7 @@ export class Linter {
                 itemGenerator.create(i, cell.model.type, 'h1', [i])
               );
             } else {
-              const historyCode = executedCode[executionCountNumber]
-                .replace(/\\n/g, '\n')
-                .replace(/\\\\/g, '\\')
-                .trim();
+              const historyCode = executedCode[executionCountNumber].trim();
               if (
                 historyCode !==
                 (cell as IGenericCodeCellMetadata).model.value.text.trim()
@@ -221,7 +218,7 @@ export class Linter {
                   itemGenerator.create(index, cell.model.type, 'h5', [
                     index,
                     number,
-                    executedCode[number].replace('\\n', '\n'),
+                    executedCode[number],
                     variable,
                   ])
                 );

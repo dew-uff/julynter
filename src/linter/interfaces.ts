@@ -82,6 +82,7 @@ export interface IReport {
   reportType: ErrorTypeKey;
   reportId: ReportId | 'group';
   suggestion: string;
+  reason: string;
   cellId: string | number;
   visible: boolean;
   filteredOut: boolean;
@@ -125,6 +126,7 @@ export interface IErrorMessage {
   suggestion: string;
   type: ErrorTypeKey;
   action: IErrorAction;
+  reason: string;
 }
 
 /**
