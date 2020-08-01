@@ -31,6 +31,11 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
     return this.checks.mode;
   }
 
+  checkView(): boolean {
+    //ToDo
+    return true;
+  }
+
   checkRequirements(): string {
     return this.checks.requirements;
   }
@@ -50,6 +55,12 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
     this.saveKey('mode', mode, true);
   }
 
+  updateView(view: boolean): void {
+    // ToDo
+    //this.checks.view = view;
+    //this.saveKey('view', view, true);
+  }
+
   updateRequirements(req: string): void {
     this.checks.requirements = req;
     this.saveKey('requirements', req, true);
@@ -63,6 +74,7 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
   reloadOptions(): void {
     this.initializeOptions({
       mode: this.loadKey('mode', this.default.mode),
+      //view: this.loadKey('view', this.default.view),
       requirements: this.loadKey('requirements', this.default.requirements),
       reports: ReportIds.reduce(
         (previous, key) => {
@@ -85,6 +97,7 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
 
   saveOptions(): void {
     this.saveKey('mode', this.checks.mode, false);
+    //this.saveKey('view', this.checks.view, false);
     this.saveKey('requirements', this.checks.requirements, false);
     for (const key of ErrorTypeKeys) {
       this.saveKey('type-' + key, this.checks.types[key], false);

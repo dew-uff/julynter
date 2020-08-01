@@ -20,23 +20,29 @@ interface IItemProps {
 
 
 export class ItemWidget extends ReactWidget {
-  props: IItemProps;
+  item: IReport;
+  notebook: NotebookHandler;
+  errorHandler: ErrorHandler;
+  cellLints: { [num: string]: CellWidget };
   action: LintAction;
 
   constructor(options: IItemProps) {
     super();
-    this.props = options;
+    this.item = options.item;
+    this.notebook = options.notebook;
+    this.errorHandler = options.errorHandler;
+    this.cellLints = options.cellLints;
     this.action = new LintAction(options.item, options.notebook, options.errorHandler, this.update.bind(this));
-    if (this.props.item.cellId in this.props.cellLints) {
-      this.props.cellLints[this.props.item.cellId].add(this.action);
+    if (this.item.cellId in this.cellLints) {
+      this.cellLints[this.item.cellId].add(this.action);
     }
   }
 
   createFeedback(): JSX.Element {
-    const item: IReport = this.props.item;
+    const item: IReport = this.item;
     if (
       item.feedback &&
-      this.props.notebook.experimentManager.config.enabled
+      this.notebook.experimentManager.config.enabled
     ) {
       const negativeClass =
         'julynter-feedback-icon ' +
@@ -95,7 +101,7 @@ export class ItemWidget extends ReactWidget {
 
   protected render(): JSX.Element {
     try {
-      const item: IReport = this.props.item;
+      const item: IReport = this.item;
       if (!item.visible || item.filteredOut) {
         return null;
       }
@@ -108,7 +114,7 @@ export class ItemWidget extends ReactWidget {
       let feedbackDiv = this.createFeedback();
 
       if (
-        this.props.notebook.options.checkMode() !== 'type' &&
+        this.notebook.options.checkMode() !== 'type' &&
         item.type !== 'group'
       ) {
         prefix = ERROR_TYPES_MAP[item.reportType].label + " - ";
@@ -138,7 +144,7 @@ export class ItemWidget extends ReactWidget {
         <div className="julynter-list-item" onClick={this.action.handle(this.action.click)}>
           <div
             className="julynter-entry-holder"
-            title={this.props.item.suggestion}
+            title={this.item.suggestion}
             onContextMenu={this.action.contextMenu.bind(this.action)}
           >
             {twistButton}
@@ -152,7 +158,7 @@ export class ItemWidget extends ReactWidget {
         </div>
       );
     } catch (error) {
-      throw this.props.errorHandler.report(error, 'ItemWidget:render', []);
+      throw this.errorHandler.report(error, 'ItemWidget:render', []);
     }
   }
 }

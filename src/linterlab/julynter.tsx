@@ -14,7 +14,7 @@ import { NotebookHandler } from './notebookhandler';
 import { ExperimentManager } from './experimentmanager';
 import { EmptyListWidget, ListWidget } from './view/listwidget';
 import { IJulynterStatus } from './view/statusrenderer';
-import { LuminoToolbar } from './view/toolbarrenderer';
+import { ToolbarWidget } from './view/toolbarwidget';
 import { ErrorHandler } from './errorhandler';
 import { HeaderWidget } from './view/headerwidget';
 import { CellWidget } from './view/cellwidget';
@@ -185,15 +185,14 @@ export class Julynter extends Panel {
           cellLints: this._currentHandler.cellLints,
         }
         listWidget = new ListWidget(listOptions);
-        const toolbarOptions = {
-          tracker:this._tracker,
+        toolbarWidget = new ToolbarWidget({
+          tracker: this._tracker,
           handlers: this.handlers,
           config: this._config,
           notebook: this.currentHandler,
           labShell: this._labShell,
           errorHandler: this._eh,
-        }
-        toolbarWidget = new LuminoToolbar(toolbarOptions);
+        });
       } else {
         listWidget = new EmptyListWidget();
       }
