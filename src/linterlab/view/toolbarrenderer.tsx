@@ -13,6 +13,7 @@ import { Config } from '../config';
 import { NotebookHandler } from '../notebookhandler';
 import { createJulynterConfigWidget } from './julynterconfigwidget';
 import { ErrorHandler } from '../errorhandler';
+import { configIcon, requirermentsIcon, listIcon, cellIcon, typeIcon, iconMap } from '../../iconimports';
 
 interface IToolbarProps {
   notebook: NotebookHandler;
@@ -124,80 +125,86 @@ export class ToolbarRenderer extends React.Component<IToolbarProps> {
       const listing: JSX.Element[] = ErrorTypeKeys.map((key) => {
         const element = ERROR_TYPES_MAP[key];
         const toggleClass =
-          element.icon +
-          ' ' +
           (this.props.notebook.options.checkType(key)
             ? 'julynter-toolbar-icon-selected'
             : 'julynter-toolbar-icon');
         const buttonClass = 'julynter-toolbar-button';
         const label = element.label;
+        const icon = iconMap[key];
         return (
           <div
             key={`toolbar-${key}-${i++}`}
             className={buttonClass}
+            title={label}
             onClick={(): void => this.toggle(key)}
           >
-            <div
-              role="text"
-              aria-label={label}
-              title={label}
+            <icon.react 
               className={toggleClass}
-            />
+              width="24px"
+              height="24px"
+              tag="div"/>
           </div>
         );
       });
 
-      let toggleClass = 'julynter-toolbar-icon';
+      let toggleIcon = null;
       const mode = this.props.notebook.options.checkMode();
       if (mode === 'list') {
-        toggleClass += ' julynter-toolbar-list-icon';
+        toggleIcon = <listIcon.react 
+          className="julynter-toolbar-icon"
+          width="24px"
+          height="24px"
+          tag="div"/>
       } else if (mode === 'cell') {
-        toggleClass += ' julynter-toolbar-cell-icon';
+        toggleIcon = <cellIcon.react 
+          className="julynter-toolbar-icon"
+          width="24px"
+          height="24px"
+          tag="div"/>
       } else if (mode === 'type') {
-        toggleClass += ' julynter-toolbar-type-icon';
+        toggleIcon = <typeIcon.react 
+          className="julynter-toolbar-icon"
+          width="24px"
+          height="24px"
+          tag="div"/>
       }
       const modeToggle = (
         <div
           key="toolbar-mode"
           className="julynter-toolbar-button"
+          title="Alternate Mode"
           onClick={this.toggleMode}
         >
-          <div
-            role="text"
-            aria-label="Alternate Mode"
-            title="Alternate Mode"
-            className={toggleClass}
-          />
+          {toggleIcon}
         </div>
       );
 
       const reqConfig = (
         <div
           key="toolbar-req"
+          title="Change requirements location"
           className="julynter-toolbar-button"
           onClick={this.changeRequirements}
         >
-          <div
-            role="text"
-            aria-label="Change requirements location"
-            title="Change requirements location"
-            className="julynter-toolbar-icon julynter-toolbar-rename-icon"
-          />
+          <requirermentsIcon.react 
+            className="julynter-toolbar-icon"
+            width="24px"
+            height="24px"
+            tag="div"/>
         </div>
       );
-
       const configure = (
         <div
           key="toolbar-config"
+          title="Configure Julynter"
           className="julynter-toolbar-button"
           onClick={this.configure.bind(this)}
         >
-          <div
-            role="text"
-            aria-label="Configure Julynter"
-            title="Configure Julynter"
-            className="julynter-toolbar-icon julynter-toolbar-config-icon"
-          />
+          <configIcon.react 
+            className="julynter-toolbar-icon"
+            width="24px"
+            height="24px"
+            tag="div"/>
         </div>
       );
       return (
@@ -270,6 +277,7 @@ export class LuminoToolbar extends ReactWidget {
   constructor(options: IToolbarProps) {
     super();
     this.props = options;
+    this.addClass("julynter-toolbar-widget")
   }
 
   protected render(): React.ReactElement<any, string | ((props: any) => React.ReactElement<any, string | any | (new (props: any) => React.Component<any, any, any>)>) | (new (props: any) => React.Component<any, any, any>)> | React.ReactElement<any, string | ((props: any) => React.ReactElement<any, string | any | (new (props: any) => React.Component<any, any, any>)>) | (new (props: any) => React.Component<any, any, any>)>[] {

@@ -7,6 +7,8 @@ import { NotebookHandler } from '../notebookhandler';
 import { ErrorHandler } from '../errorhandler';
 import { CellWidget } from './cellwidget';
 import { LintAction } from './lintaction';
+import { ERROR_TYPES_MAP } from '../../linter/reports';
+import { minusIcon, plusIcon, feedbackIcon, toggleDownIcon, toggleRightIcon } from '../../iconimports';
 
 
 interface IItemProps {
@@ -37,10 +39,10 @@ export class ItemWidget extends ReactWidget {
       this.props.notebook.experimentManager.config.enabled
     ) {
       const negativeClass =
-        'julynter-feedback-icon jp-julynter-feedback-negative-icon' +
+        'julynter-feedback-icon ' +
         (item.feedback & 2 ? ' julynter-feedback-icon-selected' : '');
       const positiveClass =
-        'julynter-feedback-icon jp-julynter-feedback-positive-icon' +
+        'julynter-feedback-icon ' +
         (item.feedback & 4 ? ' julynter-feedback-icon-selected' : '');
 
       return (
@@ -49,36 +51,39 @@ export class ItemWidget extends ReactWidget {
           <div className="julynter-feedback-buttons">
             <div
               className="julynter-feedback-button"
+              title="I do not like this lint"
               onClick={this.action.handle(this.action.negativeFeedback)}
             >
-              <div
-                role="text"
-                aria-label="I do not like this lint"
-                title="I do not like this lint"
+              <minusIcon.react 
                 className={negativeClass}
+                tag="div"
+                width="24px"
+                height="24px"
               />
             </div>
             <div
               className="julynter-feedback-button"
+              title="I like this lint"
               onClick={this.action.handle(this.action.positiveFeedback)}
             >
-              <div
-                role="text"
-                aria-label="I like this lint"
-                title="I like this lint"
+              <plusIcon.react 
                 className={positiveClass}
+                tag="div"
+                width="24px"
+                height="24px"
               />
             </div>
 
             <div
               className="julynter-feedback-button"
+              title="Send a text feedback about this lint"
               onClick={this.action.handle(this.action.messageFeedback)}
             >
-              <div
-                role="text"
-                aria-label="Send a text feedback about this lint"
-                title="Send a text feedback about this lint"
-                className="julynter-feedback-icon jp-julynter-feedback-text-icon"
+              <feedbackIcon.react 
+                className="julynter-feedback-icon"
+                tag="div"
+                width="24px"
+                height="24px"
               />
             </div>
           </div>
@@ -97,9 +102,17 @@ export class ItemWidget extends ReactWidget {
       const reportDivClass = item.hasParent
         ? 'julynter-report-div julynter-has-parent'
         : 'julynter-report-div';
+      let prefix = null;
       let twistButton = null;
       let fontSize = 'julynter-normal-size';
       let feedbackDiv = this.createFeedback();
+
+      if (
+        this.props.notebook.options.checkMode() !== 'type' &&
+        item.type !== 'group'
+      ) {
+        prefix = ERROR_TYPES_MAP[item.reportType].label + " - ";
+      }
 
       if (item.collapsed) {
         fontSize = 'julynter-title-size';
@@ -107,6 +120,7 @@ export class ItemWidget extends ReactWidget {
           <div className="julynter-collapse-button">
             <div className="julynter-twist-placeholder">placeholder</div>
             <div className="julynter-rightarrow-img julynter-arrow-img" />
+            <toggleRightIcon.react tag="div" className="julynter-arrow-img"/>
           </div>
         );
       } else if (item.collapsed === false) {
@@ -114,7 +128,7 @@ export class ItemWidget extends ReactWidget {
         twistButton = (
           <div className="julynter-collapse-button">
             <div className="julynter-twist-placeholder">placeholder</div>
-            <div className="julynter-downarrow-img julynter-arrow-img" />
+            <toggleDownIcon.react tag="div" className="julynter-arrow-img"/>
           </div>
         );
       }
@@ -130,7 +144,7 @@ export class ItemWidget extends ReactWidget {
             {twistButton}
             <div className={reportDivClass}>
               <div className={reportPromptClass}>
-                <div>{item.text}</div>
+                <div>{prefix} {item.text}</div>
                 {feedbackDiv}
               </div>
             </div>

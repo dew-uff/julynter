@@ -28,6 +28,7 @@ import {
 import { Config } from '../config';
 import { NotebookHandler } from '../notebookhandler';
 import { ErrorHandler } from '../errorhandler';
+import { julynterIcon } from '../../iconimports';
 
 const MODES: { [id in ViewMode]: string } = {
   list: 'View as list',
@@ -664,7 +665,7 @@ export function createJulynterConfigWidget(
     toolbar.addItem('julynter-save', saveButton);
 
     const conf = new MainAreaWidget({ content, toolbar });
-    conf.title.iconClass = 'julynter-main-icon';
+    conf.title.icon = julynterIcon.bindprops({ stylesheet: 'mainAreaTab' });
     conf.title.caption = 'Julynter Config';
     conf.title.label = 'Julynter Config';
     conf.title.closable = true;

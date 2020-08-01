@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { ErrorHandler } from '../errorhandler';
 import { showDialog, Dialog } from '@jupyterlab/apputils';
+import { LabIcon } from '@jupyterlab/ui-components';
+import { neverconnectedIcon, disconnectedIcon, kerneloffIcon, kernelonIcon } from '../../iconimports';
 
 export interface IJulynterStatus {
   connectedOnce: boolean;
@@ -15,24 +17,24 @@ export interface IJulynterStatusProps extends IJulynterStatus {
 }
 
 export class StatusRenderer extends React.Component<IJulynterStatusProps> {
-  chooseMessageIcon(): [string, string] {
+  chooseMessageIcon(): [string, LabIcon] {
     try {
       if (!this.props.connectedOnce) {
         return [
           'Julynter did not connect to a notebook',
-          'julynter-never-connected-icon julynter-icon',
+          neverconnectedIcon,
         ];
       }
       if (!this.props.connectedNow) {
         return [
           'Julynter is not connected to a notebook',
-          'julynter-disconnected-icon julynter-icon',
+          disconnectedIcon,
         ];
       }
       if (!this.props.hasKernel) {
-        return ['Kernel not found', 'julynter-kernel-off-icon julynter-icon'];
+        return ['Kernel not found', kerneloffIcon];
       }
-      return ['Kernel connected', 'julynter-kernel-on-icon julynter-icon'];
+      return ['Kernel connected', kernelonIcon];
     } catch (error) {
       throw this.props.errorHandler.report(
         error,
@@ -113,14 +115,14 @@ export class StatusRenderer extends React.Component<IJulynterStatusProps> {
       }
 
       return (
-        <div className="jp-Julynter-kernel">
+        <div className="jp-Julynter-kernel" title={message}>
           {error}
           {exp}
-          <div
-            role="text"
-            aria-label={message}
-            title={message}
-            className={icon}
+          <icon.react
+            tag="div"
+            className="julynter-icon"
+            width="12px"
+            height="12px"
           />
         </div>
       );

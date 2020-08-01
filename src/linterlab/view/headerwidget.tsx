@@ -16,6 +16,7 @@ export class HeaderWidget extends ReactWidget {
         this.update = update;
         this.status = status;
         this.eh = eh;
+        this.addClass("julynter-header-widget")
     }
 
     titleClick(): void {

@@ -1,10 +1,11 @@
 import { ReactWidget } from "@jupyterlab/apputils";
 import React from "react";
-import { julynterNewIcon } from "../../iconimports";
+import { julynterNewIcon, iconMap } from "../../iconimports";
 import { Cell } from "@jupyterlab/cells";
 import { LintAction } from "./lintaction";
 import { CommandRegistry } from "@lumino/commands";
 import { ContextMenu } from "@lumino/widgets";
+import { ERROR_TYPES_MAP } from "../../linter/reports";
 
 
 export class CellWidget extends ReactWidget {
@@ -28,9 +29,11 @@ export class CellWidget extends ReactWidget {
     const contextMenu = new ContextMenu({ commands: commands });
     for (let i = 0; i < this.lints.length; i++) {
       let lint = this.lints[i];
+      const icon = iconMap[lint.item.reportType];
+      const rtype = ERROR_TYPES_MAP[lint.item.reportType];
       commands.addCommand('info' + i, {
-        label: lint.item.text,
-        icon: julynterNewIcon.bindprops({
+        label: rtype.label + ' - ' + lint.item.text,
+        icon: icon.bindprops({
           stylesheet: 'menuItem'
         }),
         caption: 'Why is this lint showing?',

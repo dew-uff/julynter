@@ -18,6 +18,7 @@ import { LuminoToolbar } from './view/toolbarrenderer';
 import { ErrorHandler } from './errorhandler';
 import { HeaderWidget } from './view/headerwidget';
 import { CellWidget } from './view/cellwidget';
+import { julynterNewIcon, julynterIcon } from '../iconimports';
 
 /**
  * Timeout for throttling Julynter rendering.
@@ -151,8 +152,7 @@ export class Julynter extends Panel {
       let title = 'Julynter';
       let listWidget: Widget = null;
       let toolbarWidget: Widget = null;
-      //let renderedJSX: JSX.Element = null;
-      this.title.iconClass = 'julynter-main-icon jp-SideBar-tabIcon';
+      this.title.icon = julynterIcon.bindprops({ stylesheet: 'sideBar'});
       this._status.connectedNow = false;
       this._status.hasKernel = false;
 
@@ -166,7 +166,7 @@ export class Julynter extends Panel {
         const reports: IReport[] = this.currentHandler.lint();
         this._visibleWidget = this.currentHandler.nbPanel;
         if (reports.length > 0) {
-          this.title.iconClass = 'julynter-main-new-icon jp-SideBar-tabIcon';
+          this.title.icon = julynterNewIcon.bindprops({ stylesheet: 'sideBar'});
         }
         reports.forEach((report) => {
           if (typeof report.cellId === 'number') {

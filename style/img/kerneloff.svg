@@ -1,69 +1,28 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="16"
    viewBox="0 0 24 16"
    data-icon="ui-components:circle-empty"
    data-icon-id="8e44c514-da33-4ce6-befd-94d4804f7ca9"
    version="1.1"
    id="svg6"
-   sodipodi:docname="kerneloff.svg"
-   inkscape:version="0.92.3 (2405546, 2018-03-11)"
    height="16">
-  <metadata
-     id="metadata12">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
   <defs
      id="defs10" />
-  <sodipodi:namedview
-     pagecolor="#ffffff"
-     bordercolor="#666666"
-     borderopacity="1"
-     objecttolerance="10"
-     gridtolerance="10"
-     guidetolerance="10"
-     inkscape:pageopacity="0"
-     inkscape:pageshadow="2"
-     inkscape:window-width="1900"
-     inkscape:window-height="1420"
-     id="namedview8"
-     showgrid="false"
-     inkscape:zoom="19.666667"
-     inkscape:cx="-12.991434"
-     inkscape:cy="13.371597"
-     inkscape:window-x="0"
-     inkscape:window-y="0"
-     inkscape:window-maximized="0"
-     inkscape:current-layer="svg6"
-     showguides="false" />
   <g
-     class="jp-icon3"
      id="g4"
-     style="fill:#616161"
+     fill="#616161"
+     class="jp-icon3"
      transform="translate(0,-4)">
     <path
        d="M 12,2 C 6.47,2 2,6.47 2,12 2,17.53 6.47,22 12,22 17.53,22 22,17.53 22,12 22,6.47 17.53,2 12,2 Z m 0,18 C 7.59,20 4,16.41 4,12 4,7.59 7.59,4 12,4 c 4.41,0 8,3.59 8,8 0,4.41 -3.59,8 -8,8 z"
-       id="path2"
-       inkscape:connector-curvature="0" />
+       id="path2"/>
   </g>
   <path
-     style="fill:#616161;fill-opacity:1;stroke:#616161;stroke-width:2.10188866;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     fill="#616161"
+     stroke="#616161"
+     class="jp-icon3"
+     style="fill-opacity:1;stroke-width:2.10188866;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
      d="M 21.728414,-1.3268685 2.2715864,17.326869"
-     id="path843"
-     inkscape:connector-curvature="0" />
+     id="path843"/>
 </svg>
