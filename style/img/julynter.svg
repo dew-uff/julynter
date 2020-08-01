@@ -1,32 +1,6 @@
-<svg
-   xmlns="http://www.w3.org/2000/svg"
-   width="20"
-   viewBox="0 0 30 16"
-   data-icon="ui-components:circle-empty"
-   data-icon-id="8e44c514-da33-4ce6-befd-94d4804f7ca9"
-   version="1.1"
-   id="svg2695"
-   height="16"
->
-  <defs
-     id="defs2699" />
-  <g
-     id="g1457"
-     transform="translate(2.0365779)">
-    <g
-       transform="translate(0,-4)"
-       fill="#616161"
-       id="g2693"
-       class="jp-icon3">
-      <path
-         id="path2691"
-         d="M 12,2 C 6.47,2 2,6.47 2,12 2,17.53 6.47,22 12,22 17.53,22 22,17.53 22,12 22,6.47 17.53,2 12,2 Z m 0,18 C 7.59,20 4,16.41 4,12 4,7.59 7.59,4 12,4 c 4.41,0 8,3.59 8,8 0,4.41 -3.59,8 -8,8 z" />
-    </g>
-    <path
-       stroke="#616161"
-       class="jp-icon3"
-       id="path818"
-       d="M 6.0655869,7.1523533 11.451315,11.83538 23.069098,-1.2298715"
-       style="fill:none;stroke-width:2.2956202;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+<svg xmlns="http://www.w3.org/2000/svg" width="20" viewBox="0 0 30 16" height="16">
+  <g transform="translate(2.0365779)">
+    <path transform="translate(0,-4)" fill="#616161" class="jp-icon3" d="M 12,2 C 6.47,2 2,6.47 2,12 2,17.53 6.47,22 12,22 17.53,22 22,17.53 22,12 22,6.47 17.53,2 12,2 Z m 0,18 C 7.59,20 4,16.41 4,12 4,7.59 7.59,4 12,4 c 4.41,0 8,3.59 8,8 0,4.41 -3.59,8 -8,8 z" />
+    <path stroke="#616161" class="jp-icon3" d="M 6.0655869,7.1523533 11.451315,11.83538 23.069098,-1.2298715" stroke-width="2.2956202" style="fill:none;"/>
   </g>
 </svg>

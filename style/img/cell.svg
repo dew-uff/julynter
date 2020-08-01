@@ -1,54 +1,10 @@
-<svg
-   xmlns="http://www.w3.org/2000/svg"
-   id="svg3767"
-   version="1.1"
-   fill="none"
-   viewBox="0 0 28 28"
-   height="28"
-   width="28">
-  <defs
-     id="defs3771" />
-  <rect
-     id="rect3763"
-     fill-opacity="0"
-     fill="black"
-     height="28"
-     width="28" />
-  <g
-     transform="matrix(0.62624337,0,0,0.58706846,5.2325928,5.4521188)"
-     id="g4609">
-    <path
-       fill="#616161"
-       class="jp-icon3"
-       style="fill-opacity:1;stroke-width:0.85676616"
-       d="M 23.028232,6.7844226 H 4.9717685 V 9.4512465 H 23.028232 Z"
-       id="rect3779" />
-    <path
-       fill="#616161"
-       class="jp-icon3"
-       style="fill-opacity:1;stroke-width:0.67044264"
-       d="M 23.028232,13.226868 H 11.971384 v 2.666824 h 11.056848 z"
-       id="rect3779-7" />
-    <path
-       fill="#616161"
-       class="jp-icon3"
-       style="fill-opacity:1;stroke-width:0.67044264"
-       d="M 23.028232,19.669313 H 11.971384 v 2.666824 h 11.056848 z"
-       id="rect3779-7-9" />
-    <text
-       transform="scale(0.96821721,1.0328261)"
-       id="text1316"
-       y="20.23761"
-       x="5.1371584"
-       fill="#616161"
-       class="jp-icon3"
-       style="font-style:normal;font-weight:normal;font-size:65.96962738px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;stroke-width:1.64924073;"
-       ><tspan
-         fill="#616161"
-         class="jp-icon3"
-         style="font-size:8.79595089px;stroke-width:1.64924073;fill-opacity:1;font-weight:bold"
-         y="20.23761"
-         x="5.1371584"
-         id="tspan1314">C</tspan></text>
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 28 28" height="28" width="28">
+  <g transform="matrix(0.62624337,0,0,0.58706846,5.2325928,5.4521188)" fill="#616161" class="jp-icon3" fill-opacity="1">
+    <path stroke-width="0.85676616" d="M 23.028232,6.7844226 H 4.9717685 V 9.4512465 H 23.028232 Z"/>
+    <path stroke-width="0.67044264" d="M 23.028232,13.226868 H 11.971384 v 2.666824 h 11.056848 z"/>
+    <path stroke-width="0.67044264" d="M 23.028232,19.669313 H 11.971384 v 2.666824 h 11.056848 z"/>
+    <text transform="scale(0.96821721,1.0328261)" stroke-width="1.64924073" font-family="sans-serif" font-weight="bold" font-size="9px" y="20.23761" x="5.1371584">
+      C
+    </text>
   </g>
 </svg>

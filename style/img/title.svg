@@ -1,48 +1,6 @@
-<svg
-   xmlns="http://www.w3.org/2000/svg"
-   width="28"
-   height="28"
-   viewBox="0 0 28 28"
-   fill="none"
-   version="1.1"
-   id="svg3767">
-  <defs
-     id="defs3771" />
-  <rect
-     width="28"
-     height="28"
-     fill="black"
-     fill-opacity="0"
-     id="rect3763" />
-  <g
-     id="g4609"
-     transform="matrix(0.62624337,0,0,0.58706846,5.2325928,5.4521188)">
-    <g
-       transform="matrix(0.89071029,0,0,1.1359728,1.5300559,-0.79510944)"
-       id="g3782">
-      <rect
-         fill="#616161"
-         class="jp-icon3"
-         style="fill-opacity:1;stroke-width:0.79880279"
-         id="rect3775"
-         width="19.215002"
-         height="2.200757"
-         x="4.392499"
-         y="5.0442429" />
-    </g>
-    <rect
-       y="13.545"
-       x="13.79"
-       height="0.175"
-       width="0.41999999"
-       id="rect3777"
-       fill="#212121"
-       class="jp-icon2" />
-    <path
-       id="rect3779"
-       d="m 12.75,6.924827 v 17.26072 h 2.5 V 6.924827 Z"
-       fill="#616161"
-       class="jp-icon3"
-       style="fill-opacity:1;stroke-width:0.81105113" />
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none">
+  <g fill="#616161" class="jp-icon3" transform="matrix(0.62624337,0,0,0.58706846,5.2325928,5.4521188)">
+    <rect transform="matrix(0.89071029,0,0,1.1359728,1.5300559,-0.79510944)" width="19.215002" height="2.200757" x="4.392499" y="5.0442429" stroke-width="0.79880279"/>
+    <path d="m 12.75,6.924827 v 17.26072 h 2.5 V 6.924827 Z" stroke-width="0.79880279"/>
   </g>
 </svg>

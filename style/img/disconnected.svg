@@ -1,42 +1,7 @@
-<svg
-   xmlns="http://www.w3.org/2000/svg"
-   width="16"
-   viewBox="0 0 24 16"
-   data-icon="ui-components:circle-empty"
-   data-icon-id="8e44c514-da33-4ce6-befd-94d4804f7ca9"
-   version="1.1"
-   id="svg6"
-   height="16">
-  <defs
-     id="defs10" />
-  <g
-     id="g4"
-     fill="#616161"
-     class="jp-icon3"
-     transform="translate(0,-4)">
-    <path
-       d="M 12,2 C 6.47,2 2,6.47 2,12 2,17.53 6.47,22 12,22 17.53,22 22,17.53 22,12 22,6.47 17.53,2 12,2 Z m 0,18 C 7.59,20 4,16.41 4,12 4,7.59 7.59,4 12,4 c 4.41,0 8,3.59 8,8 0,4.41 -3.59,8 -8,8 z"
-       id="path2" />
-  </g>
-  <g
-     id="g815">
-    <path
-       id="path843"
-       d="M 21.728414,-1.3268685 2.2715864,17.326869"
-       fill="#616161"
-       stroke="#616161"
-       class="jp-icon3"
-       style="fill-opacity:1;stroke-width:2.10188866;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-  </g>
-  <g
-     id="g815-3"
-     transform="matrix(-1,0,0,1,24,0)">
-    <path
-       id="path843-6"
-       fill="#616161"
-       stroke="#616161"
-       class="jp-icon3"
-       d="M 21.728414,-1.3268685 2.2715864,17.326869"
-       style="fill-opacity:1;stroke-width:2.10188866;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+<svg xmlns="http://www.w3.org/2000/svg" width="16" viewBox="0 0 24 16" height="16">
+  <g fill="#616161" class="jp-icon3">
+    <path transform="translate(0,-4)" d="M 12,2 C 6.47,2 2,6.47 2,12 2,17.53 6.47,22 12,22 17.53,22 22,17.53 22,12 22,6.47 17.53,2 12,2 Z m 0,18 C 7.59,20 4,16.41 4,12 4,7.59 7.59,4 12,4 c 4.41,0 8,3.59 8,8 0,4.41 -3.59,8 -8,8 z"/>
+    <path d="M 21.728414,-1.3268685 2.2715864,17.326869" stroke="#616161" stroke-width="2.10188866"/>
+    <path transform="matrix(-1,0,0,1,24,0)" stroke="#616161" stroke-width="2.10188866" d="M 21.728414,-1.3268685 2.2715864,17.326869" />
   </g>
 </svg>

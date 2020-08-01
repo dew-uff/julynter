@@ -1,17 +1,3 @@
-<svg
-   xmlns="http://www.w3.org/2000/svg"
-   id="svg3767"
-   version="1.1"
-   fill="none"
-   viewBox="0 0 28 28"
-   height="28"
-   width="28">
-  <defs
-     id="defs3771" />
-  <path
-     fill="#616161"
-     class="jp-icon3"
-     id="rect3779-7"
-     d="M 19.65387,13.217196 H 8.3461296 v 1.565608 H 19.65387 Z"
-     style="fill-opacity:1;stroke-width:0.51949126" />
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 28 28" height="28" width="28">
+  <path fill="#616161" class="jp-icon3" d="M 19.65387,13.217196 H 8.3461296 v 1.565608 H 19.65387 Z" stroke-width="0.51949126" />
 </svg>

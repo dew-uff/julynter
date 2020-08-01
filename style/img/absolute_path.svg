@@ -1,33 +1,7 @@
-<svg
-   xmlns="http://www.w3.org/2000/svg"
-   id="svg3767"
-   version="1.1"
-   fill="none"
-   viewBox="0 0 28 28"
-   height="28"
-   width="28">
-  <defs
-     id="defs3771" />
-  <g
-     transform="matrix(0.62624337,0,0,0.58706846,5.2325928,5.4521188)"
-     id="g4609">
-    <path
-       fill="#616161"
-       class="jp-icon3"
-       style="fill-opacity:1;stroke-width:0.85676616"
-       d="M 19.906774,5.0659808 13.635702,23.128381 15.980084,24.054579 22.251156,5.992178 Z"
-       id="rect3779" />
-    <path
-       fill="#616161"
-       class="jp-icon3"
-       style="fill-opacity:1;stroke-width:0.32197925"
-       d="m 5.748844,21.33427 v 2.720309 h 2.5 V 21.33427 Z"
-       id="rect3779-1" />
-    <path
-       fill="#616161"
-       class="jp-icon3"
-       style="fill-opacity:1;stroke-width:0.32197925"
-       d="m 9.7342712,21.33427 v 2.720309 H 12.234271 V 21.33427 Z"
-       id="rect3779-1-8" />
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 28 28" height="28" width="28">
+  <g transform="matrix(0.62624337,0,0,0.58706846,5.2325928,5.4521188)" fill="#616161" class="jp-icon3" fill-opacity="1" stroke-width="0.32197925">
+    <path stroke-width="0.85676616" d="M 19.906774,5.0659808 13.635702,23.128381 15.980084,24.054579 22.251156,5.992178 Z"/>
+    <path d="m 5.748844,21.33427 v 2.720309 h 2.5 V 21.33427 Z"/>
+    <path d="m 9.7342712,21.33427 v 2.720309 H 12.234271 V 21.33427 Z"/>
   </g>
 </svg>
