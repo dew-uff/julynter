@@ -171,7 +171,7 @@ export class Julynter extends Panel {
         reports.forEach((report) => {
           if (typeof report.cellId === 'number') {
             let cell = this._currentHandler.nbPanel.content.widgets[report.cellId];
-            this._currentHandler.cellLints[report.cellId] = new CellWidget(cell);
+            this._currentHandler.cellLints[report.cellId] = new CellWidget(this._currentHandler, cell);
             (cell.layout as PanelLayout).insertWidget(0, this._currentHandler.cellLints[report.cellId]);
           }
         })

@@ -32,7 +32,7 @@ export class ItemWidget extends ReactWidget {
     this.notebook = options.notebook;
     this.errorHandler = options.errorHandler;
     this.cellLints = options.cellLints;
-    this.action = new LintAction(options.item, options.notebook, options.errorHandler, this.update.bind(this));
+    this.action = new LintAction(options.item, options.notebook, options.errorHandler, this.update.bind(this), "list");
     if (this.item.cellId in this.cellLints) {
       this.cellLints[this.item.cellId].add(this.action);
     }

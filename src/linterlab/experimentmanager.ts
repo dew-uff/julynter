@@ -87,6 +87,7 @@ interface INotebookLint extends INotebookBase {
 
 interface INotebookLintSubject extends INotebookBase {
   report: IReportResult;
+  source: string;
 }
 
 interface INotebookLintFeedback extends INotebookLintSubject {
@@ -787,7 +788,8 @@ export class ExperimentManager {
   reportFeedback(
     handler: NotebookHandler,
     report: IReport,
-    message: string
+    message: string,
+    source: string
   ): void {
     if (!this.config.enabled) {
       return;
@@ -804,11 +806,12 @@ export class ExperimentManager {
       notebookId: handler.id,
       report: newReport,
       message: message,
+      source: source
     };
     this._send(send);
   }
 
-  reportLintClick(handler: NotebookHandler, report: IReport): void {
+  reportLintClick(handler: NotebookHandler, report: IReport, source: string): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }
@@ -819,13 +822,13 @@ export class ExperimentManager {
       ? this.selectMessages.bind(this)
       : this.selectTypes.bind(this);
     const newReport = mapfn(report);
-
     const send: INotebookLintSubject = {
       header: 'Lint',
       operation: 'lintclick',
       notebookName: this._notebookName(handler.name),
       notebookId: handler.id,
       report: newReport,
+      source: source,
     };
     this._send(send);
   }

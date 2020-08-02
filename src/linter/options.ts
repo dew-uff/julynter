@@ -32,8 +32,11 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
   }
 
   checkView(): boolean {
-    //ToDo
-    return true;
+    return this.checks.view;
+  }
+
+  checkRestart(): boolean {
+    return this.checks.restart;
   }
 
   checkRequirements(): string {
@@ -56,9 +59,13 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
   }
 
   updateView(view: boolean): void {
-    // ToDo
-    //this.checks.view = view;
-    //this.saveKey('view', view, true);
+    this.checks.view = view;
+    this.saveKey('view', view, true);
+  }
+
+  updateRestart(restart: boolean): void {
+    this.checks.restart = restart;
+    this.saveKey('restart', restart, true);
   }
 
   updateRequirements(req: string): void {
@@ -74,7 +81,8 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
   reloadOptions(): void {
     this.initializeOptions({
       mode: this.loadKey('mode', this.default.mode),
-      //view: this.loadKey('view', this.default.view),
+      view: this.loadKey('view', this.default.view),
+      restart: this.loadKey('restart', this.default.restart),
       requirements: this.loadKey('requirements', this.default.requirements),
       reports: ReportIds.reduce(
         (previous, key) => {
@@ -97,7 +105,8 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
 
   saveOptions(): void {
     this.saveKey('mode', this.checks.mode, false);
-    //this.saveKey('view', this.checks.view, false);
+    this.saveKey('view', this.checks.view, false);
+    this.saveKey('restart', this.checks.restart, false);
     this.saveKey('requirements', this.checks.requirements, false);
     for (const key of ErrorTypeKeys) {
       this.saveKey('type-' + key, this.checks.types[key], false);

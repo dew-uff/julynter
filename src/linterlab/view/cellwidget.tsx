@@ -6,21 +6,24 @@ import { LintAction } from "./lintaction";
 import { CommandRegistry } from "@lumino/commands";
 import { ContextMenu } from "@lumino/widgets";
 import { ERROR_TYPES_MAP } from "../../linter/reports";
+import { NotebookHandler } from "../notebookhandler";
 
 
 export class CellWidget extends ReactWidget {
   cell: Cell;
+  notebook: NotebookHandler;
   lints: LintAction[];
 
-  constructor(cell: Cell) {
+  constructor(notebook: NotebookHandler, cell: Cell) {
     super();
+    this.notebook = notebook;
     this.cell = cell;
     this.lints = [];
     this.addClass("julynter-cell-mod")
   }
 
   add(action: LintAction) {
-    this.lints.push(action);
+    this.lints.push(action.clone("cell"));
     this.update();
   }
 
@@ -66,8 +69,7 @@ export class CellWidget extends ReactWidget {
   }
 
   protected render(): JSX.Element {
-    // ToDo: add option to not show
-    if (this.lints.length > 0) {
+    if (this.notebook.options.checkView() && this.lints.length > 0) {
       return <div onClick={this.click.bind(this)}> <julynterNewIcon.react tag="span"/> </div>;
     } else {
       return <div></div>;
@@ -75,9 +77,6 @@ export class CellWidget extends ReactWidget {
   }
 
   dispose() {
-    /*if (this.cell && this.cell.layout) {
-      (this.cell.layout as PanelLayout).removeWidget(this);
-    }*/
     super.dispose();
   }
     

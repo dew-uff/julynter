@@ -157,6 +157,8 @@ export interface IGroupGenerator {
  */
 export interface IJulynterLintOptions {
   mode: ViewMode;
+  view: boolean;
+  restart: boolean;
   requirements: string;
   types: { [id in ErrorTypeKey]: boolean };
   reports: { [id in ReportId]: boolean };

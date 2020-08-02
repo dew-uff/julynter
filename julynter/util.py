@@ -6,6 +6,7 @@ from datetime import date
 from threading import Lock
 
 from .config import home_config_path, load_project_config
+from ._version import __version__
 
 from requests_futures.sessions import FuturesSession
 
@@ -37,6 +38,7 @@ def log(data, folder="errors", config=None):
                 'mtype': folder,
                 'mtext': data,
                 "mexperiment_id": config["experiment"]["id"],
+                'version': __version__
             }, hooks={
                 'response': create_hook(data, folder, config),
             })

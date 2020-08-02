@@ -14,13 +14,21 @@ export class LintAction {
   notebook: NotebookHandler;
   errorHandler: ErrorHandler;
   update: () => void;
+  source: string;
 
-  constructor(item: IReport, notebook: NotebookHandler, errorHandler: ErrorHandler, update: () => void) {
+  constructor(item: IReport, notebook: NotebookHandler, errorHandler: ErrorHandler, update: () => void, source: string) {
     this.item = item;
     this.notebook = notebook;
     this.errorHandler = errorHandler;
     this.update = update;
+    this.source = source;
     this.handle = this.handle.bind(this);
+  }
+
+  clone(newSource: string): LintAction {
+    return new LintAction(
+      this.item, this.notebook, this.errorHandler, this.update, newSource
+    );
   }
 
   handle(action: () => void) {
@@ -34,7 +42,7 @@ export class LintAction {
   click(): void {
     try {
       const notebook = this.notebook;
-      notebook.experimentManager.reportLintClick(notebook, this.item);
+      notebook.experimentManager.reportLintClick(notebook, this.item, this.source);
       this.item.boundAction();
     } catch (error) {
       throw this.errorHandler.report(error, 'LintAction:click', []);
@@ -43,15 +51,16 @@ export class LintAction {
 
   why(): void {
     try {
+      const action = this.clone(this.source + "-why");
       const item = this.item;
       let suggestion = null;
-      if (this.item.suggestion) {
-        suggestion = <li>Suggestion: {this.item.suggestion}</li>;
+      if (item.suggestion) {
+        suggestion = <li>Suggestion: {item.suggestion}</li>;
       }
       const body = (
         <div>
           <ul className="julynter-feedback-ul">
-            <li>{this.item.reason}</li>
+            <li>{item.reason}</li>
             <li><br/></li>
             { suggestion }
           </ul>
@@ -60,18 +69,18 @@ export class LintAction {
       showDialog({
         title: (item.reportId === 'group' ? item.text : item.reportId + ' - ' + item.text),
         body: body,
-        buttons: [Dialog.cancelButton(), Dialog.okButton({ label: this.item.action.label })],
+        buttons: [Dialog.cancelButton(), Dialog.okButton({ label: item.action.label })],
       }).then((result) => {
         Promise.resolve(result.button.accept).then((ok: boolean) => {
           try {
             if (ok) {
-              this.click();
+              action.click();
             }
           } catch (error) {
             throw this.errorHandler.report(
               error,
               'LintAction:why.then',
-              [ok]
+              [this.source, ok]
             );
           }
         });
@@ -80,7 +89,7 @@ export class LintAction {
       throw this.errorHandler.report(
         error,
         'LintAction:why',
-        []
+        [this.source]
       );
     }
   }
@@ -113,7 +122,7 @@ export class LintAction {
             throw this.errorHandler.report(
               error,
               'LintAction:contextMenu.copy',
-              [item]
+              [this.source, item]
             );
           }
         },
@@ -174,7 +183,7 @@ export class LintAction {
                 throw this.errorHandler.report(
                   error,
                   'LintAction:contextMenu.hide',
-                  [ok, item]
+                  [this.source, ok, item]
                 );
               }
             });
@@ -226,13 +235,14 @@ export class LintAction {
       throw this.errorHandler.report(
         error,
         'LintAction:createMenu',
-        []
+        [this.source]
       );
     }
   }
 
   contextMenu(event: React.MouseEvent<HTMLDivElement>): void {
     try {
+      const action = this.clone(this.source + "-menu");
       const commands = new CommandRegistry();
       const contextMenu = new ContextMenu({ commands: commands });
       const item = this.item;
@@ -241,7 +251,7 @@ export class LintAction {
         label: (item.reportId === 'group' ? item.text : item.reportId) + ' - Why?',
         caption: 'Why is this lint showing?',
         className: 'julynter-context-info',
-        execute: this.why.bind(this),
+        execute: action.why.bind(action),
       });
       contextMenu.addItem({
         command: 'info',
@@ -251,7 +261,7 @@ export class LintAction {
         type: 'separator',
         selector: '*',
       });
-      this.populateMenu(commands, contextMenu);
+      action.populateMenu(commands, contextMenu);
       contextMenu.open(event as any);
       event.preventDefault();
       event.stopPropagation();
@@ -259,7 +269,7 @@ export class LintAction {
       throw this.errorHandler.report(
         error,
         'LintAction:contextMenu',
-        []
+        [this.source]
       );
     }
   }
@@ -270,10 +280,10 @@ export class LintAction {
       const item = this.item;
       const em = notebook.experimentManager;
       if (item.feedback & 2) {
-        em.reportFeedback(notebook, item, '<<negate-negative>>');
+        em.reportFeedback(notebook, item, '<<negate-negative>>', this.source);
         item.feedback -= 2;
       } else {
-        em.reportFeedback(notebook, item, '<<negative>>');
+        em.reportFeedback(notebook, item, '<<negative>>', this.source);
         item.feedback |= 2;
       }
 
@@ -282,7 +292,7 @@ export class LintAction {
       throw this.errorHandler.report(
         error,
         'LintAction:negativeFeedback',
-        []
+        [this.source]
       );
     }
   }
@@ -293,10 +303,10 @@ export class LintAction {
       const item = this.item;
       const em = notebook.experimentManager;
       if (item.feedback & 4) {
-        em.reportFeedback(notebook, item, '<<negate-positive>>');
+        em.reportFeedback(notebook, item, '<<negate-positive>>', this.source);
         item.feedback -= 4;
       } else {
-        em.reportFeedback(notebook, item, '<<positive>>');
+        em.reportFeedback(notebook, item, '<<positive>>', this.source);
         item.feedback |= 4;
       }
       this.update();
@@ -304,7 +314,7 @@ export class LintAction {
       throw this.errorHandler.report(
         error,
         'LintAction:positiveFeedback',
-        []
+        [this.source]
       );
     }
   }
@@ -334,14 +344,15 @@ export class LintAction {
               notebook.experimentManager.reportFeedback(
                 notebook,
                 this.item,
-                dialogResult
+                dialogResult,
+                this.source
               );
             }
           } catch (error) {
             throw this.errorHandler.report(
               error,
               'LintAction:messageFeedback.then',
-              [ok, dialogResult]
+              [this.source, ok, dialogResult]
             );
           }
         });
@@ -350,12 +361,9 @@ export class LintAction {
       throw this.errorHandler.report(
         error,
         'LintAction:messageFeedback',
-        []
+        [this.source]
       );
     }
   }
-
-
-
 
 }

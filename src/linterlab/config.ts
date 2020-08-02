@@ -32,6 +32,8 @@ export class Config {
   createDefault(): IJulynterLintOptions {
     return {
       mode: 'type',
+      view: true,
+      restart: true,
       requirements: 'requirements.txt',
       types: {
         invalidtitle: true,
