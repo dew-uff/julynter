@@ -1,3 +1,9 @@
+:root {
+  --julynter-font-size1: var(--jp-ui-font-size1);
+  --julynter-title-font-size: var(--jp-ui-font-size0);
+  
+}
+
 .julynter-main-icon, .julynter-main-new-icon {
   display: block;
   height: auto;
@@ -32,14 +38,14 @@
   flex-direction: column;
   background: var(--jp-layout-color1);
   color: var(--jp-ui-font-color1);
-  font-size: var(--jp-ui-font-size0);
+  font-size: var(--julynter-title-font-size);
   height: 100%;
 }
 
 .jp-Julynter header {
   border-bottom: var(--jp-border-width) solid var(--jp-border-color2);
   flex: 0 0 auto;
-  font-size: var(--jp-ui-font-size0);
+  font-size: var(--julynter-title-font-size);
   font-weight: 600;
   letter-spacing: 1px;
   margin: 0px;
@@ -170,11 +176,12 @@
 }
 
 .julynter-normal-size {
-  font-size: var(--jp-ui-font-size1);
+  font-size: var(--julynter-font-size1);
 }
 
 .julynter-title-size {
-  font-size: var(--jp-ui-font-size2);
+  font-size: var(--julynter-font-size1);
+  font-weight: bold;
 }
 
 .julynter-report-prompt {
@@ -257,7 +264,7 @@
   padding: 15px;
   background: var(--jp-layout-color1);
   color: var(--jp-ui-font-color1);
-  font-size: var(--jp-ui-font-size0);
+  font-size: var(--julynter-font-size0);
 }
 
 .julynter-config-inner h1 {

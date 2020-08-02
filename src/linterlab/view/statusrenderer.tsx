@@ -118,12 +118,7 @@ export class StatusRenderer extends React.Component<IJulynterStatusProps> {
         <div className="jp-Julynter-kernel" title={message}>
           {error}
           {exp}
-          <icon.react
-            tag="div"
-            className="julynter-icon"
-            width="12px"
-            height="12px"
-          />
+          <icon.react elementSize="normal" className="julynter-icon" elementPosition="center"/>
         </div>
       );
     } catch (error) {
