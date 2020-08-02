@@ -297,7 +297,8 @@ export class Linter {
     headings.forEach((element) => {
       if (
         options.checkType(element.reportType) &&
-        (element.reportId === 'group' || options.checkReport(element.reportId))
+        (element.reportId === 'group' || options.checkReport(element.reportId)) &&
+        (!element.restart || options.checkRestart())
       ) {
         newHeadings.push(element);
       }

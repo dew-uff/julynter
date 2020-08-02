@@ -19,12 +19,15 @@ class _JulynterNameVisitor(ast.NodeVisitor):
     def __init__(self):
         self.name_definitions = set()
         self.name_usages = set()
+        self.import_definition = set()
     def visit_Import(self, node):
         for alias in node.names:
             self.name_definitions.add(alias.asname or alias.name.split('.')[0])
+            self.import_definition.add(alias.asname or alias.name.split('.')[0])
     def visit_ImportFrom(self, node):
         for alias in node.names:
             self.name_definitions.add(alias.asname or alias.name.split('.')[0])
+            self.import_definition.add(alias.asname or alias.name.split('.')[0])
     def visit_Name(self, node):
         if isinstance(node.ctx, (ast.Param, ast.Store)):
             self.name_definitions.add(node.id)
@@ -48,6 +51,7 @@ class _JulynterPathVisitor(ast.NodeVisitor):
 
 _julynter_dependencies_processed = set()
 _julynter_name_definitions = {}
+_julynter_import_definitions = {}
 _julynter_name_usages = {}
 _julynter_cell_dependencies = defaultdict(dict)
 _julynter_missing_dependencies = {}
@@ -56,6 +60,7 @@ _julynter_missing_dependencies = {}
 def _julynter_dependencies(ip, hm):
     processed = _julynter_dependencies_processed
     name_definitions = _julynter_name_definitions
+    import_definitions = _julynter_import_definitions
     name_usages = _julynter_name_usages
     cell_dependencies = _julynter_cell_dependencies
     missing_dependencies = _julynter_missing_dependencies
@@ -69,6 +74,7 @@ def _julynter_dependencies(ip, hm):
         name_visitor = _JulynterNameVisitor()
         name_visitor.visit(tree)
         name_definitions[lineno] = name_visitor.name_definitions
+        import_definitions[lineno] = name_visitor.import_definition
         name_usages[lineno] = name_visitor.name_usages
         missing_dependencies[lineno] = []
         for usage in name_visitor.name_usages:
@@ -76,7 +82,7 @@ def _julynter_dependencies(ip, hm):
             for _, line, _ in reversed(list(hm.get_range(stop=lineno + 1))):
                 if usage in name_definitions.get(line, []):
                     found = True
-                    if line != lineno:
+                    if line != lineno and usage not in import_definitions.get(line, []):
                         cell_dependencies[lineno][usage] = line
                     break
             if (

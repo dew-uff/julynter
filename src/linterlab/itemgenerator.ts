@@ -62,6 +62,7 @@ export class ItemGenerator implements IItemGenerator {
         type: type,
         action: message.action,
         boundAction: message.action.execute(this, ...args),
+        restart: message.restart,
       };
     } catch (error) {
       throw this._eh.report(error, 'ItemGenerator:create', [
@@ -193,6 +194,7 @@ export class GroupGenerator implements IGroupGenerator {
         type: 'group',
         hasParent: true,
         action: null,
+        restart: false,
         boundAction: () => {
           return;
         },

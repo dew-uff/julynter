@@ -242,6 +242,27 @@ export class JulynterConfigContent extends Widget {
     }
   }
 
+  changeView(event: React.ChangeEvent<HTMLInputElement>): void {
+    try {
+      this._current.view = event.target.checked;
+    } catch (error) {
+      throw this._eh.report(error, 'JulynterConfigContent:changeView', [
+        event.currentTarget.value,
+      ]);
+    }
+  }
+
+  changeRestart(event: React.ChangeEvent<HTMLInputElement>): void {
+    try {
+      this._current.restart = event.target.checked;
+    } catch (error) {
+      throw this._eh.report(error, 'JulynterConfigContent:changeRestart', [
+        event.currentTarget.value,
+      ]);
+    }
+  }
+
+
   display(): void {
     try {
       let renderedJSX: JSX.Element = null;
@@ -302,6 +323,22 @@ export class JulynterConfigContent extends Widget {
                 defaultValue={this._current.requirements}
               />
             </div>
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              onChange={this.changeView.bind(this)}
+              defaultChecked={this._current.view}
+            />
+            Show lints on cells
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              onChange={this.changeRestart.bind(this)}
+              defaultChecked={this._current.restart}
+            />
+            Show lints that require a kernel restart
           </label>
           {reportGroups}
         </div>

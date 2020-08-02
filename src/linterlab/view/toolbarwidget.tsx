@@ -14,6 +14,7 @@ import { NotebookHandler } from '../notebookhandler';
 import { createJulynterConfigWidget } from './julynterconfigwidget';
 import { ErrorHandler } from '../errorhandler';
 import { configIcon, requirermentsIcon, listIcon, cellIcon, typeIcon, iconMap, eyeIcon } from '../../iconimports';
+import { refreshIcon } from '@jupyterlab/ui-components';
 
 interface IToolbarProps {
   notebook: NotebookHandler;
@@ -131,6 +132,15 @@ export class ToolbarWidget extends ReactWidget {
     }
   }
 
+  toggleRestart(): void {
+    try {
+      const options = this.notebook.options;
+      options.updateRestart(!options.checkRestart());
+    } catch (error) {
+      throw this.errorHandler.report(error, 'ToolbarWidget:toggleRestart', []);
+    }
+  }
+
   changeRequirements(): Promise<Dialog.IResult<string>> {
     try {
       const options = this.notebook.options;
@@ -225,6 +235,23 @@ export class ToolbarWidget extends ReactWidget {
     );
   }
 
+  private createRestartButton(): JSX.Element {
+    const toggleClass =
+        (this.notebook.options.checkRestart()
+          ? 'julynter-toolbar-icon-selected'
+          : 'julynter-toolbar-icon');
+    return (
+      <div
+        className="julynter-toolbar-button"
+        title="Toggle lints that require a kernel restart"
+        onClick={this.toggleRestart.bind(this)}
+      >
+        <refreshIcon.react elementSize="normal" className={toggleClass} elementPosition="center"/>
+      </div>
+    );
+  }
+
+
   private createModeButton(): JSX.Element {
     let toggleIcon = null;
     const mode = this.notebook.options.checkMode();
@@ -254,6 +281,7 @@ export class ToolbarWidget extends ReactWidget {
           <div className={'julynter-toolbar'}>
             {this.createFilterButtons()}
             {this.createViewButton()}
+            {this.createRestartButton()}
             {this.createModeButton()}
             <div
               key="toolbar-req"

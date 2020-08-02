@@ -86,6 +86,7 @@ export interface IReport {
   cellId: string | number;
   visible: boolean;
   filteredOut: boolean;
+  restart: boolean;
 
   action: IErrorAction;
   boundAction: () => void;
@@ -106,7 +107,6 @@ export interface IErrorType {
   key: ErrorTypeKey;
   label: string;
   toggle: string;
-  icon: string;
 }
 
 /**
@@ -127,6 +127,7 @@ export interface IErrorMessage {
   type: ErrorTypeKey;
   action: IErrorAction;
   reason: string;
+  restart: boolean;
 }
 
 /**
@@ -171,10 +172,14 @@ export interface ILintOptionsManager {
   checkReport(key: ReportId): boolean;
   checkType(key: ErrorTypeKey): boolean;
   checkMode(): ViewMode;
+  checkView(): boolean;
+  checkRestart(): boolean;
   checkRequirements(): string;
   updateReport(key: ReportId, value: boolean): void;
   updateType(key: ErrorTypeKey, value: boolean): void;
   updateMode(mode: ViewMode): void;
+  updateView(view: boolean): void;
+  updateRestart(view: boolean): void;
   updateRequirements(req: string): void;
   initializeOptions(checks: IJulynterLintOptions): void;
   reloadOptions(): void;
