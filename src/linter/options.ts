@@ -100,6 +100,7 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
         },
         { ...this.default.types }
       ),
+      kernel: this.default.kernel
     });
   }
 

@@ -153,6 +153,24 @@ export interface IGroupGenerator {
   create(key: string, reportType: string, elements: IReport[]): IReport;
 }
 
+
+/**
+ * KernelMatcher
+ */
+export interface IKernelMatcher {
+  kernel: string;
+  language: string;
+  initScript: string;
+  name: string;
+}
+
+export const GenericMatcher: IKernelMatcher = {
+  kernel: null,
+  language: null,
+  initScript: null,
+  name: 'default',
+}
+
 /**
  * Linter configuration options
  */
@@ -163,6 +181,11 @@ export interface IJulynterLintOptions {
   requirements: string;
   types: { [id in ErrorTypeKey]: boolean };
   reports: { [id in ReportId]: boolean };
+  kernel: {
+    values: { [id: string]: IKernelMatcher },
+    order: string[],
+  };
+  
 }
 
 /**

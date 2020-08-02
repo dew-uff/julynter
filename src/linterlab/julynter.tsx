@@ -7,8 +7,7 @@ import { ActivityMonitor } from '@jupyterlab/coreutils';
 import { IDocumentManager } from '@jupyterlab/docmanager';
 import { NotebookPanel, INotebookTracker } from '@jupyterlab/notebook';
 
-import { IReport } from '../linter/interfaces';
-import { Languages } from '../linter/languages';
+import { IReport, IKernelMatcher } from '../linter/interfaces';
 import { Config } from './config';
 import { NotebookHandler } from './notebookhandler';
 import { ExperimentManager } from './experimentmanager';
@@ -97,7 +96,7 @@ export class Julynter extends Panel {
         const scripts = session.ready.then(
           handler.getKernelLanguage.bind(handler)
         );
-        scripts.then((language: Languages.LanguageModel) => {
+        scripts.then((language: IKernelMatcher) => {
           status.connectedOnce = true;
           handler.configureHandler(language);
         });

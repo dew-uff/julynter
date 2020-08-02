@@ -14,8 +14,9 @@ import {
   IGenericCellMetadata,
   IQueryResult,
   IReport,
+  IKernelMatcher,
+  GenericMatcher,
 } from '../linter/interfaces';
-import { Languages } from '../linter/languages';
 import { Linter } from '../linter/lint';
 import { Config } from './config';
 import { ExperimentManager } from './experimentmanager';
@@ -31,7 +32,7 @@ export interface IJulynterKernelUpdate {
 }
 
 export class NotebookHandler implements IDisposable {
-  private _language: Languages.LanguageModel | null;
+  private _language: IKernelMatcher | null;
 
   private _kernelRestarted = new Signal<this, Promise<void>>(this);
   private _disposed = new Signal<this, void>(this);
@@ -76,7 +77,7 @@ export class NotebookHandler implements IDisposable {
       this._experimentManager = em;
       this._update = update;
       this._panelId = this._nbPanel.id;
-      this._language = Languages.GENERIC;
+      this._language = GenericMatcher;
       this.options = new OptionsManager(nbPanel, config, em, eh, update);
       this.update = {};
       this.hasKernel = false;
@@ -119,11 +120,34 @@ export class NotebookHandler implements IDisposable {
     }
   }
 
-  getKernelLanguage(): Promise<Languages.LanguageModel> {
+  findLanguage(kernelName: string, languageName: string): Promise<IKernelMatcher> {
+    return new Promise((resolve, reject) => {
+      for (let kid of this.options.checks.kernel.order) {
+        const kernel = this.options.checks.kernel.values[kid];
+        if (kernel.kernel && kernelName.match(kernel.kernel)) {
+          resolve(kernel);
+          return;
+        }
+        if (kernel.language && languageName.match(kernel.language)) {
+          resolve(kernel);
+          return;
+        } 
+      }
+      resolve({
+        kernel: null,
+        language: null,
+        initScript: null,
+        name: "default"
+      });
+    })
+  }
+
+  getKernelLanguage(): Promise<IKernelMatcher> {
     try {
       return this._session.session.kernel.info.then((infoReply: IInfoReply) => {
         try {
-          const model = Languages.getScript(infoReply.language_info.name);
+          this._session.session.kernel.name
+          const model = this.findLanguage(this._session.session.kernel.name, infoReply.language_info.name);
           this._experimentManager.reportNotebookKernel(
             this,
             this._session.session.kernel.name,
@@ -154,7 +178,7 @@ export class NotebookHandler implements IDisposable {
     }
   }
 
-  configureHandler(language: Languages.LanguageModel): void {
+  configureHandler(language: IKernelMatcher): void {
     try {
       this._language = language;
       this._ready = this._session.ready.then(() => {
