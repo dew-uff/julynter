@@ -57,9 +57,9 @@ class TopBottomPreprocessor(Preprocessor):
             index for index, cell in enumerate(notebook.cells)
             if isinstance(cell.get(u'execution_count'), int)
         ]
+        self.cell_order = cells
         if not cells:
             return u"No numbered cells"
-        self.cell_order = cells
         return ""
 
 
@@ -69,6 +69,7 @@ class ExecutionCountPreprocessor(Preprocessor):
     def prepare_notebook_order(self, notebook, vindex):
         """Define the execution of cells following the execution count"""
         self.vindex = vindex
+        self.cell_order = []
         cells = sorted([
             (int(cell.get(u'execution_count')), index, cell)
             for index, cell in enumerate(notebook.cells)

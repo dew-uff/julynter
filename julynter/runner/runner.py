@@ -12,35 +12,8 @@ import nbconvert
 from jupyter_client.kernelspec import find_kernel_specs
 
 from ..util import vprint, to_unicode, TimeoutException, Path
-from . import consts
 from .preprocessors import create_preprocessor
 from .compare import cell_diff, DEFAULT_NORMALIZATION, DEFAULT_SIMILARITY
-
-
-class ExecutionResult(object):
-    """Represents an execution result"""
-    # pylint: disable=useless-object-inheritance, too-many-instance-attributes
-
-    def __init__(self):
-        self.reason = None
-        self.msg = None
-        self.cell = None
-        self.count = None
-        self.diff = None
-        self.duration = None
-        self.timeout = None
-        self.diff_count = None
-        self.processed = consts.E_INSTALLED
-        self.statuscode = 0
-        self.similarities = []
-        self.has_diffs = 1
-
-    def add_similarity(self, sim):
-        """Add similarity dict to result"""
-        self.similarities.append(sim)
-
-    def __repr__(self):
-        return repr(self.__dict__)
 
 
 class StopRunException(Exception):
@@ -71,8 +44,40 @@ class Runner(object):
         self.old_nb = None
         self.start_time = None
 
-        self.execution = ExecutionResult()
-        self.update_status(consts.E_INSTALLED)
+        self.result = self._clean_result()
+        self.fail = self._clean_fail()
+        self.diff_result = self._clean_diff_result()
+
+    def _clean_fail(self):
+        """Return clean fail result dict"""
+        return {
+            "msg": None,
+            "reason": None,
+        }
+
+    def _clean_result(self):
+        """Return clean result dict"""
+        return {
+            "cell_order": [],
+            "executed_cells": 0,
+            "status": "not-run", # not-run, skipped, error, run
+            "processed": ["attempt"], # attempt, loaded, timeout, exception
+            "timeout": None,
+            "duration": None,
+            "last_cell_index": None,
+            "count": None,
+        }
+
+    def _clean_diff_result(self):
+        """Return clean diff result dict"""
+        return {
+            "diff": None,
+            "diff_count": None,
+            "diffnorm": None,
+            "diffnorm_count": None,
+            "processed": [], # finished, same-results, mismatch-results, same-norm, mismatch-norm
+            "similarities": [],
+        }
 
     def _timeout_func(self, cell):
         """Define cell timeout"""
@@ -87,7 +92,7 @@ class Runner(object):
             with open(str(self.path)) as fil:
                 self.notebook = nbformat.read(fil, as_version=4)
             self.old_nb = deepcopy(self.notebook)
-            self.update_status(consts.E_LOADED)
+            self.update_processed("loaded")
         except OSError:
             vprint(self.vindex + 1, "Failed to open file")
             self.report_exit(
@@ -147,10 +152,15 @@ class Runner(object):
         """Execute notebook"""
         preprocessor.timeout_func = self._timeout_func
         self.start_time = time.time()
+        preprocessor.log.propagate = False
         preprocessor.preprocess(self.notebook, {'metadata': {'path': str(self.path.parent)}})
+        preprocessor.log.propagate = True
 
-    def run(self):
+    def run(self, clean=True):
         """Run notebook"""
+        if clean:
+            self.result = self._clean_result()
+            self.fail = self._clean_fail()
         try:
             # pylint: disable=duplicate-except
             self.load_file()
@@ -158,9 +168,10 @@ class Runner(object):
             preprocessor.last_try = (-1, -1)
             self.set_kernel(preprocessor)
             skip = preprocessor.prepare_notebook_order(self.notebook, self.vindex)
+            self.result["cell_order"] = preprocessor.cell_order
             if skip != "":
                 vprint(self.vindex, "Skipping notebook. Reason: {}".format(skip))
-                self.report_exit("<Skipping notebook>", skip, statuscode=0)
+                self.report_exit("<Skipping notebook>", skip, statuscode="skipped")
 
             timeout = 0
             try:
@@ -170,16 +181,16 @@ class Runner(object):
             except TimeoutException:
                 timeout = 1
                 vprint(self.vindex + 1, "Timeout")
-                self.update_status(consts.E_TIMEOUT)
+                self.update_processed("timeout")
             except RuntimeError:
                 reason = "RuntimeError"
                 vprint(self.vindex + 1, "Exception: {}".format(reason))
-                self.update_status(consts.E_EXCEPTION)
+                self.update_processed("exception")
                 self.update_reason(reason, traceback.format_exc())
             except AttributeError:
                 reason = "Malformed Notebook"
                 vprint(self.vindex + 1, "Exception: {}".format(reason))
-                self.update_status(consts.E_EXCEPTION)
+                self.update_processed("exception")
                 self.update_reason(reason, traceback.format_exc())
             except nbconvert.preprocessors.execute.CellExecutionError as exc:
                 try:
@@ -187,28 +198,30 @@ class Runner(object):
                 except IndexError:
                     reason = "<Unknown exception>"
                 vprint(self.vindex + 1, "Exception: {}".format(reason))
-                self.update_status(consts.E_EXCEPTION)
+                self.update_processed("exception")
                 self.update_reason(reason, traceback.format_exc())
 
             vprint(self.vindex + 1, "Run up to {}".format(preprocessor.last_try))
             self.update_results(
                 timeout=self.notebook_timeout,
                 duration=time.time() - self.start_time,
-                cell=preprocessor.last_try[1],
-                count=preprocessor.last_try[0] + 1
+                last_cell_index=preprocessor.last_try[1],
+                count=preprocessor.last_try[0] + 1,
+                executed_cells=preprocessor.last_try[0] + 1 - timeout,
+                status="run"
             )
-            self.compare(preprocessor, timeout)
-            self.update_status(consts.E_EXECUTED)
         except StopRunException:
-            print(self.execution)
-            sys.exit(self.execution.statuscode)
+            return False
+        return True
 
-    def compare(self, preprocessor, timeout):
+    def compare(self, clean=True):
         """Compare notebook results"""
+        if clean:
+            self.diff_result = self._clean_diff_result()
         vprint(self.vindex, "Comparing notebooks")
         diff = []
         new_diff = []
-        for _, index in zip(range(preprocessor.last_try[0] + 1 - timeout), preprocessor.cell_order):
+        for _, index in zip(range(self.result["executed_cells"]), self.result["cell_order"]):
             vprint(self.vindex + 1, "Comparing cell {}".format(index))
             old_cell = self.old_nb.cells[index]
             new_cell = self.notebook.cells[index]
@@ -228,52 +241,69 @@ class Runner(object):
 
         if not diff:
             vprint(self.vindex + 1, "Identical results")
-            self.update_status(consts.E_SAME_RESULTS)
+            self.update_processed("same-results", usediff=True)
             self.update_results(
+                usediff=True,
                 diff="",
                 diff_count=0
             )
         else:
             vprint(self.vindex + 1, "Diff on cells: {}".format(diff))
+            self.update_processed("mismatch-results", usediff=True)
             self.update_results(
+                usediff=True,
                 diff=",".join(map(str, diff)),
                 diff_count=len(diff)
             )
 
         if not new_diff:
             vprint(self.vindex + 1, "Identical results after normalizations")
-            self.update_has_diffs(consts.E_HAS_DIFFS_SAME)
+            self.update_processed("same-norm", usediff=True)
+            self.update_results(
+                usediff=True,
+                diffnorm="",
+                diffnorm_count=0
+            )
         else:
             vprint(self.vindex + 1, "Diff on cells after normalizations: {}".format(new_diff))
-            self.update_has_diffs(consts.E_HAS_DIFFS_MISMATCH)
+            self.update_processed("mismatch-norm", usediff=True)
+            self.update_results(
+                usediff=True,
+                diffnorm=",".join(map(str, new_diff)),
+                diffnorm_count=len(new_diff)
+            )
+        self.update_processed("finished", usediff=True)
 
-    def update_status(self, new_status):
-        """Update execution status"""
-        self.execution.processed |= new_status
+    def save(self, output):
+        """Save output notebook"""
+        with open(str(output), "w") as fil:
+            nbformat.write(self.notebook, fil)
 
-    def update_has_diffs(self, new_status):
-        """Update execution diff status"""
-        self.execution.has_diffs |= new_status
+    def update_processed(self, flag, usediff=False):
+        """Add flag to processed"""
+        res = self.diff_result if usediff else self.result
+        res["processed"].append(flag)
 
     def update_reason(self, reason, msg):
         """Update execution reason and msg"""
-        self.execution.reason = reason
-        self.execution.msg = msg
+        self.fail["reason"] = reason
+        self.fail["msg"] = msg
 
-    def update_results(self, **kwargs):
+    def update_results(self, usediff=False, **kwargs):
         """Update execution results"""
+        res = self.diff_result if usediff else self.result
         for key, value in kwargs.items():
-            if key in self.execution.__dict__:
-                setattr(self.execution, key, value)
+            if key in res:
+                res[key] = value
             else:
-                self.report_exit("<runner bug>", "Key {} not found in execution object".format(key))
+                self.report_exit("<runner bug>", "Key {} not found in result dict".format(key))
 
     def add_similarity(self, sim):
         """Add similarity result to execution result"""
-        self.execution.add_similarity(sim)
+        self.diff_result["similarities"].append(sim)
 
-    def report_exit(self, reason, msg, statuscode=1):
+    def report_exit(self, reason, msg, statuscode="error"):
         """Stop execution and give a reason"""
         self.update_reason(reason, msg)
-        self.execution.statuscode = statuscode
+        self.result["status"] = statuscode
         raise StopRunException()

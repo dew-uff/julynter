@@ -1,4 +1,5 @@
 """julynter run command"""
+import json
 from .. import util
 from ..runner.runner import Runner
 from ..runner.compare import NORMALIZATIONS, DEFAULT_NORMALIZATION, DEFAULT_SIMILARITY
@@ -7,14 +8,54 @@ from ..runner.compare import NORMALIZATIONS, DEFAULT_NORMALIZATION, DEFAULT_SIMI
 def run(args, _):
     """run operation"""
     util.VERBOSE = args.verbose
-    print(args.normalizations)
     runner = Runner(
-        args.path, args.order, args.unsafe,
+        args.path, args.cell_order, args.unsafe,
         args.kernel, args.force_fail, args.timeout,
         args.show_report,
-        args.normalizations, args.calculate_similarity
+        args.normalizations, args.calculate_similarity,
+        args.initial_verbose
     )
-    runner.run()
+    finished_run = runner.run()
+    if finished_run and not args.skip_comparison:
+        runner.compare()
+    if args.output:
+        runner.save(args.output)
+    if args.view_mode == "json":
+        print(json.dumps({
+            'fail': runner.fail,
+            'execution': runner.result,
+            'diff': runner.diff_result
+        }, indent=2))
+    elif args.view_mode == "simple":
+        if not finished_run:
+            print("Execution failed")
+        else:
+            print("Execution ok")
+            select_cells = list(zip(
+                range(runner.result["executed_cells"]),
+                runner.result["cell_order"]
+            ))
+            print("  Cells order: {}".format(", ".join(
+                str(index) for _, index in select_cells
+            )))
+            print("  Duration: {}".format(runner.result["duration"]))
+        if runner.fail['msg']:
+            print("  Message: {}".format(runner.fail['msg']))
+            print("  Reason: {}".format(runner.fail['reason']))
+        if finished_run and not args.skip_comparison:
+            print("  Diff:")
+            norms = {x: [] for x in args.normalizations}
+            for sim in runner.diff_result['similarities']:
+                for norm in args.normalizations:
+                    if not sim.get(norm + '_equals', True):
+                        norms[norm].append(str(sim['index']))
+            anydiff = False
+            for norm in args.normalizations:
+                if norms[norm]:
+                    anydiff = True
+                    print("    {}: {}".format(norm, ', '.join(norms[norm])))
+            if not anydiff:
+                print("    No diff")
 
 
 def create_subparsers(subparsers):
@@ -24,7 +65,7 @@ def create_subparsers(subparsers):
     )
     runparser.set_defaults(func=run, command=runparser)
     runparser.add_argument(
-        "-o", "--order", type=str, default="t", choices=[
+        "-c", "--cell-order", type=str, default="t", choices=[
             '0', 'a', 'all',
             '1', 'e', 'ec', 'executioncount',
             '2', 't', 'td', 'topdown'
@@ -67,6 +108,23 @@ def create_subparsers(subparsers):
         default=DEFAULT_SIMILARITY,
         help="calculate post-normalization similarity"
     )
+    runparser.add_argument(
+        "-o", "--output", type=str,
+        help="output notebook"
+    )
+    runparser.add_argument(
+        "-x", "--skip-comparison", action="store_true",
+        help="do not compare results after execution"
+    )
+    runparser.add_argument(
+        "-i", "--initial-verbose", type=int, default=1,
+        help="initial verbose level"
+    )
+    runparser.add_argument(
+        "-w", "--view-mode", type=str, choices=["json", "simple"], default="simple",
+        help="result visualization mode"
+    )
+
 
     runparser.add_argument(
         "path", type=str,

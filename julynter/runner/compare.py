@@ -246,7 +246,7 @@ class NormalizeDeprecation(Normalizer):
         for out in obj:
             has_deprecation = (
                 out.get(u'output_type', u'') == u'error' and (
-                    self.has_deprecation(out.get(u'ename', u'')) 
+                    self.has_deprecation(out.get(u'ename', u''))
                     or self.has_deprecation(out.get(u'evalue', u''))
                 )
                 or out.get(u'output_type', u'') == u'stream' and (
@@ -443,12 +443,13 @@ def flat(outputs):
 
 
 @timeout(1 * 60, use_signals=False)
-def jaccard(a, b):
-    a = re.split(r"([^a-zA-Z0-9])", a)
-    b = re.split(r"([^a-zA-Z0-9])", b)
-    matcher = difflib.SequenceMatcher(None, a, b)
+def jaccard(first, second):
+    """Compare elements using jaccard"""
+    first = re.split(r"([^a-zA-Z0-9])", first)
+    second = re.split(r"([^a-zA-Z0-9])", second)
+    matcher = difflib.SequenceMatcher(None, first, second)
     matches = sum(triple[-1] for triple in matcher.get_matching_blocks())
-    length = len(a) + len(b)
+    length = len(first) + len(second)
     if length:
         return float(matches) / float(length - matches)
     return 1.0
@@ -527,8 +528,8 @@ def cell_diff(index, old_cell, new_cell, show_report, normalizations, calculate_
         print(">", index)
         outjson = "out.{}.json".format(index)
         print("Creating {}".format(outjson))
-        with open(outjson, 'w') as f:
-            json.dump(result, f, indent=2)
+        with open(outjson, 'w') as fil:
+            json.dump(result, fil, indent=2)
         for comparison in iterate(comp, use_all=True):
             reason = comparison.get("_reason")
             if reason:
@@ -549,7 +550,7 @@ def cell_diff(index, old_cell, new_cell, show_report, normalizations, calculate_
                     print("{} {}".format(comparison.base, reason))
                 else:
                     temp.append(comparison.base)
-                
+
                 oldouttxt = "out.{}.{}.{}.txt".format(index, old_name, reason)
                 newouttxt = "out.{}.{}.{}.txt".format(index, new_name, reason)
                 print("Creating {}".format(oldouttxt))
