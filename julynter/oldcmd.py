@@ -1,17 +1,11 @@
 import argparse
-import sys
 
-from . import julynterlab
-from . import experiment
-from . import run
-
+from .cmd import run
 
 def main():
-    parser = argparse.ArgumentParser(description='Lint Jupyter Notebooks')
+    print("This version is not supported! It has limitted analysis features")
+    parser = argparse.ArgumentParser(description='Analyze Jupyter Notebooks')
     subparsers = parser.add_subparsers()
-
-    julynterlab.create_subparsers(subparsers)
-    experiment.create_subparsers(subparsers)
     run.create_subparsers(subparsers)
     
     args, rest = parser.parse_known_args()

@@ -1,12 +1,11 @@
-from pathlib import Path
 import json
-
 
 DEFAULT_EXPERIMENT_SERVER = "https://julynter.npimentel.net"
 CONFIG_DIR = '.julynter'
 
 
 def home_config_path():
+    from .util import Path
     return Path.home() / CONFIG_DIR
 
 
@@ -17,6 +16,7 @@ def load_home_config():
 
 
 def load_project_config(merge_home=True):
+    from .util import Path
     project_config = load_config(Path.cwd() / CONFIG_DIR)
     if merge_home:
         home_config = load_home_config()
@@ -29,6 +29,7 @@ def save_home_config(data):
 
 
 def save_project_config(data):
+    from .util import Path
     return save_config(Path.cwd() / CONFIG_DIR, data)
 
 

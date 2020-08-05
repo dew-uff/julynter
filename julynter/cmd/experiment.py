@@ -4,7 +4,6 @@ from datetime import datetime
 from ..config import load_home_config, save_home_config, home_config_path
 from ..config import DEFAULT_EXPERIMENT_SERVER
 from ..util import log
-from pathlib import Path
 
 
 def base_experiment_cmd(args, rest):

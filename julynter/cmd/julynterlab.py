@@ -1,8 +1,12 @@
 import re
-import pkg_resources
 import os
-from jupyterlab import labapp, labextensions
-from jupyterlab.commands import install_extension, build
+import sys
+import pkg_resources
+
+
+if sys.version_info > (3, 5):
+    from jupyterlab import labapp, labextensions
+    from jupyterlab.commands import install_extension, build
 
 
 RESOURCE_NAME = 'julynter'

@@ -1,16 +1,73 @@
+"""Utility module"""
+from __future__ import print_function
 import json
-import requests
-import queue
+import sys
 
 from datetime import date
 from threading import Lock
 
+from requests_futures.sessions import FuturesSession
+from timeout_decorator import timeout, TimeoutError as TimeDecoratorError, timeout_decorator
+
 from .config import home_config_path, load_project_config
 from ._version import __version__
 
-from requests_futures.sessions import FuturesSession
 
+VERBOSE = -1
 LOG_LOCK = Lock()
+
+if sys.version_info < (3, 0):
+    TimeoutException = RuntimeError
+    String = unicode
+    Bytes = str
+    encode_r = lambda x: x.decode('utf-8')
+else:
+    TimeoutException = TimeoutError
+    String = str
+    Bytes = bytes
+    encode_r = lambda x: x
+
+
+if sys.version_info <= (3, 4):
+    from pathlib2 import Path
+else:
+    from pathlib import Path
+
+
+def _target(queue, function, *args, **kwargs):
+    """Run a function with arguments and return output via a queue.
+    This is a helper function for the Process created in _Timeout. It runs
+    the function with positional arguments and keyword arguments and then
+    returns the function's output by way of a queue. If an exception gets
+    raised, it is returned to _Timeout to be raised by the value property.
+    """
+    try:
+        queue.put((True, function(*args, **kwargs)))
+    except:
+        #traceback.print_exc()
+        queue.put((False, sys.exc_info()[1]))
+
+
+timeout_decorator._target = _target
+
+
+
+def to_unicode(text):
+    if sys.version_info < (3, 0):
+        if isinstance(text, unicode):
+            return text
+        return str(text).decode("utf-8")
+    if isinstance(text, str):
+        return text
+    return bytes(text).decode("utf-8")
+
+
+def vprint(level, *args):
+    if VERBOSE > level:
+        if level > 0:
+            print(">" * level, *args)
+        else:
+            print(*args)
 
 
 def create_hook(data, folder, config):
