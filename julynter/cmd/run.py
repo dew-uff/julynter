@@ -5,6 +5,44 @@ from ..runner.runner import Runner
 from ..runner.compare import NORMALIZATIONS, DEFAULT_NORMALIZATION, DEFAULT_SIMILARITY
 
 
+def json_view(runner):
+    """Display result as json"""
+    print(json.dumps(runner, indent=2))
+
+
+def simple_view(args, runner, spaces=2):
+    """Display summarized result as prints"""
+    print("{}Status: {}".format(" " * spaces, runner['execution']["status"]))
+    print("{}Processed: {}".format(" " * spaces, runner['execution']["processed"]))
+    if runner['execution']["status"] == "run":
+        select_cells = list(zip(
+            range(runner['execution']["executed_cells"]),
+            runner['execution']["cell_order"]
+        ))
+        print("{}  Cells order: {}".format(" " * spaces, ", ".join(
+            str(index) for _, index in select_cells
+        )))
+        print("{}  Duration: {}".format(" " * spaces, runner['execution']["duration"]))
+    if runner['fail']['msg']:
+        print("{}  Reason: {}".format(" " * spaces, runner['fail']['reason']))
+        if not args.hide_message:
+            print("{}  Message: {}".format(" " * spaces, runner['fail']['msg']))
+    if "finished" in runner["diff"]['processed'] and not args.skip_comparison:
+        print("{}  Diff:".format(" " * spaces))
+        norms = {x: [] for x in args.normalizations}
+        for sim in runner['diff']['similarities']:
+            for norm in args.normalizations:
+                if not sim.get(norm + '_equals', True):
+                    norms[norm].append(str(sim['index']))
+        anydiff = False
+        for norm in args.normalizations:
+            if norms[norm]:
+                anydiff = True
+                print("{}    {}: {}".format(" " * spaces, norm, ', '.join(norms[norm])))
+        if not anydiff:
+            print("{}    No diff".format(" " * spaces))
+
+
 def run(args, _):
     """run operation"""
     util.VERBOSE = args.verbose
@@ -20,42 +58,17 @@ def run(args, _):
         runner.compare()
     if args.output:
         runner.save(args.output)
-    if args.view_mode == "json":
-        print(json.dumps({
-            'fail': runner.fail,
-            'execution': runner.result,
-            'diff': runner.diff_result
-        }, indent=2))
+    dictresult = {
+        'fail': runner.fail,
+        'execution': runner.result,
+        'diff': runner.diff_result
+    }
+    if args.view_mode in ("ejson", "json"):
+        if args.view_mode == "ejson":
+            print("<<<<---julyntersep--->>>>")
+        json_view(dictresult)
     elif args.view_mode == "simple":
-        if not finished_run:
-            print("Execution failed")
-        else:
-            print("Execution ok")
-            select_cells = list(zip(
-                range(runner.result["executed_cells"]),
-                runner.result["cell_order"]
-            ))
-            print("  Cells order: {}".format(", ".join(
-                str(index) for _, index in select_cells
-            )))
-            print("  Duration: {}".format(runner.result["duration"]))
-        if runner.fail['msg']:
-            print("  Message: {}".format(runner.fail['msg']))
-            print("  Reason: {}".format(runner.fail['reason']))
-        if finished_run and not args.skip_comparison:
-            print("  Diff:")
-            norms = {x: [] for x in args.normalizations}
-            for sim in runner.diff_result['similarities']:
-                for norm in args.normalizations:
-                    if not sim.get(norm + '_equals', True):
-                        norms[norm].append(str(sim['index']))
-            anydiff = False
-            for norm in args.normalizations:
-                if norms[norm]:
-                    anydiff = True
-                    print("    {}: {}".format(norm, ', '.join(norms[norm])))
-            if not anydiff:
-                print("    No diff")
+        simple_view(args, dictresult)
 
 
 def create_subparsers(subparsers):
@@ -64,6 +77,13 @@ def create_subparsers(subparsers):
         'run', help="Run notebook and check if it reproduces the same results"
     )
     runparser.set_defaults(func=run, command=runparser)
+    add_run_arguments(runparser)
+    runparser.add_argument(
+        "path", type=str,
+        help="notebook path")
+
+def add_run_arguments(runparser):
+    """Add run arguments to parsers"""
     runparser.add_argument(
         "-c", "--cell-order", type=str, default="t", choices=[
             '0', 'a', 'all',
@@ -121,11 +141,11 @@ def create_subparsers(subparsers):
         help="initial verbose level"
     )
     runparser.add_argument(
-        "-w", "--view-mode", type=str, choices=["json", "simple"], default="simple",
+        "-w", "--view-mode", type=str, choices=["ejson", "json", "simple"], default="simple",
         help="result visualization mode"
     )
-
-
     runparser.add_argument(
-        "path", type=str,
-        help="notebook path")
+        "-m", "--hide-message", action="store_true",
+        help="hide error messages"
+    )
+    

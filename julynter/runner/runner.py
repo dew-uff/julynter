@@ -19,6 +19,37 @@ from .compare import cell_diff, DEFAULT_NORMALIZATION, DEFAULT_SIMILARITY
 class StopRunException(Exception):
     """Represents an interruption of the execution"""
 
+def clean_fail():
+    """Return clean fail result dict"""
+    return {
+        "msg": None,
+        "reason": None,
+    }
+
+def clean_result():
+    """Return clean result dict"""
+    return {
+        "cell_order": [],
+        "executed_cells": 0,
+        "status": "not-run", # not-run, skipped, error, run
+        "processed": ["attempt"], # attempt, loaded, timeout, exception
+        "timeout": None,
+        "duration": None,
+        "last_cell_index": None,
+        "count": None,
+    }
+
+def clean_diff_result():
+    """Return clean diff result dict"""
+    return {
+        "diff": None,
+        "diff_count": None,
+        "diffnorm": None,
+        "diffnorm_count": None,
+        "processed": [], # finished, same-results, mismatch-results, same-norm, mismatch-norm
+        "similarities": [],
+    }
+
 
 class Runner(object):
     """Run Jupyter notebooks"""
@@ -44,40 +75,9 @@ class Runner(object):
         self.old_nb = None
         self.start_time = None
 
-        self.result = self._clean_result()
-        self.fail = self._clean_fail()
-        self.diff_result = self._clean_diff_result()
-
-    def _clean_fail(self):
-        """Return clean fail result dict"""
-        return {
-            "msg": None,
-            "reason": None,
-        }
-
-    def _clean_result(self):
-        """Return clean result dict"""
-        return {
-            "cell_order": [],
-            "executed_cells": 0,
-            "status": "not-run", # not-run, skipped, error, run
-            "processed": ["attempt"], # attempt, loaded, timeout, exception
-            "timeout": None,
-            "duration": None,
-            "last_cell_index": None,
-            "count": None,
-        }
-
-    def _clean_diff_result(self):
-        """Return clean diff result dict"""
-        return {
-            "diff": None,
-            "diff_count": None,
-            "diffnorm": None,
-            "diffnorm_count": None,
-            "processed": [], # finished, same-results, mismatch-results, same-norm, mismatch-norm
-            "similarities": [],
-        }
+        self.result = clean_result()
+        self.fail = clean_fail()
+        self.diff_result = clean_diff_result()
 
     def _timeout_func(self, cell):
         """Define cell timeout"""
@@ -159,8 +159,8 @@ class Runner(object):
     def run(self, clean=True):
         """Run notebook"""
         if clean:
-            self.result = self._clean_result()
-            self.fail = self._clean_fail()
+            self.result = clean_result()
+            self.fail = clean_fail()
         try:
             # pylint: disable=duplicate-except
             self.load_file()
@@ -217,7 +217,7 @@ class Runner(object):
     def compare(self, clean=True):
         """Compare notebook results"""
         if clean:
-            self.diff_result = self._clean_diff_result()
+            self.diff_result = clean_diff_result()
         vprint(self.vindex, "Comparing notebooks")
         diff = []
         new_diff = []
