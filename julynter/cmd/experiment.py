@@ -1,3 +1,4 @@
+"""Manage experiment"""
 import zipfile
 import os
 from datetime import datetime
@@ -7,6 +8,7 @@ from ..util import log
 
 
 def base_experiment_cmd(args, rest):
+    """Execute experiment function"""
     if not getattr(args, 'expfunc', None):
         args.command.print_help()
     else:
@@ -14,6 +16,7 @@ def base_experiment_cmd(args, rest):
 
 
 def non_empty(value, question, keep=None):
+    """Ask value while it is empty"""
     if value != "<ask>":
         if value:
             return value
@@ -26,11 +29,11 @@ def non_empty(value, question, keep=None):
         check_value = value.strip()
         if check_value:
             return value
-        else:
-            print("Please write a non-empty value")
+        print("Please write a non-empty value")
 
 
 def validate_yes_no(value):
+    """Validate yes-no question"""
     if isinstance(value, bool):
         return value
     if value is None or value == "<ask>":
@@ -38,11 +41,13 @@ def validate_yes_no(value):
     check_value = value.strip().lower()
     if check_value in ("", "y", "yes", "t", "true", "1"):
         return True
-    elif check_value in ("n", "no", "f", "false", "0"):
+    if check_value in ("n", "no", "f", "false", "0"):
         return False
+    return None
 
 
 def yes_no(value, question, keep=None):
+    """Ask yes-no question while it is not valid"""
     if value != "<ask>":
         if value is not None:
             return value
@@ -60,15 +65,15 @@ def yes_no(value, question, keep=None):
                 print("Using default (yes)")
             return check_value
         else:
-            print("Please respond with 'yes' or 'no'")
-        
+            print("Please respond with 'yes' or 'no'")   
 
-def start_experiment_cmd(args, rest):
+def start_experiment_cmd(args, _):
+    """Start experiment"""
     data = load_home_config()
     experiment = data["experiment"]
     experiment["id"] = non_empty(
         args.id,
-        "What is your participant ID?",
+        "What is your participant ID or email address?",
         experiment["id"] if args.keep else None
     )
     experiment["lintingMessage"] = yes_no(
@@ -96,12 +101,14 @@ def start_experiment_cmd(args, rest):
     )
     experiment["execution"] = yes_no(
         args.execution,
-        "Can we collect execution information (i.e., size of executed cells, type of execution output)?",
+        "Can we collect execution information "
+        "(i.e., size of executed cells, type of execution output)?",
         experiment["execution"] if args.keep else None
     )
     experiment["activity"] = yes_no(
         args.activity,
-        "Can we collect activity information (i.e., Julynter filters, notebook opening and closing)?",
+        "Can we collect activity information "
+        "(i.e., Julynter filters, notebook opening and closing)?",
         experiment["activity"] if args.keep else None
     )
     experiment["sendServer"] = yes_no(
@@ -109,17 +116,22 @@ def start_experiment_cmd(args, rest):
         "Can we send the collected data to a server on the fly?",
         experiment["sendServer"] if args.keep else None
     )
-    experiment["server"] = args.server or (experiment["server"] if args.keep else DEFAULT_EXPERIMENT_SERVER)
-    experiment["enabled"] = True 
+    experiment["server"] = (
+        args.server
+        or (experiment["server"] if args.keep else DEFAULT_EXPERIMENT_SERVER)
+    )
+    experiment["enabled"] = True
     save_home_config(data)
     data["header"] = "Configure"
     data["operation"] = "start"
     data["date"] = datetime.now().isoformat()
     log(data, "experiment", data)
-    print("Experiment started! Do not forget to use `jupyter lab` or `julynter lab` during the next week")
+    print("Experiment started! Do not forget to use `jupyter lab`"
+          " or `julynter lab` during the next week")
 
 
 def end_experiment_cmd(args, rest):
+    """End experiment"""
     data = load_home_config()
     data['experiment']['enabled'] = False
     save_home_config(data)

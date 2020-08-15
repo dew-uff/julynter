@@ -7,7 +7,8 @@ from datetime import date
 from threading import Lock
 
 from requests_futures.sessions import FuturesSession
-from timeout_decorator import timeout, TimeoutError as TimeDecoratorError, timeout_decorator
+from timeout_decorator import timeout, timeout_decorator
+from timeout_decorator import TimeoutError as TimeDecoratorError
 
 from .config import home_config_path, load_project_config
 from ._version import __version__
@@ -15,6 +16,7 @@ from ._version import __version__
 
 VERBOSE = -1
 LOG_LOCK = Lock()
+EXITED = False
 
 if sys.version_info < (3, 0):
     TimeoutException = RuntimeError
@@ -117,3 +119,17 @@ def save_log(data, folder, config):
         except json.JSONDecodeError as e:
             print("Failed to save", data, e)
 
+
+def do_exit(exitcode, command=None):
+    """Exit program"""
+    global EXITED
+    EXITED = True
+    data = {
+        "header": "CLI",
+        "operation": command or " ".join(sys.argv[1:2]),
+        "param": " ".join(sys.argv[1:]),
+        "info": str(exitcode),
+    }
+    print(data)
+    log(data, "experiment")
+    sys.exit(exitcode)

@@ -11,6 +11,7 @@ from ..environments.venv import VenvEnvironment
 from ..environments.orchestrator import EnvironmentOrchestrator
 from ..environments.imports import create_notebook_with_imports
 from ..cmd.run import simple_view, add_run_arguments
+from ..util import do_exit
 
 
 def discover_files(cwd, values, pattern, exclude=None):
@@ -80,7 +81,7 @@ def prepare_files(cwd, args):
     return install, notebooks, targs, toremove
 
 
-def display_execution_results(res, args, eargs):
+def display_execution_results(res, args, eargs, exitcode):
     """Display execution results"""
     if args.view_mode == "simple":
         print("Report:")
@@ -125,6 +126,8 @@ def display_execution_results(res, args, eargs):
     if not eargs.skip_comparison:
         print("  Same results before normalizations: {} notebooks".format(same))
         print("  Same results after normalization: {} notebooks".format(same_norm))
+    
+    return exitcode
 
 
 def display_results(res, args, eargs):
@@ -151,7 +154,7 @@ def display_results(res, args, eargs):
     elif fail == 'dryrun':
         print("Finished dry-run")
     else:
-        display_execution_results(res, args, eargs)
+        exitcode = display_execution_results(res, args, eargs, exitcode)
     return exitcode
 
 async def aenv(args, eargs):
@@ -176,7 +179,7 @@ async def aenv(args, eargs):
             envi.report()
         for path in toremove:
             os.remove(path)
-    sys.exit(exitcode)
+    do_exit(exitcode)
 
 def env(args, _):
     """run operation"""

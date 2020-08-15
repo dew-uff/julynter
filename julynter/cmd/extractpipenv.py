@@ -3,6 +3,7 @@ import sys
 import subprocess
 import os
 from .. import util
+from ..util import do_exit
 
 
 def extract(args, _):
@@ -18,7 +19,7 @@ def extract(args, _):
             stdout=outf, cwd=str(parent), env=env, check=False)
         if result.stderr:
             sys.stderr.write(result.stderr)
-    sys.exit(result.returncode)
+    do_exit(result.returncode)
 
 
 def create_subparsers(subparsers):

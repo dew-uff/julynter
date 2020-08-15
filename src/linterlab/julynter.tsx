@@ -7,7 +7,7 @@ import { ActivityMonitor } from '@jupyterlab/coreutils';
 import { IDocumentManager } from '@jupyterlab/docmanager';
 import { NotebookPanel, INotebookTracker } from '@jupyterlab/notebook';
 
-import { IReport, IKernelMatcher } from '../linter/interfaces';
+import { IKernelMatcher, ILintingResult } from '../linter/interfaces';
 import { Config } from './config';
 import { NotebookHandler } from './notebookhandler';
 import { ExperimentManager } from './experimentmanager';
@@ -162,7 +162,8 @@ export class Julynter extends Panel {
         this._currentHandler.cellLints = {};
         this._status.connectedNow = true;
         this._status.hasKernel = this.currentHandler.hasKernel;
-        const reports: IReport[] = this.currentHandler.lint();
+        const lintResult: ILintingResult = this.currentHandler.lint();
+        const reports = lintResult.visible;
         this._visibleWidget = this.currentHandler.nbPanel;
         if (reports.length > 0) {
           this.title.icon = julynterNewIcon.bindprops({ stylesheet: 'sideBar'});

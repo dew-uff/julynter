@@ -15,6 +15,7 @@ import {
 } from '../linter/interfaces';
 import { NotebookHandler } from './notebookhandler';
 import { ErrorHandler } from './errorhandler';
+import { hash } from '../linter/lint';
 
 function isNumber(value: string | number): boolean {
   return value !== null && !isNaN(Number(value.toString()));
@@ -23,6 +24,7 @@ function isNumber(value: string | number): boolean {
 function capitalizeFirstLetter(string: string): string {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
+
 
 export class ItemGenerator implements IItemGenerator {
   _docManager: IDocumentManager;
@@ -46,6 +48,7 @@ export class ItemGenerator implements IItemGenerator {
     cellId: number | string,
     type: ReportType,
     messageId: ReportId,
+    hashSource: string,
     args: any[]
   ): IReport {
     try {
@@ -60,6 +63,7 @@ export class ItemGenerator implements IItemGenerator {
         visible: true,
         filteredOut: false,
         type: type,
+        hash: hash(`<${messageId}>${hashSource}`),
         action: message.action,
         boundAction: message.action.execute(this, ...args),
         restart: message.restart,
@@ -69,6 +73,7 @@ export class ItemGenerator implements IItemGenerator {
         cellId,
         type,
         messageId,
+        hashSource,
         args,
       ]);
     }
@@ -192,6 +197,7 @@ export class GroupGenerator implements IGroupGenerator {
         filteredOut: false,
         collapsed: collapsed,
         type: 'group',
+        hash: hash(strTitle),
         hasParent: true,
         action: null,
         restart: false,

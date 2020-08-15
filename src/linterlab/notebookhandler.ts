@@ -1,4 +1,4 @@
-import { JSONObject } from '@lumino/coreutils';
+import { JSONObject, PartialJSONArray } from '@lumino/coreutils';
 import { IDisposable } from '@lumino/disposable';
 import { Signal, ISignal } from '@lumino/signaling';
 
@@ -13,9 +13,10 @@ import {
   IGenericNotebookMetadata,
   IGenericCellMetadata,
   IQueryResult,
-  IReport,
   IKernelMatcher,
   GenericMatcher,
+  ILintingResult,
+  IReport,
 } from '../linter/interfaces';
 import { Linter } from '../linter/lint';
 import { Config } from './config';
@@ -282,10 +283,29 @@ export class NotebookHandler implements IDisposable {
     }
   }
 
+  /** 
+   * Map linting reports
+  */
+  private mapReports(reports: IReport[]) : PartialJSONArray {
+    let result: PartialJSONArray = [];
+    reports.forEach(report => {
+      result.push({
+        text: report.text,
+        reportType: report.reportType,
+        reportId: report.reportId,
+        suggestion: report.suggestion,
+        reason: report.reason,
+        cellId: report.cellId,
+        hash: report.hash,
+      })
+    });
+    return result;
+  }
+
   /**
    * Lint notebook
    */
-  public lint(): IReport[] {
+  public lint(): ILintingResult {
     try {
       const groupGenerator = new GroupGenerator(
         this._nbPanel,
@@ -305,6 +325,14 @@ export class NotebookHandler implements IDisposable {
         groupGenerator
       );
       this._experimentManager.reportLinting(this, results);
+      this.nbPanel.model.metadata.set('julynter-results', {
+        visible: this.mapReports(results.visible),
+        filteredType: this.mapReports(results.filteredType),
+        filteredId: this.mapReports(results.filteredId),
+        filteredRestart: this.mapReports(results.filteredRestart),
+        filteredIndividual: this.mapReports(results.filteredIndividual),
+        hash: results.hash,
+      });
       return results;
     } catch (error) {
       throw this._eh.report(error, 'NotebookHandler:lint', []);

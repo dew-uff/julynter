@@ -87,6 +87,7 @@ export interface IReport {
   visible: boolean;
   filteredOut: boolean;
   restart: boolean;
+  hash: string;
 
   action: IErrorAction;
   boundAction: () => void;
@@ -99,6 +100,19 @@ export interface IReport {
   feedback?: number;
   kept?: boolean;
 }
+
+/**
+ * An object that represents a linting result
+ */
+export interface ILintingResult {
+  visible: IReport[];
+  filteredType: IReport[];
+  filteredId: IReport[];
+  filteredRestart: IReport[];
+  filteredIndividual: IReport[];
+  hash: string;
+}
+
 
 /**
  * An error type that can be filtered
@@ -138,6 +152,7 @@ export interface IItemGenerator {
     cellId: number | string,
     type: ReportType,
     messageId: string,
+    hashSource: string,
     args: any[]
   ): IReport;
   renameNotebook(): void;

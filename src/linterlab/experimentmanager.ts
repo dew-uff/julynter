@@ -5,7 +5,7 @@ import { IDocumentManager } from '@jupyterlab/docmanager';
 import { IStream, IError, CellType, IBaseCell } from '@jupyterlab/nbformat';
 import { Notebook, NotebookPanel, NotebookActions } from '@jupyterlab/notebook';
 import { KernelMessage, Contents } from '@jupyterlab/services';
-import { IReport, IJulynterLintOptions } from '../linter/interfaces';
+import { IReport, IJulynterLintOptions, ILintingResult } from '../linter/interfaces';
 import { requestAPI } from '../server';
 import { NotebookHandler } from './notebookhandler';
 
@@ -722,10 +722,11 @@ export class ExperimentManager {
 
   /* Start lint */
 
-  reportLinting(handler: NotebookHandler, reports: IReport[]): void {
+  reportLinting(handler: NotebookHandler, result: ILintingResult): void {
     if (!this.config.enabled) {
       return;
     }
+    const reports = result.visible;
 
     if (!{}.hasOwnProperty.call(this.lastLint, handler.id)) {
       this.lastLint[handler.id] = [];
