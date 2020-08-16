@@ -15,6 +15,7 @@ import {
 } from '../linter/interfaces';
 import { NotebookHandler } from './notebookhandler';
 import { ErrorHandler } from './errorhandler';
+import { hash } from '../linter/lint';
 
 function isNumber(value: string | number): boolean {
   return value !== null && !isNaN(Number(value.toString()));
@@ -23,6 +24,7 @@ function isNumber(value: string | number): boolean {
 function capitalizeFirstLetter(string: string): string {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
+
 
 export class ItemGenerator implements IItemGenerator {
   _docManager: IDocumentManager;
@@ -46,6 +48,7 @@ export class ItemGenerator implements IItemGenerator {
     cellId: number | string,
     type: ReportType,
     messageId: ReportId,
+    hashSource: string,
     args: any[]
   ): IReport {
     try {
@@ -55,18 +58,22 @@ export class ItemGenerator implements IItemGenerator {
         reportType: message.type,
         reportId: messageId,
         suggestion: message.suggestion,
+        reason: message.reason,
         cellId: cellId,
         visible: true,
         filteredOut: false,
         type: type,
+        hash: hash(`<${messageId}>${hashSource}`),
         action: message.action,
         boundAction: message.action.execute(this, ...args),
+        restart: message.restart,
       };
     } catch (error) {
       throw this._eh.report(error, 'ItemGenerator:create', [
         cellId,
         type,
         messageId,
+        hashSource,
         args,
       ]);
     }
@@ -185,12 +192,15 @@ export class GroupGenerator implements IGroupGenerator {
         reportId: 'group',
         cellId: 'group',
         suggestion: null,
+        reason: 'This groups other lint messages',
         visible: true,
         filteredOut: false,
         collapsed: collapsed,
         type: 'group',
+        hash: hash(strTitle),
         hasParent: true,
         action: null,
+        restart: false,
         boundAction: () => {
           return;
         },

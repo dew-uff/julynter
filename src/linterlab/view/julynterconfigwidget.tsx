@@ -28,6 +28,7 @@ import {
 import { Config } from '../config';
 import { NotebookHandler } from '../notebookhandler';
 import { ErrorHandler } from '../errorhandler';
+import { julynterIcon } from '../../iconimports';
 
 const MODES: { [id in ViewMode]: string } = {
   list: 'View as list',
@@ -241,6 +242,27 @@ export class JulynterConfigContent extends Widget {
     }
   }
 
+  changeView(event: React.ChangeEvent<HTMLInputElement>): void {
+    try {
+      this._current.view = event.target.checked;
+    } catch (error) {
+      throw this._eh.report(error, 'JulynterConfigContent:changeView', [
+        event.currentTarget.value,
+      ]);
+    }
+  }
+
+  changeRestart(event: React.ChangeEvent<HTMLInputElement>): void {
+    try {
+      this._current.restart = event.target.checked;
+    } catch (error) {
+      throw this._eh.report(error, 'JulynterConfigContent:changeRestart', [
+        event.currentTarget.value,
+      ]);
+    }
+  }
+
+
   display(): void {
     try {
       let renderedJSX: JSX.Element = null;
@@ -301,6 +323,22 @@ export class JulynterConfigContent extends Widget {
                 defaultValue={this._current.requirements}
               />
             </div>
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              onChange={this.changeView.bind(this)}
+              defaultChecked={this._current.view}
+            />
+            Show lints on cells
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              onChange={this.changeRestart.bind(this)}
+              defaultChecked={this._current.restart}
+            />
+            Show lints that require a kernel restart
           </label>
           {reportGroups}
         </div>
@@ -487,7 +525,7 @@ export class SaveButton extends ReactWidget {
           });
       } else if (selected in this._handlers) {
         this._handlers[selected].then((handler) => {
-          handler.options.initializeOptions(this._checks);
+          handler.options.initializeOptions(this._checks, handler.options.checkFiltered());
           handler.options.saveOptions();
           showDialog({
             title: 'Success',
@@ -664,7 +702,7 @@ export function createJulynterConfigWidget(
     toolbar.addItem('julynter-save', saveButton);
 
     const conf = new MainAreaWidget({ content, toolbar });
-    conf.title.iconClass = 'julynter-main-icon';
+    conf.title.icon = julynterIcon.bindprops({ stylesheet: 'mainAreaTab' });
     conf.title.caption = 'Julynter Config';
     conf.title.label = 'Julynter Config';
     conf.title.closable = true;

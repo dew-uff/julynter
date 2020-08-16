@@ -10,7 +10,15 @@ import {
   ILintOptionsManager,
   IQueryResult,
   IReport,
+  ILintingResult,
 } from './interfaces';
+import sha1 from 'sha1';
+
+
+export function hash(value: string){
+  // ToDo: apply sha1
+  return sha1(value);
+}
 
 export class Linter {
   hasKernel: boolean;
@@ -32,54 +40,55 @@ export class Linter {
     notebookMetadata: IGenericNotebookMetadata,
     itemGenerator: IItemGenerator,
     groupGenerator: IGroupGenerator
-  ): IReport[] {
+  ): ILintingResult {
     let headings: IReport[] = [];
-    this.checkTitle(notebookMetadata, headings, itemGenerator);
-    this.checkCellDefinitions(notebookMetadata, headings, itemGenerator);
-
-    headings = this.filterByReportType(headings);
+    let hashSource = this.checkTitle(notebookMetadata, headings, itemGenerator);
+    hashSource += this.checkCellDefinitions(notebookMetadata, headings, itemGenerator);
+    const result: ILintingResult = this.createFilteredResult(headings, hash(hashSource));
     if (this.options.checkMode() === 'cell') {
-      headings = this.groupByCell(headings, groupGenerator);
+      result.visible = this.groupByCell(result.visible, groupGenerator);
     } else if (this.options.checkMode() === 'type') {
-      headings = this.groupByType(headings, groupGenerator);
+      result.visible = this.groupByType(result.visible, groupGenerator);
     }
-    return headings;
+    return result;
   }
 
+  
   private checkTitle(
     notebookMetadata: IGenericNotebookMetadata,
     headings: IReport[],
     generator: IItemGenerator
-  ): void {
+  ): string {
     const title = notebookMetadata.title.toLowerCase();
     if (title === '.ipynb') {
-      headings.push(generator.create('title', 'title', 't1', []));
+      headings.push(generator.create('title', 'title', 't1', title, []));
     }
     if (title.startsWith('untitled')) {
-      headings.push(generator.create('title', 'title', 't2', []));
+      headings.push(generator.create('title', 'title', 't2', title, []));
     }
     if (title.includes('-copy')) {
-      headings.push(generator.create('title', 'title', 't3', []));
+      headings.push(generator.create('title', 'title', 't3', title, []));
     }
     if (title.includes(' ')) {
-      headings.push(generator.create('title', 'title', 't4', []));
+      headings.push(generator.create('title', 'title', 't4', title, []));
     }
     if (!/^([a-z]|[0-9]|_|-| |\.)*$/.test(title)) {
-      headings.push(generator.create('title', 'title', 't5', []));
+      headings.push(generator.create('title', 'title', 't5', title, []));
     }
     if (title.length > 100) {
-      headings.push(generator.create('title', 'title', 't6', []));
+      headings.push(generator.create('title', 'title', 't6', title, []));
     }
     if (title.length < 10) {
-      headings.push(generator.create('title', 'title', 't7', []));
+      headings.push(generator.create('title', 'title', 't7', title, []));
     }
+    return title + ":";
   }
 
   private checkCellDefinitions(
     notebookMetadata: IGenericNotebookMetadata,
     headings: IReport[],
     itemGenerator: IItemGenerator
-  ): void {
+  ): string {
     // Iterate through the cells in the notebook
     const executionCounts: {
       [key: number]: [number, IGenericCellMetadata];
@@ -93,9 +102,13 @@ export class Linter {
 
     let lastExecutionCount = -1;
     let firstCodeCell = -1;
+    let lastText = "";
+    let emptyCounter = 0;
+    let hashSource = "";
     for (let i = 0; i < notebookMetadata.cells.length; i++) {
       const cell: IGenericCellMetadata = notebookMetadata.cells[i];
       const model = cell.model;
+      const text = model.value.text;
       if (model.type === 'code') {
         if (firstCodeCell === -1) {
           firstCodeCell = i;
@@ -103,6 +116,7 @@ export class Linter {
         const executionCount = (cell as IGenericCodeCellMetadata).model
           .executionCount;
         const executionCountNumber = executionCount as number | null;
+        hashSource += `[${executionCountNumber || ''}]`;
 
         if (this.hasKernel) {
           if (
@@ -111,19 +125,13 @@ export class Linter {
           ) {
             if (!{}.hasOwnProperty.call(executedCode, executionCountNumber)) {
               headings.push(
-                itemGenerator.create(i, cell.model.type, 'h1', [i])
+                itemGenerator.create(i, cell.model.type, 'h1', `[${executionCountNumber}]${text}`, [i])
               );
             } else {
-              const historyCode = executedCode[executionCountNumber]
-                .replace(/\\n/g, '\n')
-                .replace(/\\\\/g, '\\')
-                .trim();
-              if (
-                historyCode !==
-                (cell as IGenericCodeCellMetadata).model.value.text.trim()
-              ) {
+              const historyCode = executedCode[executionCountNumber].trim();
+              if (historyCode !== text.trim()) {
                 headings.push(
-                  itemGenerator.create(i, cell.model.type, 'h2', [i])
+                  itemGenerator.create(i, cell.model.type, 'h2', `[${executionCountNumber}]${historyCode}`, [i])
                 );
               }
             }
@@ -132,12 +140,12 @@ export class Linter {
 
         if (executionCountNumber === null) {
           if (i < nonExecutedTail && model.value.text.trim() !== '') {
-            headings.push(itemGenerator.create(i, cell.model.type, 'c1', [i]));
+            headings.push(itemGenerator.create(i, cell.model.type, 'c1', text, [i]));
           }
         } else {
           if (executionCountNumber < lastExecutionCount) {
             headings.push(
-              itemGenerator.create(i, cell.model.type, 'c2', [
+              itemGenerator.create(i, cell.model.type, 'c2', `[${executionCountNumber}]${text}`, [
                 i,
                 executionCountNumber,
               ])
@@ -145,7 +153,7 @@ export class Linter {
           }
           if ({}.hasOwnProperty.call(executionCounts, executionCountNumber)) {
             headings.push(
-              itemGenerator.create(i, cell.model.type, 'h3', [
+              itemGenerator.create(i, cell.model.type, 'h3', `[${executionCountNumber}]${text}`, [
                 i,
                 executionCountNumber,
               ])
@@ -155,9 +163,13 @@ export class Linter {
           lastExecutionCount = executionCountNumber;
         }
       }
-      const text = model.value.text;
+      hashSource += text + ";;;";
       if (text.trim() === '' && i < emptyTail) {
-        headings.push(itemGenerator.create(i, cell.model.type, 'c3', [i]));
+        headings.push(itemGenerator.create(i, cell.model.type, 'c3', `-${emptyCounter}-${lastText}`, [i]));
+        emptyCounter += 1;
+      } else {
+        lastText = text;
+        emptyCounter = 0;
       }
     }
     const hasImports = this.update.has_imports || [];
@@ -171,14 +183,16 @@ export class Linter {
         const tuple = executionCounts[currentCount];
         const cell = tuple[1];
         const index = tuple[0];
+        const model = cell.model;
+        const text = model.value.text;
         if (hasImports.includes(currentCount) && index !== firstCodeCell) {
           headings.push(
-            itemGenerator.create(index, cell.model.type, 'i1', [index])
+            itemGenerator.create(index, cell.model.type, 'i1', text, [index])
           );
         }
         if ({}.hasOwnProperty.call(absolutePaths, currentCount)) {
           headings.push(
-            itemGenerator.create(index, cell.model.type, 'p1', [
+            itemGenerator.create(index, cell.model.type, 'p1', text, [
               index,
               absolutePaths[currentCount].map((x) => "'" + x + "'").join(', '),
             ])
@@ -188,7 +202,7 @@ export class Linter {
           Object.keys(missingRequirements[currentCount]).forEach(
             (module, j) => {
               headings.push(
-                itemGenerator.create(index, cell.model.type, 'i2', [
+                itemGenerator.create(index, cell.model.type, 'i2', `:${module}:${text}`, [
                   index,
                   module,
                 ])
@@ -199,14 +213,14 @@ export class Linter {
 
         if (lastExecutionCount === null && currentCount !== 1) {
           headings.push(
-            itemGenerator.create(index, cell.model.type, 'h4', [index])
+            itemGenerator.create(index, cell.model.type, 'h4', text, [index])
           );
         } else if (
           lastExecutionCount !== null &&
           lastExecutionCount !== currentCount - 1
         ) {
           headings.push(
-            itemGenerator.create(index, cell.model.type, 'h4', [index])
+            itemGenerator.create(index, cell.model.type, 'h4', text, [index])
           );
         }
         lastExecutionCount = currentCount;
@@ -218,10 +232,10 @@ export class Linter {
               const number = Number(dependencies[variable]);
               if (!{}.hasOwnProperty.call(executionCounts, number)) {
                 headings.push(
-                  itemGenerator.create(index, cell.model.type, 'h5', [
+                  itemGenerator.create(index, cell.model.type, 'h5', `${variable};${text}`, [
                     index,
                     number,
-                    executedCode[number].replace('\\n', '\n'),
+                    executedCode[number],
                     variable,
                   ])
                 );
@@ -231,7 +245,7 @@ export class Linter {
           const missing = missingDependencies[currentCount];
           if (missing !== undefined && missing.length > 0) {
             headings.push(
-              itemGenerator.create(index, cell.model.type, 'h6', [
+              itemGenerator.create(index, cell.model.type, 'h6', `${missing.join(',')};${text}`, [
                 index,
                 missing.map((x) => "'" + x + "'").join(', '),
               ])
@@ -242,21 +256,24 @@ export class Linter {
     if (notebookMetadata.cells.length > 0) {
       const cell = notebookMetadata.cells[0];
       const model = cell.model;
+      const text = model.value.text;
       if (model.type !== 'markdown') {
-        headings.push(itemGenerator.create(0, cell.model.type, 'c4', [0]));
+        headings.push(itemGenerator.create(0, cell.model.type, 'c4', text, [0]));
       }
     }
     if (emptyTail > 1) {
       const cell = notebookMetadata.cells[emptyTail - 1];
       const model = cell.model;
+      const text = model.value.text;
       if (model.type !== 'markdown') {
         headings.push(
-          itemGenerator.create(emptyTail - 1, cell.model.type, 'c5', [
+          itemGenerator.create(emptyTail - 1, cell.model.type, 'c5', text, [
             emptyTail - 1,
           ])
         );
       }
     }
+    return hashSource;
   }
 
   private getNonExecutedTail(
@@ -294,19 +311,33 @@ export class Linter {
     return emptyTail;
   }
 
-  private filterByReportType(headings: IReport[]): IReport[] {
+  private createFilteredResult(headings: IReport[], notebookHash:string): ILintingResult {
     const options = this.options;
-    const newHeadings: IReport[] = [];
+    const filtered = options.checkFiltered();
+    const result: ILintingResult = {
+      visible: [],
+      filteredType: [],
+      filteredId: [],
+      filteredRestart: [],
+      filteredIndividual: [],
+      hash: notebookHash,
+    };
+    
     headings.forEach((element) => {
-      if (
-        options.checkType(element.reportType) &&
-        (element.reportId === 'group' || options.checkReport(element.reportId))
-      ) {
-        newHeadings.push(element);
+      if (!options.checkType(element.reportType)) {
+        result.filteredType.push(element);
+      } else if (element.reportId !== 'group' && !options.checkReport(element.reportId)) {
+        result.filteredId.push(element);
+      } else if (element.restart && !options.checkRestart()) {
+        result.filteredRestart.push(element);
+      } else if (filtered.includes(element.hash)) {
+        result.filteredIndividual.push(element);
+      } else {
+        result.visible.push(element);
       }
     });
 
-    return newHeadings;
+    return result;
   }
 
   private groupByCell(

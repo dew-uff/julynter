@@ -15,6 +15,7 @@ import { Julynter } from './linterlab/julynter';
 
 import '../style/index.css';
 import { ErrorHandler } from './linterlab/errorhandler';
+import { julynterIcon } from './iconimports';
 
 /**
  * Initialization data for the julynter extension.
@@ -40,7 +41,7 @@ function activateJulynter(
     // Create the widget.
     const julynter = new Julynter(docmanager, notebookTracker, labShell, eh);
     // Add the julynter to the left area.
-    julynter.title.iconClass = 'julynter-main-icon jp-SideBar-tabIcon';
+    julynter.title.icon = julynterIcon.bindprops({stylesheet: 'sideBar'});
     julynter.title.caption = 'Julynter';
     julynter.id = 'julynter';
     labShell.add(julynter, 'left', { rank: 700 });

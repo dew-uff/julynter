@@ -3,6 +3,7 @@ import {
   ErrorTypeKeys,
   IJulynterLintOptions,
   ReportIds,
+  IKernelMatcher,
 } from '../linter/interfaces';
 import {
   IExperimentConfig,
@@ -32,6 +33,8 @@ export class Config {
   createDefault(): IJulynterLintOptions {
     return {
       mode: 'type',
+      view: true,
+      restart: true,
       requirements: 'requirements.txt',
       types: {
         invalidtitle: true,
@@ -63,6 +66,19 @@ export class Config {
         t6: true,
         t7: true,
       },
+      kernel: {
+        order: ['python', 'default'],
+        values: {
+          python: {
+            language: 'python',
+            initScript: 'import julynter.kernel; julynter.kernel.init()',
+          } as IKernelMatcher,
+          default: {
+            kernel: '.*',
+            initScript: null
+          } as IKernelMatcher,
+        }
+      }
     };
   }
 
@@ -211,6 +227,9 @@ export class Config {
             original.reports[key] = value;
           }
         }
+      }
+      if (newOptions.kernel !== undefined) {
+        original.kernel = newOptions.kernel;
       }
     } catch (error) {
       throw this._eh.report(error, 'Config:merge', [original, newOptions]);

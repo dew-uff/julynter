@@ -6,6 +6,7 @@ import { Config } from './config';
 import { ExperimentManager } from './experimentmanager';
 import { AbstractOptionsManager } from '../linter/options';
 import { ErrorHandler } from './errorhandler';
+import { ReadonlyPartialJSONValue } from '@lumino/coreutils';
 
 export class OptionsManager extends AbstractOptionsManager {
   private _experimentManager: ExperimentManager;
@@ -26,7 +27,7 @@ export class OptionsManager extends AbstractOptionsManager {
     this._eh = errorHandler;
     this._nbPanel = nbPanel;
     this._update = update;
-    this.initializeOptions({ ...this.default });
+    this.initializeOptions({ ...this.default }, []);
     this.reloadOptions();
   }
 
@@ -47,7 +48,7 @@ export class OptionsManager extends AbstractOptionsManager {
     }
   }
 
-  saveKey(key: string, value: boolean | string, ereport = true): void {
+  saveKey(key: string, value: ReadonlyPartialJSONValue, ereport = true): void {
     try {
       if (this._nbPanel) {
         this._nbPanel.model.metadata.set('julynter-check-' + key, value);
@@ -66,9 +67,9 @@ export class OptionsManager extends AbstractOptionsManager {
   }
 
   // initialize options, will NOT change notebook metadata
-  initializeOptions(checks: IJulynterLintOptions): void {
+  initializeOptions(checks: IJulynterLintOptions, filtered: string[]): void {
     try {
-      super.initializeOptions(checks);
+      super.initializeOptions(checks, filtered);
       this._update();
     } catch (error) {
       throw this._eh.report(error, 'OptionsManager:initializeOptions', [

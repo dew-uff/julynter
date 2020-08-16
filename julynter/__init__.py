@@ -1,8 +1,17 @@
-from ._version import __version__ 
-from .handlers import setup_handlers
-from .cmd import main
+"""Julynter module"""
+import sys
+
+from ._version import __version__
+
+if sys.version_info < (3, 5):
+    from .oldcmd import main
+else:
+    from .handlers import setup_handlers
+    from .cmd import main
+
 
 def _jupyter_server_extension_paths():
+    """Register julynter server extension"""
     return [{
         "module": "julynter"
     }]

@@ -1,8 +1,13 @@
+"""julynter lab command"""
 import re
-import pkg_resources
 import os
-from jupyterlab import labapp, labextensions
-from jupyterlab.commands import install_extension, build
+import sys
+import pkg_resources
+
+
+if sys.version_info > (3, 5):
+    from jupyterlab import labapp, labextensions
+    from jupyterlab.commands import install_extension, build
 
 
 RESOURCE_NAME = 'julynter'
@@ -11,11 +16,13 @@ PACKAGE_RE = re.compile('^' + PACKAGE_NAME.format('(.*)\\'))
 
 
 def version_tuple(version):
+    """Get version tuple"""
     parts = version.split('.')
     return tuple(int(x) if x.isnumeric() else x for x in parts)
 
 
-def install_cmd(args, rest):
+def install_cmd(_args, _rest):
+    """install command"""
     files = pkg_resources.resource_listdir(RESOURCE_NAME, 'labextension')
     versions = [version_tuple(PACKAGE_RE.sub(r'\1', x)) for x in files]
     latest = max(versions)
@@ -26,14 +33,16 @@ def install_cmd(args, rest):
     build()
 
 
-def lab_cmd(args, rest):
+def lab_cmd(_args, rest):
+    """lab command"""
     path = pkg_resources.resource_filename(RESOURCE_NAME, 'julynterlab')
     os.environ['JUPYTERLAB_DIR'] = path
     labapp.LabApp.app_dir = os.environ['JUPYTERLAB_DIR']
     labapp.LabApp.launch_instance(argv=rest)
 
 
-def labextension_cmd(args, rest):
+def labextension_cmd(_args, rest):
+    """labextension command"""
     path = pkg_resources.resource_filename(RESOURCE_NAME, 'julynterlab')
     os.environ['JUPYTERLAB_DIR'] = path
     labextensions.BaseExtensionApp.app_dir = os.environ['JUPYTERLAB_DIR']
@@ -41,6 +50,7 @@ def labextension_cmd(args, rest):
 
 
 def create_subparsers(subparsers):
+    """create install, lab, and labextension subcommands"""
     ins_parser = subparsers.add_parser(
         'install',
         help="Use nodejs to install the labextension"

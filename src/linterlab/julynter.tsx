@@ -1,24 +1,23 @@
 /* eslint @typescript-eslint/no-unused-vars: 0 */
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-
 import { Message } from '@lumino/messaging';
-import { Widget } from '@lumino/widgets';
+import { Widget, Panel, PanelLayout } from '@lumino/widgets';
 
 import { ILabShell } from '@jupyterlab/application';
 import { ActivityMonitor } from '@jupyterlab/coreutils';
 import { IDocumentManager } from '@jupyterlab/docmanager';
 import { NotebookPanel, INotebookTracker } from '@jupyterlab/notebook';
 
-import { IReport } from '../linter/interfaces';
-import { Languages } from '../linter/languages';
+import { IKernelMatcher, ILintingResult } from '../linter/interfaces';
 import { Config } from './config';
 import { NotebookHandler } from './notebookhandler';
 import { ExperimentManager } from './experimentmanager';
-import { ListRenderer } from './view/listrenderer';
-import { StatusRenderer, IJulynterStatus } from './view/statusrenderer';
-import { ToolbarRenderer } from './view/toolbarrenderer';
+import { EmptyListWidget, ListWidget } from './view/listwidget';
+import { IJulynterStatus } from './view/statusrenderer';
+import { ToolbarWidget } from './view/toolbarwidget';
 import { ErrorHandler } from './errorhandler';
+import { HeaderWidget } from './view/headerwidget';
+import { CellWidget } from './view/cellwidget';
+import { julynterNewIcon, julynterIcon } from '../iconimports';
 
 /**
  * Timeout for throttling Julynter rendering.
@@ -28,7 +27,7 @@ const RENDER_TIMEOUT = 1000;
 /**
  * A widget for hosting a notebook julynter.
  */
-export class Julynter extends Widget {
+export class Julynter extends Panel {
   private _docmanager: IDocumentManager;
   private _labShell: ILabShell;
   private _currentWidget: Widget | null;
@@ -40,6 +39,7 @@ export class Julynter extends Widget {
   private _experimentManager: ExperimentManager;
   private _status: IJulynterStatus;
   private _eh: ErrorHandler;
+  private _mainWidget: Panel;
   public handlers: { [id: string]: Promise<NotebookHandler> };
 
   /**
@@ -52,6 +52,7 @@ export class Julynter extends Widget {
     eh: ErrorHandler
   ) {
     super();
+    this._mainWidget = null;
     this._docmanager = docmanager;
     this._labShell = labShell;
     this._tracker = tracker;
@@ -95,7 +96,7 @@ export class Julynter extends Widget {
         const scripts = session.ready.then(
           handler.getKernelLanguage.bind(handler)
         );
-        scripts.then((language: Languages.LanguageModel) => {
+        scripts.then((language: IKernelMatcher) => {
           status.connectedOnce = true;
           handler.configureHandler(language);
         });
@@ -139,72 +140,72 @@ export class Julynter extends Widget {
     }
   }
 
-  titleClick(): void {
-    try {
-      this.updateJulynter();
-    } catch (error) {
-      throw this._eh.report(error, 'Julynter:titleClick', []);
-    }
-  }
+  
 
   updateJulynter(): void {
     try {
+      if (this._mainWidget !== null && this.contains(this._mainWidget)) {
+        this._mainWidget.dispose();
+        this._mainWidget = null;
+      }
       let title = 'Julynter';
-      let listRenderer: JSX.Element = null;
-      let toolbarRenderer: JSX.Element = null;
-      let renderedJSX: JSX.Element = null;
-      this.title.iconClass = 'julynter-main-icon jp-SideBar-tabIcon';
+      let listWidget: Widget = null;
+      let toolbarWidget: Widget = null;
+      this.title.icon = julynterIcon.bindprops({ stylesheet: 'sideBar'});
       this._status.connectedNow = false;
       this._status.hasKernel = false;
 
       if (this.currentHandler) {
+        for (let cellLint of Object.values(this._currentHandler.cellLints)) {
+          cellLint.dispose();
+        }
+        this._currentHandler.cellLints = {};
         this._status.connectedNow = true;
         this._status.hasKernel = this.currentHandler.hasKernel;
-        const reports: IReport[] = this.currentHandler.lint();
+        const lintResult: ILintingResult = this.currentHandler.lint();
+        const reports = lintResult.visible;
         this._visibleWidget = this.currentHandler.nbPanel;
         if (reports.length > 0) {
-          this.title.iconClass = 'julynter-main-new-icon jp-SideBar-tabIcon';
+          this.title.icon = julynterNewIcon.bindprops({ stylesheet: 'sideBar'});
         }
+        reports.forEach((report) => {
+          if (typeof report.cellId === 'number') {
+            let cell = this._currentHandler.nbPanel.content.widgets[report.cellId];
+            this._currentHandler.cellLints[report.cellId] = new CellWidget(this._currentHandler, cell);
+            (cell.layout as PanelLayout).insertWidget(0, this._currentHandler.cellLints[report.cellId]);
+          }
+        })
+
+
         title = this._currentHandler.name;
-        listRenderer = (
-          <ListRenderer
-            reports={reports}
-            notebook={this.currentHandler}
-            errorHandler={this._eh}
-          />
-        );
-        toolbarRenderer = (
-          <ToolbarRenderer
-            tracker={this._tracker}
-            handlers={this.handlers}
-            config={this._config}
-            notebook={this.currentHandler}
-            labShell={this._labShell}
-            errorHandler={this._eh}
-          />
-        );
+        const listOptions = {
+          reports: reports,
+          notebook: this.currentHandler,
+          errorHandler: this._eh,
+          cellLints: this._currentHandler.cellLints,
+        }
+        listWidget = new ListWidget(listOptions);
+        toolbarWidget = new ToolbarWidget({
+          tracker: this._tracker,
+          handlers: this.handlers,
+          config: this._config,
+          notebook: this.currentHandler,
+          labShell: this._labShell,
+          errorHandler: this._eh,
+          filtered: lintResult.filteredIndividual,
+        });
       } else {
-        listRenderer = (
-          <div className="julynter-error-desc"> No notebooks to lint </div>
-        );
+        listWidget = new EmptyListWidget();
       }
-      renderedJSX = (
-        <div className="jp-Julynter">
-          <header>
-            <div
-              className="julynter-title"
-              onClick={this.titleClick.bind(this)}
-              title="Click to reload"
-            >
-              {title}
-            </div>
-            <StatusRenderer {...this._status} errorHandler={this._eh} />
-          </header>
-          {toolbarRenderer}
-          {listRenderer}
-        </div>
-      );
-      ReactDOM.render(renderedJSX, this.node);
+      const headerWidget = new HeaderWidget(title, this._status, this._eh, this.updateJulynter.bind(this));
+      this._mainWidget = new Panel();
+      this._mainWidget.addClass("jp-Julynter");
+      this._mainWidget.addWidget(headerWidget);
+      if (toolbarWidget) {
+        this._mainWidget.addWidget(toolbarWidget);
+      }
+      this._mainWidget.addWidget(listWidget);
+      this.addWidget(this._mainWidget);
     } catch (error) {
       throw this._eh.report(error, 'Julynter:updateJulynter', []);
     }

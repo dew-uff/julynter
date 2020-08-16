@@ -1,126 +1,14 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   id="svg3767"
-   version="1.1"
-   fill="none"
-   viewBox="0 0 28 28"
-   height="28"
-   width="28">
-  <metadata
-     id="metadata3773">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
-  <defs
-     id="defs3771" />
-  <rect
-     id="rect3763"
-     fill-opacity="0"
-     fill="black"
-     height="28"
-     width="28" />
-  <g
-     transform="matrix(0.62624337,0,0,0.58706846,5.2325928,5.4521188)"
-     id="g4609">
-    <g
-       id="g3782"
-       transform="matrix(0.27021647,0,0,1.1359728,4.2715243,2.6116483)"
-       style="fill:#666666;fill-opacity:1">
-      <rect
-         y="5.0442429"
-         x="4.392499"
-         height="2.200757"
-         width="19.215002"
-         id="rect3775"
-         style="fill:#666666;fill-opacity:1;stroke-width:0.79880279" />
-    </g>
-    <path
-       style="fill:#666666;fill-opacity:1;stroke-width:0.7334789"
-       d="m 5.4584499,10.0687 v 14.116847 h 2.5 V 10.0687 Z"
-       id="rect3779" />
-    <path
-       style="fill:#666666;fill-opacity:1;stroke-width:0.7334789"
-       d="m 20.073448,10.0687 v 14.116847 h 2.500001 V 10.0687 Z"
-       id="rect3779-3" />
-    <g
-       id="g3782-5"
-       transform="matrix(0.27021647,0,0,1.1359728,16.194314,2.6116483)"
-       style="fill:#666666;fill-opacity:1">
-      <rect
-         y="5.0442429"
-         x="4.392499"
-         height="2.200757"
-         width="19.215002"
-         id="rect3775-3"
-         style="fill:#666666;fill-opacity:1;stroke-width:0.79880279" />
-    </g>
-    <g
-       id="g3782-56"
-       transform="matrix(0.87328074,0,0,1.1359728,1.6440535,15.955424)"
-       style="fill:#666666;fill-opacity:1">
-      <rect
-         y="5.0442429"
-         x="4.392499"
-         height="2.200757"
-         width="19.215002"
-         id="rect3775-2"
-         style="fill:#666666;fill-opacity:1;stroke-width:0.79880279" />
-    </g>
-    <path
-       style="fill:#666666;fill-opacity:1;stroke-width:0.48669285"
-       d="m 12.143564,1.0138466 v 4.1850681 h 3.712872 V 1.0138466 Z"
-       id="rect3779-3-2-7" />
-    <path
-       id="path979-0"
-       d="M 14,8.6974717 8.9763532,5.0891647 H 19.023647 Z"
-       style="opacity:1;fill:#666666;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-    <g
-       id="g3782-56-9"
-       transform="matrix(0.29461795,0,0,0.61650316,7.5139397,12.068671)"
-       style="fill:#666666;fill-opacity:1">
-      <rect
-         y="5.0442429"
-         x="4.392499"
-         height="2.200757"
-         width="19.215002"
-         id="rect3775-2-3"
-         style="fill:#666666;fill-opacity:1;stroke-width:0.79880279" />
-    </g>
-    <g
-       id="g3782-56-9-6"
-       transform="matrix(0.29461795,0,0,0.61650316,7.5139397,14.112787)"
-       style="fill:#666666;fill-opacity:1">
-      <rect
-         y="5.0442429"
-         x="4.392499"
-         height="2.200757"
-         width="19.215002"
-         id="rect3775-2-3-0"
-         style="fill:#666666;fill-opacity:1;stroke-width:0.79880279" />
-    </g>
-    <g
-       id="g3782-56-9-6-6"
-       transform="matrix(0.29461795,0,0,0.61650316,7.5139397,16.256337)"
-       style="fill:#666666;fill-opacity:1">
-      <rect
-         y="5.0442429"
-         x="4.392499"
-         height="2.200757"
-         width="19.215002"
-         id="rect3775-2-3-0-2"
-         style="fill:#666666;fill-opacity:1;stroke-width:0.79880279" />
-    </g>
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" height="14" width="14">
+  <g transform="matrix(0.62624337,0,0,0.58706846,-1.7773956,-0.3968846)" fill="#616161" class="jp-icon3">
+    <rect transform="matrix(0.27021647,0,0,1.1359728,4.2715243,2.6116483)" y="5.0442429" x="4.392499" height="2.200757" width="19.215002" stroke-width="0.79880279"/>
+    <path d="m 5.4584499,10.0687 v 14.116847 h 2.5 V 10.0687 Z" stroke-width="0.7334789"/>
+    <path d="m 20.073448,10.0687 v 14.116847 h 2.500001 V 10.0687 Z" stroke-width="0.7334789"/>
+    <rect transform="matrix(0.27021647,0,0,1.1359728,16.194314,2.6116483)" y="5.0442429" x="4.392499" height="2.200757" width="19.215002" stroke-width="0.79880279"/>
+    <rect transform="matrix(0.87328074,0,0,1.1359728,1.6440535,15.955424)" y="5.0442429" x="4.392499" height="2.200757" width="19.215002" stroke-width="0.79880279"/>
+    <path d="m 12.143564,1.0138466 v 4.1850681 h 3.712872 V 1.0138466 Z" stroke-width="0.48669285"/>
+    <path d="M 14,8.6974717 8.9763532,5.0891647 H 19.023647 Z"/>
+    <rect transform="matrix(0.29461795,0,0,0.61650316,7.5139397,12.068671)" y="5.0442429" x="4.392499" height="2.200757" width="19.215002" stroke-width="0.79880279"/>
+    <rect transform="matrix(0.29461795,0,0,0.61650316,7.5139397,14.112787)" y="5.0442429" x="4.392499" height="2.200757" width="19.215002" stroke-width="0.79880279"/>
+    <rect transform="matrix(0.29461795,0,0,0.61650316,7.5139397,16.256337)" y="5.0442429" x="4.392499" height="2.200757" width="19.215002" stroke-width="0.79880279"/>
   </g>
 </svg>
