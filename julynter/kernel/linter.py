@@ -55,7 +55,7 @@ class JulynterKernel(JulynterComm):
     """Implements julynter checks"""
 
     def __init__(self, *args, **kwargs):
-        super(JulynterKernel).__init__(*args, **kwargs)
+        super(JulynterKernel, self).__init__(*args, **kwargs)
         self.history = self.shell.history_manager
         self.cache = {
             'lineno_order': [],
