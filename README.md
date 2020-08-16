@@ -250,7 +250,7 @@ The interface may send two types of operations:
 
 After processing the operatings, the kernel should reply with the linting result:
 
-```json
+```javascript
 {   // consider all the numbers as the cell execution count number
     "operation": "queryResult",
     "executed_code": {1: "<code1>", 2: "<code2">, ...}, // Cell history based on the execution count
@@ -288,7 +288,7 @@ If there is any error during linting, the kernel may replay with an error:
 
 After defining the Comm, you may set the Julynter interface to automatically execute your Julynter kernel for a programming language, by configuring the Julynter options in `~/.julynter/config.json`:
 
-```json
+```javascript
 {
     ...
     "options": {
