@@ -1,11 +1,11 @@
 import * as React from 'react';
 
+import { Panel } from '@lumino/widgets';
+import { ReactWidget } from '@jupyterlab/apputils';
 import { IReport } from '../../linter/interfaces';
 import { NotebookHandler } from '../notebookhandler';
-import { ItemWidget } from './itemwidget'; /* eslint @typescript-eslint/no-unused-vars: 0 */
 import { ErrorHandler } from '../errorhandler';
-import { ReactWidget } from '@jupyterlab/apputils';
-import { Panel } from '@lumino/widgets';
+import { ItemWidget } from './itemwidget'; /* eslint @typescript-eslint/no-unused-vars: 0 */
 import { CellWidget } from './cellwidget';
 
 interface IListProps {
@@ -16,7 +16,6 @@ interface IListProps {
 }
 
 export class ListWidget extends Panel {
-  
   reports: IReport[];
   notebook: NotebookHandler;
   errorHandler: ErrorHandler;
@@ -31,15 +30,15 @@ export class ListWidget extends Panel {
     this.create();
   }
 
-  create() {
+  create(): void {
     try {
-      this.addClass("jp-Julynter-content")
+      this.addClass('jp-Julynter-content');
       this.reports.forEach((el) => {
-        let itemWidget = new ItemWidget({
+        const itemWidget = new ItemWidget({
           item: el,
           notebook: this.notebook,
           errorHandler: this.errorHandler,
-          cellLints: this.cellLints
+          cellLints: this.cellLints,
         });
         this.addWidget(itemWidget);
       });
@@ -50,8 +49,7 @@ export class ListWidget extends Panel {
 }
 
 export class EmptyListWidget extends ReactWidget {
-  protected render(): React.ReactElement<any, string | ((props: any) => React.ReactElement<any, string | any | (new (props: any) => React.Component<any, any, any>)>) | (new (props: any) => React.Component<any, any, any>)> | React.ReactElement<any, string | ((props: any) => React.ReactElement<any, string | any | (new (props: any) => React.Component<any, any, any>)>) | (new (props: any) => React.Component<any, any, any>)>[] {
+  protected render(): JSX.Element {
     return <div className="julynter-error-desc"> No notebooks to lint </div>;
   }
-
 }

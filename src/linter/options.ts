@@ -91,35 +91,41 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
   }
 
   // initialize options, will NOT change notebook metadata
-  initializeOptions(checks: IJulynterLintOptions, filteredHashes: string[]): void {
+  initializeOptions(
+    checks: IJulynterLintOptions,
+    filteredHashes: string[]
+  ): void {
     this.checks = checks;
     this.filteredHashes = filteredHashes;
   }
 
   reloadOptions(): void {
-    this.initializeOptions({
-      mode: this.loadKey('mode', this.default.mode),
-      view: this.loadKey('view', this.default.view),
-      restart: this.loadKey('restart', this.default.restart),
-      requirements: this.loadKey('requirements', this.default.requirements),
-      reports: ReportIds.reduce(
-        (previous, key) => {
-          const rkey = 'report-' + key;
-          previous[key] = this.loadKey(rkey, this.default.reports[key]);
-          return previous;
-        },
-        { ...this.default.reports }
-      ),
-      types: ErrorTypeKeys.reduce(
-        (previous, key) => {
-          const tkey = 'type-' + key;
-          previous[key] = this.loadKey(tkey, this.default.types[key]);
-          return previous;
-        },
-        { ...this.default.types }
-      ),
-      kernel: this.default.kernel
-    }, this.loadKey('filtered-hashes', []));
+    this.initializeOptions(
+      {
+        mode: this.loadKey('mode', this.default.mode),
+        view: this.loadKey('view', this.default.view),
+        restart: this.loadKey('restart', this.default.restart),
+        requirements: this.loadKey('requirements', this.default.requirements),
+        reports: ReportIds.reduce(
+          (previous, key) => {
+            const rkey = 'report-' + key;
+            previous[key] = this.loadKey(rkey, this.default.reports[key]);
+            return previous;
+          },
+          { ...this.default.reports }
+        ),
+        types: ErrorTypeKeys.reduce(
+          (previous, key) => {
+            const tkey = 'type-' + key;
+            previous[key] = this.loadKey(tkey, this.default.types[key]);
+            return previous;
+          },
+          { ...this.default.types }
+        ),
+        kernel: this.default.kernel,
+      },
+      this.loadKey('filtered-hashes', [])
+    );
   }
 
   saveOptions(): void {

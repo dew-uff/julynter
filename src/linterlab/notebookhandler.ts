@@ -53,7 +53,7 @@ export class NotebookHandler implements IDisposable {
   public options: OptionsManager;
   public update: IQueryResult | null;
   public hasKernel: boolean;
-  public cellLints: { [num:string]: CellWidget };
+  public cellLints: { [num: string]: CellWidget };
 
   _boundQueryCall: (
     sess: ISessionContext,
@@ -121,10 +121,13 @@ export class NotebookHandler implements IDisposable {
     }
   }
 
-  findLanguage(kernelName: string, languageName: string): Promise<IKernelMatcher> {
+  findLanguage(
+    kernelName: string,
+    languageName: string
+  ): Promise<IKernelMatcher> {
     return new Promise((resolve, reject) => {
       this.options.reloadOptions();
-      for (let kid of this.options.checks.kernel.order) {
+      for (const kid of this.options.checks.kernel.order) {
         const kernel = this.options.checks.kernel.values[kid];
         if (kernel.kernel && kernelName.match(kernel.kernel)) {
           resolve(kernel);
@@ -133,23 +136,26 @@ export class NotebookHandler implements IDisposable {
         if (kernel.language && languageName.match(kernel.language)) {
           resolve(kernel);
           return;
-        } 
+        }
       }
       resolve({
         kernel: null,
         language: null,
         initScript: null,
-        name: "default"
+        name: 'default',
       });
-    })
+    });
   }
 
   getKernelLanguage(): Promise<IKernelMatcher> {
     try {
       return this._session.session.kernel.info.then((infoReply: IInfoReply) => {
         try {
-          this._session.session.kernel.name
-          const model = this.findLanguage(this._session.session.kernel.name, infoReply.language_info.name);
+          this._session.session.kernel.name;
+          const model = this.findLanguage(
+            this._session.session.kernel.name,
+            infoReply.language_info.name
+          );
           this._experimentManager.reportNotebookKernel(
             this,
             this._session.session.kernel.name,
@@ -284,12 +290,12 @@ export class NotebookHandler implements IDisposable {
     }
   }
 
-  /** 
+  /**
    * Map linting reports
-  */
-  private mapReports(reports: IReport[]) : PartialJSONArray {
-    let result: PartialJSONArray = [];
-    reports.forEach(report => {
+   */
+  private mapReports(reports: IReport[]): PartialJSONArray {
+    const result: PartialJSONArray = [];
+    reports.forEach((report) => {
       result.push({
         text: report.text,
         reportType: report.reportType,
@@ -298,7 +304,7 @@ export class NotebookHandler implements IDisposable {
         reason: report.reason,
         cellId: report.cellId,
         hash: report.hash,
-      })
+      });
     });
     return result;
   }

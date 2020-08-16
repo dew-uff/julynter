@@ -3,14 +3,15 @@ module.exports = {
       'eslint:recommended',
       'plugin:@typescript-eslint/eslint-recommended',
       'plugin:@typescript-eslint/recommended',
-      'plugin:prettier/recommended'
+      'plugin:prettier/recommended',
+      'plugin:react/recommended'
     ],
     parser: '@typescript-eslint/parser',
     parserOptions: {
       project: 'tsconfig.json',
       sourceType: 'module'
     },
-    plugins: ['@typescript-eslint'],
+    plugins: ['@typescript-eslint', 'react'],
     rules: {
       '@typescript-eslint/no-unused-vars': ['warn', { args: 'none' }],
       '@typescript-eslint/no-explicit-any': 'off',
@@ -24,6 +25,11 @@ module.exports = {
       curly: ['error', 'all'],
       eqeqeq: 'error',
       'prefer-arrow-callback': 'error'
+    },
+    settings: {
+      react: {
+        version: "detect"
+      }
     }
   };
   

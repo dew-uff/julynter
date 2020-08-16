@@ -75,10 +75,10 @@ export class Config {
           } as IKernelMatcher,
           default: {
             kernel: '.*',
-            initScript: null
+            initScript: null,
           } as IKernelMatcher,
-        }
-      }
+        },
+      },
     };
   }
 

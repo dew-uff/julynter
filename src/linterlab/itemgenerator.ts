@@ -25,7 +25,6 @@ function capitalizeFirstLetter(string: string): string {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-
 export class ItemGenerator implements IItemGenerator {
   _docManager: IDocumentManager;
   _nbPanel: NotebookPanel;

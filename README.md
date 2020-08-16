@@ -285,6 +285,7 @@ If there is any error during linting, the kernel may replay with an error:
     "command": "<operation that caused the error>",
     "message": "<error message>"
 }
+```
 
 After defining the Comm, you may set the Julynter interface to automatically execute your Julynter kernel for a programming language, by configuring the Julynter options in `~/.julynter/config.json`:
 

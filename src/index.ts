@@ -41,7 +41,7 @@ function activateJulynter(
     // Create the widget.
     const julynter = new Julynter(docmanager, notebookTracker, labShell, eh);
     // Add the julynter to the left area.
-    julynter.title.icon = julynterIcon.bindprops({stylesheet: 'sideBar'});
+    julynter.title.icon = julynterIcon.bindprops({ stylesheet: 'sideBar' });
     julynter.title.caption = 'Julynter';
     julynter.id = 'julynter';
     labShell.add(julynter, 'left', { rank: 700 });

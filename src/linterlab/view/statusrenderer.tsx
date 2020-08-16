@@ -1,8 +1,13 @@
 import * as React from 'react';
-import { ErrorHandler } from '../errorhandler';
 import { showDialog, Dialog } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
-import { neverconnectedIcon, disconnectedIcon, kerneloffIcon, kernelonIcon } from '../../iconimports';
+import {
+  neverconnectedIcon,
+  disconnectedIcon,
+  kerneloffIcon,
+  kernelonIcon,
+} from '../../iconimports';
+import { ErrorHandler } from '../errorhandler';
 
 export interface IJulynterStatus {
   connectedOnce: boolean;
@@ -20,16 +25,10 @@ export class StatusRenderer extends React.Component<IJulynterStatusProps> {
   chooseMessageIcon(): [string, LabIcon] {
     try {
       if (!this.props.connectedOnce) {
-        return [
-          'Julynter did not connect to a notebook',
-          neverconnectedIcon,
-        ];
+        return ['Julynter did not connect to a notebook', neverconnectedIcon];
       }
       if (!this.props.connectedNow) {
-        return [
-          'Julynter is not connected to a notebook',
-          disconnectedIcon,
-        ];
+        return ['Julynter is not connected to a notebook', disconnectedIcon];
       }
       if (!this.props.hasKernel) {
         return ['Kernel not found', kerneloffIcon];
@@ -56,6 +55,7 @@ export class StatusRenderer extends React.Component<IJulynterStatusProps> {
             <div>
               <a
                 target="_blank"
+                rel="noreferrer"
                 href="https://github.com/dew-uff/julynter/issues"
               >
                 https://github.com/dew-uff/julynter/issues
@@ -118,7 +118,11 @@ export class StatusRenderer extends React.Component<IJulynterStatusProps> {
         <div className="jp-Julynter-kernel" title={message}>
           {error}
           {exp}
-          <icon.react elementSize="normal" className="julynter-icon" elementPosition="center"/>
+          <icon.react
+            elementSize="normal"
+            className="julynter-icon"
+            elementPosition="center"
+          />
         </div>
       );
     } catch (error) {

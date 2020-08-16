@@ -3,18 +3,32 @@ import * as React from 'react';
 import { Widget } from '@lumino/widgets';
 
 import { ILabShell } from '@jupyterlab/application';
-import { showDialog, Dialog, showErrorMessage, ReactWidget } from '@jupyterlab/apputils';
+import {
+  showDialog,
+  Dialog,
+  showErrorMessage,
+  ReactWidget,
+} from '@jupyterlab/apputils';
+import { refreshIcon } from '@jupyterlab/ui-components';
 import { PathExt } from '@jupyterlab/coreutils';
 import { INotebookTracker } from '@jupyterlab/notebook';
 
 import { ERROR_TYPES_MAP } from '../../linter/reports';
 import { ErrorTypeKey, ErrorTypeKeys, IReport } from '../../linter/interfaces';
+import {
+  configIcon,
+  requirermentsIcon,
+  listIcon,
+  cellIcon,
+  typeIcon,
+  iconMap,
+  eyeIcon,
+  filterIcon,
+} from '../../iconimports';
 import { Config } from '../config';
 import { NotebookHandler } from '../notebookhandler';
-import { createJulynterConfigWidget } from './julynterconfigwidget';
 import { ErrorHandler } from '../errorhandler';
-import { configIcon, requirermentsIcon, listIcon, cellIcon, typeIcon, iconMap, eyeIcon, filterIcon } from '../../iconimports';
-import { refreshIcon } from '@jupyterlab/ui-components';
+import { createJulynterConfigWidget } from './julynterconfigwidget';
 
 interface IToolbarProps {
   notebook: NotebookHandler;
@@ -72,9 +86,7 @@ class RequirementsHandler extends Widget {
   }
 }
 
-
 export class ToolbarWidget extends ReactWidget {
-  
   notebook: NotebookHandler;
   labShell: ILabShell;
   tracker: INotebookTracker;
@@ -92,7 +104,7 @@ export class ToolbarWidget extends ReactWidget {
     this.handlers = options.handlers;
     this.errorHandler = options.errorHandler;
     this.filtered = options.filtered;
-    this.addClass("julynter-toolbar-widget")
+    this.addClass('julynter-toolbar-widget');
   }
 
   toggle(key: ErrorTypeKey): void {
@@ -100,9 +112,7 @@ export class ToolbarWidget extends ReactWidget {
       const options = this.notebook.options;
       options.updateType(key, !options.checkType(key));
     } catch (error) {
-      throw this.errorHandler.report(error, 'ToolbarWidget:toggle', [
-        key,
-      ]);
+      throw this.errorHandler.report(error, 'ToolbarWidget:toggle', [key]);
     }
   }
 
@@ -118,11 +128,7 @@ export class ToolbarWidget extends ReactWidget {
       }
       this.notebook.options.updateMode(mode);
     } catch (error) {
-      throw this.errorHandler.report(
-        error,
-        'ToolbarWidget:toggleMode',
-        []
-      );
+      throw this.errorHandler.report(error, 'ToolbarWidget:toggleMode', []);
     }
   }
 
@@ -201,11 +207,7 @@ export class ToolbarWidget extends ReactWidget {
         'main'
       );
     } catch (error) {
-      throw this.errorHandler.report(
-        error,
-        'ToolbarWidget:configure',
-        []
-      );
+      throw this.errorHandler.report(error, 'ToolbarWidget:configure', []);
     }
   }
 
@@ -213,10 +215,9 @@ export class ToolbarWidget extends ReactWidget {
     let i = 0;
     return ErrorTypeKeys.map((key) => {
       const element = ERROR_TYPES_MAP[key];
-      const toggleClass =
-        (this.notebook.options.checkType(key)
-          ? 'julynter-toolbar-icon-selected'
-          : 'julynter-toolbar-icon');
+      const toggleClass = this.notebook.options.checkType(key)
+        ? 'julynter-toolbar-icon-selected'
+        : 'julynter-toolbar-icon';
       const icon = iconMap[key];
       return (
         <div
@@ -225,52 +226,64 @@ export class ToolbarWidget extends ReactWidget {
           title={element.label}
           onClick={(): void => this.toggle(key)}
         >
-          <icon.react elementSize="normal" className={toggleClass} elementPosition="center"/>
+          <icon.react
+            elementSize="normal"
+            className={toggleClass}
+            elementPosition="center"
+          />
         </div>
       );
     });
   }
 
   private createViewButton(): JSX.Element {
-    const toggleClass =
-        (this.notebook.options.checkView()
-          ? 'julynter-toolbar-icon-selected'
-          : 'julynter-toolbar-icon');
+    const toggleClass = this.notebook.options.checkView()
+      ? 'julynter-toolbar-icon-selected'
+      : 'julynter-toolbar-icon';
     return (
       <div
         className="julynter-toolbar-button"
         title="Toggle view on cells"
         onClick={this.toggleView.bind(this)}
       >
-        <eyeIcon.react elementSize="normal" className={toggleClass} elementPosition="center"/>
+        <eyeIcon.react
+          elementSize="normal"
+          className={toggleClass}
+          elementPosition="center"
+        />
       </div>
     );
   }
 
   private createRestartButton(): JSX.Element {
-    const toggleClass =
-        (this.notebook.options.checkRestart()
-          ? 'julynter-toolbar-icon-selected'
-          : 'julynter-toolbar-icon');
+    const toggleClass = this.notebook.options.checkRestart()
+      ? 'julynter-toolbar-icon-selected'
+      : 'julynter-toolbar-icon';
     return (
       <div
         className="julynter-toolbar-button"
         title="Toggle lints that require a kernel restart"
         onClick={this.toggleRestart.bind(this)}
       >
-        <refreshIcon.react elementSize="normal" className={toggleClass} elementPosition="center"/>
+        <refreshIcon.react
+          elementSize="normal"
+          className={toggleClass}
+          elementPosition="center"
+        />
       </div>
     );
   }
 
   private createRestartFilterButton(): JSX.Element {
     let toggleClass = 'julynter-toolbar-icon';
-    let element = <span> {this.filtered.length > 99 ? '++' : this.filtered.length} </span>;
-    if (this.filtered.length == 0) {
+    let element = (
+      <span> {this.filtered.length > 99 ? '++' : this.filtered.length} </span>
+    );
+    if (this.filtered.length === 0) {
       toggleClass = 'julynter-toolbar-icon-selected';
       element = <span></span>;
     }
-    
+
     return (
       <div
         className="julynter-toolbar-button"
@@ -278,7 +291,11 @@ export class ToolbarWidget extends ReactWidget {
         onClick={this.removeFilters.bind(this)}
       >
         <div className="julynter-toolbar-icon-with-text">
-          <filterIcon.react elementSize="normal" className={toggleClass} elementPosition="center"/>
+          <filterIcon.react
+            elementSize="normal"
+            className={toggleClass}
+            elementPosition="center"
+          />
           <span className="julynter-toolbar-icon-text">{element}</span>
         </div>
       </div>
@@ -289,11 +306,29 @@ export class ToolbarWidget extends ReactWidget {
     let toggleIcon = null;
     const mode = this.notebook.options.checkMode();
     if (mode === 'list') {
-      toggleIcon = <listIcon.react elementSize="normal" className="julynter-toolbar-icon" elementPosition="center"/>
+      toggleIcon = (
+        <listIcon.react
+          elementSize="normal"
+          className="julynter-toolbar-icon"
+          elementPosition="center"
+        />
+      );
     } else if (mode === 'cell') {
-      toggleIcon = <cellIcon.react elementSize="normal" className="julynter-toolbar-icon" elementPosition="center"/>
+      toggleIcon = (
+        <cellIcon.react
+          elementSize="normal"
+          className="julynter-toolbar-icon"
+          elementPosition="center"
+        />
+      );
     } else if (mode === 'type') {
-      toggleIcon = <typeIcon.react elementSize="normal" className="julynter-toolbar-icon" elementPosition="center"/>
+      toggleIcon = (
+        <typeIcon.react
+          elementSize="normal"
+          className="julynter-toolbar-icon"
+          elementPosition="center"
+        />
+      );
     }
     return (
       <div
@@ -307,8 +342,8 @@ export class ToolbarWidget extends ReactWidget {
     );
   }
 
-  protected render(): React.ReactElement<any, string | ((props: any) => React.ReactElement<any, string | any | (new (props: any) => React.Component<any, any, any>)>) | (new (props: any) => React.Component<any, any, any>)> | React.ReactElement<any, string | ((props: any) => React.ReactElement<any, string | any | (new (props: any) => React.Component<any, any, any>)>) | (new (props: any) => React.Component<any, any, any>)>[] {
-    try { 
+  protected render(): JSX.Element {
+    try {
       return (
         <div>
           <div className={'julynter-toolbar'}>
@@ -323,7 +358,11 @@ export class ToolbarWidget extends ReactWidget {
               className="julynter-toolbar-button"
               onClick={this.changeRequirements.bind(this)}
             >
-              <requirermentsIcon.react elementSize="normal" className="julynter-toolbar-icon" elementPosition="center"/>
+              <requirermentsIcon.react
+                elementSize="normal"
+                className="julynter-toolbar-icon"
+                elementPosition="center"
+              />
             </div>
             <div
               key="toolbar-config"
@@ -331,7 +370,11 @@ export class ToolbarWidget extends ReactWidget {
               className="julynter-toolbar-button"
               onClick={this.configure.bind(this)}
             >
-              <configIcon.react elementSize="normal" className="julynter-toolbar-icon" elementPosition="center"/>
+              <configIcon.react
+                elementSize="normal"
+                className="julynter-toolbar-icon"
+                elementPosition="center"
+              />
             </div>
           </div>
         </div>

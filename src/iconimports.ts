@@ -24,35 +24,100 @@ import togglerightSvgstr from '../style/img/toggle_right.svg';
 import eyeSvgstr from '../style/img/eye.svg';
 import filterSvgstr from '../style/img/filter.svg';
 
-export const julynterIcon = new LabIcon({name: 'julynter:icon', svgstr: julynterSvgstr});
-export const julynterNewIcon = new LabIcon({name: 'julynter:newicon', svgstr: julynterNewSvgstr});
-export const configIcon = new LabIcon({name: 'julynter:config', svgstr: configSvgstr});
-export const requirermentsIcon = new LabIcon({name: 'julynter:requirements', svgstr: requirermentsSvgstr});
-export const listIcon = new LabIcon({name: 'julynter:list', svgstr: listSvgstr});
-export const typeIcon = new LabIcon({name: 'julynter:type', svgstr: typeSvgstr});
-export const cellIcon = new LabIcon({name: 'julynter:cell', svgstr: cellSvgstr});
-export const pathIcon = new LabIcon({name: 'julynter:path', svgstr: pathSvgstr});
-export const importIcon = new LabIcon({name: 'julynter:import', svgstr: importSvgstr});
-export const confuseIcon = new LabIcon({name: 'julynter:confuse', svgstr: confuseSvgstr});
-export const hiddenStateIcon = new LabIcon({name: 'julynter:hiddenstate', svgstr: hiddenstateSvgstr});
-export const titleIcon = new LabIcon({name: 'julynter:title', svgstr: titleSvgstr});
-export const minusIcon = new LabIcon({name: 'julynter:minus', svgstr: minusSvgstr});
-export const plusIcon = new LabIcon({name: 'julynter:plus', svgstr: plusSvgstr});
-export const feedbackIcon = new LabIcon({name: 'julynter:feedback', svgstr: feedbackSvgstr});
-export const kernelonIcon = new LabIcon({name: 'julynter:kernelon', svgstr: kernelonSvgstr});
-export const kerneloffIcon = new LabIcon({name: 'julynter:kerneloff', svgstr: kerneloffSvgstr});
-export const disconnectedIcon = new LabIcon({name: 'julynter:disconnected', svgstr: disconnectedSvgstr});
-export const neverconnectedIcon = new LabIcon({name: 'julynter:neverconnected', svgstr: neverconnectedSvgstr});
-export const toggleDownIcon = new LabIcon({name: 'julynter:toggledown', svgstr: toggledownSvgstr});
-export const toggleRightIcon = new LabIcon({name: 'julynter:toggleright', svgstr: togglerightSvgstr});
-export const eyeIcon = new LabIcon({name: 'julynter:eye', svgstr: eyeSvgstr});
-export const filterIcon = new LabIcon({name: 'julynter:filter', svgstr: filterSvgstr});
-
+export const julynterIcon = new LabIcon({
+  name: 'julynter:icon',
+  svgstr: julynterSvgstr,
+});
+export const julynterNewIcon = new LabIcon({
+  name: 'julynter:newicon',
+  svgstr: julynterNewSvgstr,
+});
+export const configIcon = new LabIcon({
+  name: 'julynter:config',
+  svgstr: configSvgstr,
+});
+export const requirermentsIcon = new LabIcon({
+  name: 'julynter:requirements',
+  svgstr: requirermentsSvgstr,
+});
+export const listIcon = new LabIcon({
+  name: 'julynter:list',
+  svgstr: listSvgstr,
+});
+export const typeIcon = new LabIcon({
+  name: 'julynter:type',
+  svgstr: typeSvgstr,
+});
+export const cellIcon = new LabIcon({
+  name: 'julynter:cell',
+  svgstr: cellSvgstr,
+});
+export const pathIcon = new LabIcon({
+  name: 'julynter:path',
+  svgstr: pathSvgstr,
+});
+export const importIcon = new LabIcon({
+  name: 'julynter:import',
+  svgstr: importSvgstr,
+});
+export const confuseIcon = new LabIcon({
+  name: 'julynter:confuse',
+  svgstr: confuseSvgstr,
+});
+export const hiddenStateIcon = new LabIcon({
+  name: 'julynter:hiddenstate',
+  svgstr: hiddenstateSvgstr,
+});
+export const titleIcon = new LabIcon({
+  name: 'julynter:title',
+  svgstr: titleSvgstr,
+});
+export const minusIcon = new LabIcon({
+  name: 'julynter:minus',
+  svgstr: minusSvgstr,
+});
+export const plusIcon = new LabIcon({
+  name: 'julynter:plus',
+  svgstr: plusSvgstr,
+});
+export const feedbackIcon = new LabIcon({
+  name: 'julynter:feedback',
+  svgstr: feedbackSvgstr,
+});
+export const kernelonIcon = new LabIcon({
+  name: 'julynter:kernelon',
+  svgstr: kernelonSvgstr,
+});
+export const kerneloffIcon = new LabIcon({
+  name: 'julynter:kerneloff',
+  svgstr: kerneloffSvgstr,
+});
+export const disconnectedIcon = new LabIcon({
+  name: 'julynter:disconnected',
+  svgstr: disconnectedSvgstr,
+});
+export const neverconnectedIcon = new LabIcon({
+  name: 'julynter:neverconnected',
+  svgstr: neverconnectedSvgstr,
+});
+export const toggleDownIcon = new LabIcon({
+  name: 'julynter:toggledown',
+  svgstr: toggledownSvgstr,
+});
+export const toggleRightIcon = new LabIcon({
+  name: 'julynter:toggleright',
+  svgstr: togglerightSvgstr,
+});
+export const eyeIcon = new LabIcon({ name: 'julynter:eye', svgstr: eyeSvgstr });
+export const filterIcon = new LabIcon({
+  name: 'julynter:filter',
+  svgstr: filterSvgstr,
+});
 
 export const iconMap = {
-  'absolutepath': pathIcon,
-  'import': importIcon,
-  'confusenotebook': confuseIcon,
-  'hiddenstate': hiddenStateIcon,
-  'invalidtitle': titleIcon,
-}
+  absolutepath: pathIcon,
+  import: importIcon,
+  confusenotebook: confuseIcon,
+  hiddenstate: hiddenStateIcon,
+  invalidtitle: titleIcon,
+};

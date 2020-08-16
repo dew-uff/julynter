@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-
 import { Widget } from '@lumino/widgets';
 import {
   Dialog,
@@ -14,6 +13,7 @@ import {
 import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { HTMLSelect } from '@jupyterlab/ui-components';
 
+import { julynterIcon } from '../../iconimports';
 import { ERRORS, ERROR_TYPES_MAP } from '../../linter/reports';
 import {
   ErrorTypeKey,
@@ -28,7 +28,6 @@ import {
 import { Config } from '../config';
 import { NotebookHandler } from '../notebookhandler';
 import { ErrorHandler } from '../errorhandler';
-import { julynterIcon } from '../../iconimports';
 
 const MODES: { [id in ViewMode]: string } = {
   list: 'View as list',
@@ -262,7 +261,6 @@ export class JulynterConfigContent extends Widget {
     }
   }
 
-
   display(): void {
     try {
       let renderedJSX: JSX.Element = null;
@@ -301,7 +299,8 @@ export class JulynterConfigContent extends Widget {
         <div className="julynter-config-inner">
           <h1> Configure Julynter </h1>
           <div className="julynter-config-notice">
-            Do not forget to click the "Save" button when you are done
+            Do not forget to click the &quot; Save &quot; button when you are
+            done
           </div>
           <label key={'mode-' + this._key}>
             Mode:
@@ -525,7 +524,10 @@ export class SaveButton extends ReactWidget {
           });
       } else if (selected in this._handlers) {
         this._handlers[selected].then((handler) => {
-          handler.options.initializeOptions(this._checks, handler.options.checkFiltered());
+          handler.options.initializeOptions(
+            this._checks,
+            handler.options.checkFiltered()
+          );
           handler.options.saveOptions();
           showDialog({
             title: 'Success',

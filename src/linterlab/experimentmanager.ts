@@ -5,7 +5,11 @@ import { IDocumentManager } from '@jupyterlab/docmanager';
 import { IStream, IError, CellType, IBaseCell } from '@jupyterlab/nbformat';
 import { Notebook, NotebookPanel, NotebookActions } from '@jupyterlab/notebook';
 import { KernelMessage, Contents } from '@jupyterlab/services';
-import { IReport, IJulynterLintOptions, ILintingResult } from '../linter/interfaces';
+import {
+  IReport,
+  IJulynterLintOptions,
+  ILintingResult,
+} from '../linter/interfaces';
 import { requestAPI } from '../server';
 import { NotebookHandler } from './notebookhandler';
 
@@ -807,12 +811,16 @@ export class ExperimentManager {
       notebookId: handler.id,
       report: newReport,
       message: message,
-      source: source
+      source: source,
     };
     this._send(send);
   }
 
-  reportLintClick(handler: NotebookHandler, report: IReport, source: string): void {
+  reportLintClick(
+    handler: NotebookHandler,
+    report: IReport,
+    source: string
+  ): void {
     if (!this.config.enabled || !this.config.activity) {
       return;
     }

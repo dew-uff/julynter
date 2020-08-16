@@ -113,7 +113,6 @@ export interface ILintingResult {
   hash: string;
 }
 
-
 /**
  * An error type that can be filtered
  */
@@ -168,7 +167,6 @@ export interface IGroupGenerator {
   create(key: string, reportType: string, elements: IReport[]): IReport;
 }
 
-
 /**
  * KernelMatcher
  */
@@ -184,7 +182,7 @@ export const GenericMatcher: IKernelMatcher = {
   language: null,
   initScript: null,
   name: 'default',
-}
+};
 
 /**
  * Linter configuration options
@@ -197,10 +195,9 @@ export interface IJulynterLintOptions {
   types: { [id in ErrorTypeKey]: boolean };
   reports: { [id in ReportId]: boolean };
   kernel: {
-    values: { [id: string]: IKernelMatcher },
-    order: string[],
+    values: { [id: string]: IKernelMatcher };
+    order: string[];
   };
-  
 }
 
 /**
@@ -221,7 +218,7 @@ export interface ILintOptionsManager {
   updateRestart(view: boolean): void;
   updateRequirements(req: string): void;
   resetFiltered(): void;
-  addLintFilter(hash:string): void
+  addLintFilter(hash: string): void;
   initializeOptions(checks: IJulynterLintOptions, filtered: string[]): void;
   reloadOptions(): void;
   saveOptions(): void;

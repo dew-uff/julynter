@@ -14,8 +14,7 @@ import {
 } from './interfaces';
 import sha1 from 'sha1';
 
-
-export function hash(value: string){
+export function hash(value: string): string {
   // ToDo: apply sha1
   return sha1(value);
 }
@@ -41,10 +40,17 @@ export class Linter {
     itemGenerator: IItemGenerator,
     groupGenerator: IGroupGenerator
   ): ILintingResult {
-    let headings: IReport[] = [];
+    const headings: IReport[] = [];
     let hashSource = this.checkTitle(notebookMetadata, headings, itemGenerator);
-    hashSource += this.checkCellDefinitions(notebookMetadata, headings, itemGenerator);
-    const result: ILintingResult = this.createFilteredResult(headings, hash(hashSource));
+    hashSource += this.checkCellDefinitions(
+      notebookMetadata,
+      headings,
+      itemGenerator
+    );
+    const result: ILintingResult = this.createFilteredResult(
+      headings,
+      hash(hashSource)
+    );
     if (this.options.checkMode() === 'cell') {
       result.visible = this.groupByCell(result.visible, groupGenerator);
     } else if (this.options.checkMode() === 'type') {
@@ -53,7 +59,6 @@ export class Linter {
     return result;
   }
 
-  
   private checkTitle(
     notebookMetadata: IGenericNotebookMetadata,
     headings: IReport[],
@@ -81,7 +86,7 @@ export class Linter {
     if (title.length < 10) {
       headings.push(generator.create('title', 'title', 't7', title, []));
     }
-    return title + ":";
+    return title + ':';
   }
 
   private checkCellDefinitions(
@@ -102,9 +107,9 @@ export class Linter {
 
     let lastExecutionCount = -1;
     let firstCodeCell = -1;
-    let lastText = "";
+    let lastText = '';
     let emptyCounter = 0;
-    let hashSource = "";
+    let hashSource = '';
     for (let i = 0; i < notebookMetadata.cells.length; i++) {
       const cell: IGenericCellMetadata = notebookMetadata.cells[i];
       const model = cell.model;
@@ -125,13 +130,25 @@ export class Linter {
           ) {
             if (!{}.hasOwnProperty.call(executedCode, executionCountNumber)) {
               headings.push(
-                itemGenerator.create(i, cell.model.type, 'h1', `[${executionCountNumber}]${text}`, [i])
+                itemGenerator.create(
+                  i,
+                  cell.model.type,
+                  'h1',
+                  `[${executionCountNumber}]${text}`,
+                  [i]
+                )
               );
             } else {
               const historyCode = executedCode[executionCountNumber].trim();
               if (historyCode !== text.trim()) {
                 headings.push(
-                  itemGenerator.create(i, cell.model.type, 'h2', `[${executionCountNumber}]${historyCode}`, [i])
+                  itemGenerator.create(
+                    i,
+                    cell.model.type,
+                    'h2',
+                    `[${executionCountNumber}]${historyCode}`,
+                    [i]
+                  )
                 );
               }
             }
@@ -140,32 +157,48 @@ export class Linter {
 
         if (executionCountNumber === null) {
           if (i < nonExecutedTail && model.value.text.trim() !== '') {
-            headings.push(itemGenerator.create(i, cell.model.type, 'c1', text, [i]));
+            headings.push(
+              itemGenerator.create(i, cell.model.type, 'c1', text, [i])
+            );
           }
         } else {
           if (executionCountNumber < lastExecutionCount) {
             headings.push(
-              itemGenerator.create(i, cell.model.type, 'c2', `[${executionCountNumber}]${text}`, [
+              itemGenerator.create(
                 i,
-                executionCountNumber,
-              ])
+                cell.model.type,
+                'c2',
+                `[${executionCountNumber}]${text}`,
+                [i, executionCountNumber]
+              )
             );
           }
           if ({}.hasOwnProperty.call(executionCounts, executionCountNumber)) {
             headings.push(
-              itemGenerator.create(i, cell.model.type, 'h3', `[${executionCountNumber}]${text}`, [
+              itemGenerator.create(
                 i,
-                executionCountNumber,
-              ])
+                cell.model.type,
+                'h3',
+                `[${executionCountNumber}]${text}`,
+                [i, executionCountNumber]
+              )
             );
           }
           executionCounts[executionCountNumber] = [i, cell];
           lastExecutionCount = executionCountNumber;
         }
       }
-      hashSource += text + ";;;";
+      hashSource += text + ';;;';
       if (text.trim() === '' && i < emptyTail) {
-        headings.push(itemGenerator.create(i, cell.model.type, 'c3', `-${emptyCounter}-${lastText}`, [i]));
+        headings.push(
+          itemGenerator.create(
+            i,
+            cell.model.type,
+            'c3',
+            `-${emptyCounter}-${lastText}`,
+            [i]
+          )
+        );
         emptyCounter += 1;
       } else {
         lastText = text;
@@ -202,10 +235,13 @@ export class Linter {
           Object.keys(missingRequirements[currentCount]).forEach(
             (module, j) => {
               headings.push(
-                itemGenerator.create(index, cell.model.type, 'i2', `:${module}:${text}`, [
+                itemGenerator.create(
                   index,
-                  module,
-                ])
+                  cell.model.type,
+                  'i2',
+                  `:${module}:${text}`,
+                  [index, module]
+                )
               );
             }
           );
@@ -232,12 +268,13 @@ export class Linter {
               const number = Number(dependencies[variable]);
               if (!{}.hasOwnProperty.call(executionCounts, number)) {
                 headings.push(
-                  itemGenerator.create(index, cell.model.type, 'h5', `${variable};${text}`, [
+                  itemGenerator.create(
                     index,
-                    number,
-                    executedCode[number],
-                    variable,
-                  ])
+                    cell.model.type,
+                    'h5',
+                    `${variable};${text}`,
+                    [index, number, executedCode[number], variable]
+                  )
                 );
               }
             });
@@ -245,10 +282,13 @@ export class Linter {
           const missing = missingDependencies[currentCount];
           if (missing !== undefined && missing.length > 0) {
             headings.push(
-              itemGenerator.create(index, cell.model.type, 'h6', `${missing.join(',')};${text}`, [
+              itemGenerator.create(
                 index,
-                missing.map((x) => "'" + x + "'").join(', '),
-              ])
+                cell.model.type,
+                'h6',
+                `${missing.join(',')};${text}`,
+                [index, missing.map((x) => "'" + x + "'").join(', ')]
+              )
             );
           }
         }
@@ -258,7 +298,9 @@ export class Linter {
       const model = cell.model;
       const text = model.value.text;
       if (model.type !== 'markdown') {
-        headings.push(itemGenerator.create(0, cell.model.type, 'c4', text, [0]));
+        headings.push(
+          itemGenerator.create(0, cell.model.type, 'c4', text, [0])
+        );
       }
     }
     if (emptyTail > 1) {
@@ -311,7 +353,10 @@ export class Linter {
     return emptyTail;
   }
 
-  private createFilteredResult(headings: IReport[], notebookHash:string): ILintingResult {
+  private createFilteredResult(
+    headings: IReport[],
+    notebookHash: string
+  ): ILintingResult {
     const options = this.options;
     const filtered = options.checkFiltered();
     const result: ILintingResult = {
@@ -322,11 +367,14 @@ export class Linter {
       filteredIndividual: [],
       hash: notebookHash,
     };
-    
+
     headings.forEach((element) => {
       if (!options.checkType(element.reportType)) {
         result.filteredType.push(element);
-      } else if (element.reportId !== 'group' && !options.checkReport(element.reportId)) {
+      } else if (
+        element.reportId !== 'group' &&
+        !options.checkReport(element.reportId)
+      ) {
         result.filteredId.push(element);
       } else if (element.restart && !options.checkRestart()) {
         result.filteredRestart.push(element);

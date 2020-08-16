@@ -140,8 +140,6 @@ export class Julynter extends Panel {
     }
   }
 
-  
-
   updateJulynter(): void {
     try {
       if (this._mainWidget !== null && this.contains(this._mainWidget)) {
@@ -151,12 +149,12 @@ export class Julynter extends Panel {
       let title = 'Julynter';
       let listWidget: Widget = null;
       let toolbarWidget: Widget = null;
-      this.title.icon = julynterIcon.bindprops({ stylesheet: 'sideBar'});
+      this.title.icon = julynterIcon.bindprops({ stylesheet: 'sideBar' });
       this._status.connectedNow = false;
       this._status.hasKernel = false;
 
       if (this.currentHandler) {
-        for (let cellLint of Object.values(this._currentHandler.cellLints)) {
+        for (const cellLint of Object.values(this._currentHandler.cellLints)) {
           cellLint.dispose();
         }
         this._currentHandler.cellLints = {};
@@ -166,16 +164,25 @@ export class Julynter extends Panel {
         const reports = lintResult.visible;
         this._visibleWidget = this.currentHandler.nbPanel;
         if (reports.length > 0) {
-          this.title.icon = julynterNewIcon.bindprops({ stylesheet: 'sideBar'});
+          this.title.icon = julynterNewIcon.bindprops({
+            stylesheet: 'sideBar',
+          });
         }
         reports.forEach((report) => {
           if (typeof report.cellId === 'number') {
-            let cell = this._currentHandler.nbPanel.content.widgets[report.cellId];
-            this._currentHandler.cellLints[report.cellId] = new CellWidget(this._currentHandler, cell);
-            (cell.layout as PanelLayout).insertWidget(0, this._currentHandler.cellLints[report.cellId]);
+            const cell = this._currentHandler.nbPanel.content.widgets[
+              report.cellId
+            ];
+            this._currentHandler.cellLints[report.cellId] = new CellWidget(
+              this._currentHandler,
+              cell
+            );
+            (cell.layout as PanelLayout).insertWidget(
+              0,
+              this._currentHandler.cellLints[report.cellId]
+            );
           }
-        })
-
+        });
 
         title = this._currentHandler.name;
         const listOptions = {
@@ -183,7 +190,7 @@ export class Julynter extends Panel {
           notebook: this.currentHandler,
           errorHandler: this._eh,
           cellLints: this._currentHandler.cellLints,
-        }
+        };
         listWidget = new ListWidget(listOptions);
         toolbarWidget = new ToolbarWidget({
           tracker: this._tracker,
@@ -197,9 +204,14 @@ export class Julynter extends Panel {
       } else {
         listWidget = new EmptyListWidget();
       }
-      const headerWidget = new HeaderWidget(title, this._status, this._eh, this.updateJulynter.bind(this));
+      const headerWidget = new HeaderWidget(
+        title,
+        this._status,
+        this._eh,
+        this.updateJulynter.bind(this)
+      );
       this._mainWidget = new Panel();
-      this._mainWidget.addClass("jp-Julynter");
+      this._mainWidget.addClass('jp-Julynter');
       this._mainWidget.addWidget(headerWidget);
       if (toolbarWidget) {
         this._mainWidget.addWidget(toolbarWidget);
