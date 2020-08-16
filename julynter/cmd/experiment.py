@@ -64,8 +64,7 @@ def yes_no(value, question, keep=None):
             if value.strip() == "":
                 print("Using default (yes)")
             return check_value
-        else:
-            print("Please respond with 'yes' or 'no'")   
+        print("Please respond with 'yes' or 'no'")
 
 def start_experiment_cmd(args, _):
     """Start experiment"""
@@ -144,9 +143,10 @@ def end_experiment_cmd(args, rest):
 
     if not args.prevent_zip:
         zip_experiment_cmd(args, rest)
-    
 
-def zip_experiment_cmd(args, rest):
+
+def zip_experiment_cmd(args, _):
+    """Zip command"""
     save_cwd = os.getcwd()
     zip_filename = os.path.abspath(args.file)
     archive_dir = os.path.dirname(zip_filename)
@@ -157,20 +157,20 @@ def zip_experiment_cmd(args, rest):
         if archive_dir and not os.path.exists(archive_dir):
             os.makedirs(archive_dir)
         with zipfile.ZipFile(zip_filename, "w",
-                             compression=zipfile.ZIP_DEFLATED) as zf:
+                             compression=zipfile.ZIP_DEFLATED) as zfil:
             path = os.path.normpath(base_dir)
             if path != os.curdir:
-                zf.write(path, path)
+                zfil.write(path, path)
             for dirpath, dirnames, filenames in os.walk(base_dir):
                 for name in sorted(dirnames):
                     path = os.path.normpath(os.path.join(dirpath, name))
                     if not args.ignore_sent or not path.startswith('sent_'):
-                        zf.write(path, path)
+                        zfil.write(path, path)
                 for name in filenames:
                     path = os.path.normpath(os.path.join(dirpath, name))
                     if not args.ignore_sent or not path.startswith('sent_'):
                         if os.path.isfile(path):
-                            zf.write(path, path)
+                            zfil.write(path, path)
     finally:
         os.chdir(save_cwd)
 
@@ -179,6 +179,7 @@ def zip_experiment_cmd(args, rest):
 
 
 def create_subparsers(subparsers):
+    """Create experiment subparsers"""
     expparser = subparsers.add_parser(
         'experiment', help="Configure Julynter experiment"
     )
@@ -194,12 +195,12 @@ def create_subparsers(subparsers):
         help='Keep old values'
     )
     expparser_start.add_argument(
-        '-i', '--id', default=None, nargs='?', const="<ask>", 
+        '-i', '--id', default=None, nargs='?', const="<ask>",
         help='Experiment id'
     )
     expparser_start.add_argument(
         '-m', '--linting-messages', type=validate_yes_no,
-        nargs='?', default=None, const="<ask>", 
+        nargs='?', default=None, const="<ask>",
         help='Collect linting messages'
     )
     expparser_start.add_argument(
@@ -208,7 +209,7 @@ def create_subparsers(subparsers):
         help='Collect linting types'
     )
     expparser_start.add_argument(
-        '-a', '--activity', type=validate_yes_no, nargs='?', 
+        '-a', '--activity', type=validate_yes_no, nargs='?',
         default=None, const="<ask>",
         help='Collect activity'
     )
@@ -223,12 +224,12 @@ def create_subparsers(subparsers):
         help='Collect notebook name'
     )
     expparser_start.add_argument(
-        '-c', '--code', type=validate_yes_no, nargs='?', 
-        default=None, const="<ask>", 
+        '-c', '--code', type=validate_yes_no, nargs='?',
+        default=None, const="<ask>",
         help='Collect notebook code'
     )
     expparser_start.add_argument(
-        '-s', '--send', type=validate_yes_no, nargs='?', 
+        '-s', '--send', type=validate_yes_no, nargs='?',
         default=None, const="<ask>",
         help='Send experiment to server'
     )
@@ -236,8 +237,8 @@ def create_subparsers(subparsers):
         '--server', default=None,
         help='Experiment server'
     )
-    
-    
+
+
     expparser_stop = expparser_sub.add_parser(
         "stop", help="Stop Julynter experiment"
     )

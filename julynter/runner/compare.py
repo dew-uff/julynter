@@ -34,6 +34,7 @@ class Comparison(object):
 
     def independent(self):
         """Indicates that the comparison is independent"""
+        # pylint: disable=no-self-use
         return True
 
     def propagate(self, key, value):
@@ -455,8 +456,15 @@ def jaccard(first, second):
     return 1.0
 
 
-def cell_diff(index, old_cell, new_cell, show_report, normalizations, calculate_similarity, vindex):
+def cell_diff(
+        index, old_cell, new_cell, show_report,
+        normalizations, calculate_similarity, vindex
+):
     """Compare cells"""
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     result = {}
     comparisons = []
     last = None

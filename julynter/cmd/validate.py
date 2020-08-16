@@ -1,5 +1,6 @@
 """julynter validate command"""
-import sys
+import hashlib
+from pathlib import Path
 import nbformat
 from .. import util
 from ..util import vprint, do_exit
@@ -107,13 +108,35 @@ def validate(args, _):
     else:
         vprint(-1, 'Valid notebook!')
 
-    if hidden and not args.hide_warning:
+    if not args.hide_warning:
         current = current_filter_letters(args)
-        vprint(-1, '\nWARNING: Found {} hidden lints'.format(len(hidden)))
-        vprint(-1, '  Please run "julynter validate -trim <notebook>" to show all hidden lints')
-        vprint(-1, '  Or "julynter validate -w{} <notebook>" to hide this warning'.format(current))
+
+        if hidden:
+            vprint(-1, '\nWARNING: Found {} hidden lints'.format(len(hidden)))
+            vprint(-1, '  Please run "julynter validate -trim <notebook>" to show all hidden lints')
+            vprint(-1, '  Or "julynter validate -w{} <notebook>" '
+                       'to hide this warning'.format(current))
+
+        if not check_hash(args.path, notebook, results['hash']):
+            vprint(-1, '\nWARNING: Hash Mismatch')
+            vprint(-1, '  Please perform the linting again in Jupyter Lab')
+            vprint(-1, '  Or run "julynter validate -w{} <notebook>" '
+                       'to hide this warning'.format(current))
 
     do_exit(exitcode)
+
+
+def check_hash(path, notebook, old_hash):
+    """Check if current notebook SHA1 matches calculated hash"""
+    hashsource = []
+    notebook_name = str(Path(path).name).lower()
+    hashsource.append(notebook_name + ":")
+    for cell in notebook.get('cells', []):
+        if cell.get('cell_type', '') == 'code':
+            hashsource.append('[{}]'.format(cell.get('execution_count', '') or ''))
+        hashsource.append(cell.get('source', '') + ';;;')
+    current_hash = hashlib.sha1(''.join(hashsource).encode('utf-8')).hexdigest()
+    return current_hash == old_hash
 
 
 def current_filter_letters(args):

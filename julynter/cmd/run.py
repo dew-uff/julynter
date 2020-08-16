@@ -148,4 +148,3 @@ def add_run_arguments(runparser):
         "-m", "--hide-message", action="store_true",
         help="hide error messages"
     )
-    

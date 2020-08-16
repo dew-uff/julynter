@@ -1,4 +1,5 @@
 """Utility module"""
+# pylint: disable=unused-import
 from __future__ import print_function
 import json
 import sys
@@ -20,7 +21,7 @@ EXITED = False
 
 if sys.version_info < (3, 0):
     TimeoutException = RuntimeError
-    String = unicode
+    String = unicode  # pylint: disable=undefined-variable
     Bytes = str
     encode_r = lambda x: x.decode('utf-8')
 else:
@@ -31,7 +32,7 @@ else:
 
 
 if sys.version_info <= (3, 4):
-    from pathlib2 import Path
+    from pathlib2 import Path  # pylint: disable=import-error
 else:
     from pathlib import Path
 
@@ -45,18 +46,19 @@ def _target(queue, function, *args, **kwargs):
     """
     try:
         queue.put((True, function(*args, **kwargs)))
-    except:
+    except:  # pylint: disable=bare-except
         #traceback.print_exc()
         queue.put((False, sys.exc_info()[1]))
 
 
-timeout_decorator._target = _target
+timeout_decorator._target = _target  # pylint: disable=protected-access
 
 
 
 def to_unicode(text):
+    """Convert to unicode"""
     if sys.version_info < (3, 0):
-        if isinstance(text, unicode):
+        if isinstance(text, unicode):  # pylint: disable=undefined-variable
             return text
         return str(text).decode("utf-8")
     if isinstance(text, str):
@@ -65,6 +67,7 @@ def to_unicode(text):
 
 
 def vprint(level, *args):
+    """Print according to verbose level"""
     if VERBOSE > level:
         if level > 0:
             print(">" * level, *args)
@@ -72,8 +75,10 @@ def vprint(level, *args):
             print(*args)
 
 
-def create_hook(data, folder, config):
-    def log_hook(response, *args, **kwargs):
+def create_hook(data, folder):
+    """Create hook to send experiment data to server"""
+    def log_hook(response, *_args, **_kwargs):
+        """Hook that sends experiment data to server"""
         newfolder = folder
         try:
             if response.status_code == 200:
@@ -82,46 +87,49 @@ def create_hook(data, folder, config):
                     newfolder = "sent_" + folder
                     if "id" in result:
                         data["mid"] = result["id"]
-        except Exception as e:
-            print("Failed to send to server", e)
-        save_log(data, newfolder, config)
+        except Exception as exc:  # pylint: disable=broad-except
+            print("Failed to send to server", exc)
+        save_log(data, newfolder)
     return log_hook
 
 
 def log(data, folder="errors", config=None):
+    """Log commands to server"""
     config = config or load_project_config()
     if config["experiment"]["enabled"] and config["experiment"]["sendServer"]:
         try:
             session = FuturesSession()
-            future = session.post(config["experiment"]["server"], json={
+            session.post(config["experiment"]["server"], json={
                 'mtype': folder,
                 'mtext': data,
                 "mexperiment_id": config["experiment"]["id"],
                 'version': __version__
             }, hooks={
-                'response': create_hook(data, folder, config),
+                'response': create_hook(data, folder),
             })
-        except Exception as e:
-            print("Failed to send to server", e)
+        except Exception as exc:  # pylint: disable=broad-except
+            print("Failed to send to server", exc)
     else:
-        save_log(data, folder, config)
+        save_log(data, folder)
 
 
-def save_log(data, folder, config):
+def save_log(data, folder):
+    """Save log to folder"""
     today = date.today()
     path = home_config_path() / folder / "{}{}".format(today.year, today.month)
     path.mkdir(parents=True, exist_ok=True)
     with LOG_LOCK:
         try:
-            with open(str(path / "{}.log".format(today.day)), 'a') as f:
-                f.write('\n')
-                json.dump(data, f)
-        except json.JSONDecodeError as e:
-            print("Failed to save", data, e)
+            with open(str(path / "{}.log".format(today.day)), 'a') as fil:
+                fil.write('\n')
+                json.dump(data, fil)
+        except json.JSONDecodeError as exc:
+            print("Failed to save", data, exc)
 
 
 def do_exit(exitcode, command=None):
     """Exit program"""
+    # pylint: disable=global-statement
     global EXITED
     EXITED = True
     data = {
@@ -130,6 +138,5 @@ def do_exit(exitcode, command=None):
         "param": " ".join(sys.argv[1:]),
         "info": str(exitcode),
     }
-    print(data)
     log(data, "experiment")
     sys.exit(exitcode)

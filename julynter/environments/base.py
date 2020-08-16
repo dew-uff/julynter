@@ -48,6 +48,7 @@ class Environment:
 
     def report(self):
         """Report environment name"""
+        # pylint: disable=no-self-use
         print("Environment created")
 
 

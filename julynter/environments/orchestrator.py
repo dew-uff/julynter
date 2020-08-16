@@ -133,12 +133,11 @@ class EnvironmentOrchestrator:
                 return (False, data)
         return (True, b"")
 
-    async def install_julynter(self, cwd, _):
+    async def install_julynter(self, _cwd, _names):
         """Install julynter for running notebook"""
         self.rprint(self.iverbose + 1, "Installing julynter")
-        # ToDo: replace by julnyter pinned version
         result = await self.run(
-            "pip install {}/julynter/dist/julynter-0.4.0a0-py3-none-any.whl".format((cwd / "..").resolve()),
+            "pip install julynter==0.4.0"
         )
         data = self._output_data(result)
         if result.returncode != 0:

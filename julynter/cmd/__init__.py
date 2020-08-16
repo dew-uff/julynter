@@ -23,7 +23,7 @@ def main():
     env.create_subparsers(subparsers)
     extractpipenv.create_subparsers(subparsers)
     validate.create_subparsers(subparsers)
-    
+
     args, rest = parser.parse_known_args()
     try:
         if not getattr(args, 'func', None):
@@ -36,4 +36,3 @@ def main():
         if not util.EXITED:
             traceback.print_exc()
             util.do_exit(1)
-        

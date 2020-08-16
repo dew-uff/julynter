@@ -7,6 +7,7 @@ from subprocess import CalledProcessError, CompletedProcess
 
 NOP = lambda x: None
 
+
 async def read_stream_and_display(stream, display):
     """Read from stream line by line until EOF, display, and capture the lines."""
     #import IPython; IPython.embed()
@@ -41,6 +42,7 @@ async def async_run(args, out_display=NOP, err_display=NOP, check=False, **kwarg
                                  output=stdout, stderr=stderr)
 
     return CompletedProcess(args, retcode, stdout, stderr)
+
 
 def sync_run(args, **kwargs):
     """Run process synchronously"""

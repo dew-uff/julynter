@@ -32,12 +32,8 @@ def discover_files(cwd, values, pattern, exclude=None):
 def create_environment(args, cwd, create, remove):
     """Create environment based on arguments"""
     if args.env_type == "docker":
-        volumes = {
-            cwd.expanduser().resolve(): args.target_dir,
-            Path("~/projects/julynter").expanduser().resolve(): "/home/jul/julynter" # ToDo: remove
-        }
         return DockerEnvironment(
-            args.image_name, volumes=volumes, cwd=cwd,
+            args.image_name, cwd=cwd,
             wd=args.target_dir, create=create, remove=remove
         )
     if args.env_type == "conda":
@@ -126,7 +122,7 @@ def display_execution_results(res, args, eargs, exitcode):
     if not eargs.skip_comparison:
         print("  Same results before normalizations: {} notebooks".format(same))
         print("  Same results after normalization: {} notebooks".format(same_norm))
-    
+
     return exitcode
 
 

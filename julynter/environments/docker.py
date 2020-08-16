@@ -20,7 +20,7 @@ class DockerEnvironment(Environment):
         self.name = name
         self.wdir = str(wd)
         cwd = cwd or Path.cwd()
-        self.volumes = volumes or {str(cwd.resolve()): str(wd)}
+        self.volumes = volumes or {str(cwd.expanduser().resolve()): str(wd)}
         self._container_id = None if create else name
         self.docker_cmd = docker_cmd or []
 
@@ -81,14 +81,14 @@ class DockerEnvironment(Environment):
                 result = await async_run(self._rm_container_cmd())
                 if result.returncode != 0:
                     print("WARNING: failed to remove container {}. Trying to prune it"
-                        .format(self._container_id))
+                          .format(self._container_id))
                     result.check_returncode()
 
             except CalledProcessError:
                 result = await async_run(self._prune_containers_cmd())
                 if result.returncode != 0:
                     print("WARNING: failed to remove container {}. Trying to prune it"
-                        .format(self._container_id))
+                          .format(self._container_id))
 
     def project_wd(self, cwd):
         """Get project directory in environment"""
