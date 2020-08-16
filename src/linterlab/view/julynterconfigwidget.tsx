@@ -525,7 +525,7 @@ export class SaveButton extends ReactWidget {
           });
       } else if (selected in this._handlers) {
         this._handlers[selected].then((handler) => {
-          handler.options.initializeOptions(this._checks);
+          handler.options.initializeOptions(this._checks, handler.options.checkFiltered());
           handler.options.saveOptions();
           showDialog({
             title: 'Success',

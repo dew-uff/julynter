@@ -123,6 +123,7 @@ export class NotebookHandler implements IDisposable {
 
   findLanguage(kernelName: string, languageName: string): Promise<IKernelMatcher> {
     return new Promise((resolve, reject) => {
+      this.options.reloadOptions();
       for (let kid of this.options.checks.kernel.order) {
         const kernel = this.options.checks.kernel.values[kid];
         if (kernel.kernel && kernelName.match(kernel.kernel)) {

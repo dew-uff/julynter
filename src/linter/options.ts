@@ -1,3 +1,5 @@
+import { ReadonlyPartialJSONValue } from '@lumino/coreutils';
+
 import {
   ErrorTypeKey,
   ErrorTypeKeys,
@@ -11,11 +13,12 @@ import {
 export abstract class AbstractOptionsManager implements ILintOptionsManager {
   public checks: IJulynterLintOptions;
   public default: IJulynterLintOptions;
+  public filteredHashes: string[];
 
   abstract loadKey<T>(key: string, def: T): T;
   abstract saveKey(
     key: string,
-    value: boolean | string,
+    value: ReadonlyPartialJSONValue,
     ereport: boolean
   ): void;
 
@@ -41,6 +44,10 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
 
   checkRequirements(): string {
     return this.checks.requirements;
+  }
+
+  checkFiltered(): string[] {
+    return this.filteredHashes;
   }
 
   updateReport(key: ReportId, value: boolean): void {
@@ -73,9 +80,20 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
     this.saveKey('requirements', req, true);
   }
 
+  resetFiltered(): void {
+    this.filteredHashes = [];
+    this.saveKey('filtered-hashes', this.filteredHashes, true);
+  }
+
+  addLintFilter(hash: string): void {
+    this.filteredHashes.push(hash);
+    this.saveKey('filtered-hashes', this.filteredHashes, true);
+  }
+
   // initialize options, will NOT change notebook metadata
-  initializeOptions(checks: IJulynterLintOptions): void {
+  initializeOptions(checks: IJulynterLintOptions, filteredHashes: string[]): void {
     this.checks = checks;
+    this.filteredHashes = filteredHashes;
   }
 
   reloadOptions(): void {
@@ -101,7 +119,7 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
         { ...this.default.types }
       ),
       kernel: this.default.kernel
-    });
+    }, this.loadKey('filtered-hashes', []));
   }
 
   saveOptions(): void {
@@ -115,5 +133,6 @@ export abstract class AbstractOptionsManager implements ILintOptionsManager {
     for (const key of ReportIds) {
       this.saveKey('report-' + key, this.checks.reports[key], false);
     }
+    this.saveKey('filtered-hashes', this.filteredHashes, false);
   }
 }

@@ -133,17 +133,61 @@ export class LintAction {
       });
       let hideTitle = `Filter out lint ${item.reportId}`;
       let hideMessage =
-        'Are you sure you want to filter out' +
+        'Are you sure you want to filter out ' +
         `lints with the id "${item.reportId}"?`;
+      const hideInfo = (
+        <ul className="julynter-feedback-ul">
+          <li>Message: {item.text}</li>
+          <li>Suggestion: {item.suggestion}</li>
+        </ul>
+      );
       let hideExample = (
         <div>
           Example of instance:
-          <ul className="julynter-feedback-ul">
-            <li>Message: {item.text}</li>
-            <li>Suggestion: {item.suggestion}</li>
-          </ul>
+          {hideInfo}  
         </div>
       );
+
+      if (item.reportId !== 'group') {
+        commands.addCommand('hidethis' + postfix, {
+          label: 'Filter out this lint',
+          caption: 'Filter out this lint',
+          execute: () => {
+            showDialog({
+              title: 'Filter out this lint',
+              body: (
+                <div>
+                  <div> Are you sure you want to filter out this lint? </div>
+                  <div>
+                    {hideInfo}
+                  </div>
+                </div>
+              ),
+              buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'Yes' })],
+            }).then((result) => {
+              Promise.resolve(result.button.accept).then((ok: boolean) => {
+                try {
+                  console.log(ok);
+                  if (ok) {
+                    this.notebook.options.addLintFilter(item.hash);
+                  }
+                } catch (error) {
+                  throw this.errorHandler.report(
+                    error,
+                    'LintAction:contextMenu.hidethis',
+                    [this.source, ok, item]
+                  );
+                }
+              });
+            });
+          },
+        });
+        contextMenu.addItem({
+          command: 'hidethis' + postfix,
+          selector: '*',
+        });
+      }
+
       if (item.reportId === 'group') {
         hideTitle = `Filter out lint type ${item.text}`;
         hideMessage =

@@ -1,4 +1,4 @@
-import { JSONObject } from '@lumino/coreutils';
+import { JSONObject, ReadonlyPartialJSONValue } from '@lumino/coreutils';
 import { ISessionContext, Clipboard } from '@jupyterlab/apputils';
 import { ICodeCellModel, CodeCell, Cell } from '@jupyterlab/cells';
 import { IDocumentManager } from '@jupyterlab/docmanager';
@@ -639,7 +639,7 @@ export class ExperimentManager {
   reportSetConfig(
     nbPanel: NotebookPanel,
     config: string,
-    value: boolean | string
+    value: ReadonlyPartialJSONValue
   ): void {
     if (!this.config.enabled || !this.config.activity) {
       return;

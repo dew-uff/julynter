@@ -116,6 +116,23 @@
   cursor: pointer;
 }
 
+.julynter-toolbar-icon-selected:hover, .julynter-toolbar-icon-with-text:hover {
+  cursor: pointer;
+}
+
+.julynter-toolbar-icon-with-text {
+  position: relative;
+}
+
+.julynter-toolbar-icon-text {
+  position: absolute;
+  right: 5px;
+  font-size: 8px;
+  bottom: -28px;
+}
+
+
+
 .julynter-toolbar {
   position: relative;
   width: 100%;

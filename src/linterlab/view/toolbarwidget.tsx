@@ -8,12 +8,12 @@ import { PathExt } from '@jupyterlab/coreutils';
 import { INotebookTracker } from '@jupyterlab/notebook';
 
 import { ERROR_TYPES_MAP } from '../../linter/reports';
-import { ErrorTypeKey, ErrorTypeKeys } from '../../linter/interfaces';
+import { ErrorTypeKey, ErrorTypeKeys, IReport } from '../../linter/interfaces';
 import { Config } from '../config';
 import { NotebookHandler } from '../notebookhandler';
 import { createJulynterConfigWidget } from './julynterconfigwidget';
 import { ErrorHandler } from '../errorhandler';
-import { configIcon, requirermentsIcon, listIcon, cellIcon, typeIcon, iconMap, eyeIcon } from '../../iconimports';
+import { configIcon, requirermentsIcon, listIcon, cellIcon, typeIcon, iconMap, eyeIcon, filterIcon } from '../../iconimports';
 import { refreshIcon } from '@jupyterlab/ui-components';
 
 interface IToolbarProps {
@@ -23,6 +23,7 @@ interface IToolbarProps {
   config: Config;
   handlers: { [id: string]: Promise<NotebookHandler> };
   errorHandler: ErrorHandler;
+  filtered: IReport[];
 }
 
 /**
@@ -80,6 +81,7 @@ export class ToolbarWidget extends ReactWidget {
   config: Config;
   handlers: { [id: string]: Promise<NotebookHandler> };
   errorHandler: ErrorHandler;
+  filtered: IReport[];
 
   constructor(options: IToolbarProps) {
     super();
@@ -89,6 +91,7 @@ export class ToolbarWidget extends ReactWidget {
     this.config = options.config;
     this.handlers = options.handlers;
     this.errorHandler = options.errorHandler;
+    this.filtered = options.filtered;
     this.addClass("julynter-toolbar-widget")
   }
 
@@ -136,6 +139,15 @@ export class ToolbarWidget extends ReactWidget {
     try {
       const options = this.notebook.options;
       options.updateRestart(!options.checkRestart());
+    } catch (error) {
+      throw this.errorHandler.report(error, 'ToolbarWidget:toggleRestart', []);
+    }
+  }
+
+  removeFilters(): void {
+    try {
+      const options = this.notebook.options;
+      options.resetFiltered();
     } catch (error) {
       throw this.errorHandler.report(error, 'ToolbarWidget:toggleRestart', []);
     }
@@ -251,6 +263,27 @@ export class ToolbarWidget extends ReactWidget {
     );
   }
 
+  private createRestartFilterButton(): JSX.Element {
+    let toggleClass = 'julynter-toolbar-icon';
+    let element = <span> {this.filtered.length > 99 ? '++' : this.filtered.length} </span>;
+    if (this.filtered.length == 0) {
+      toggleClass = 'julynter-toolbar-icon-selected';
+      element = <span></span>;
+    }
+    
+    return (
+      <div
+        className="julynter-toolbar-button"
+        title="Remove all individual lint filters"
+        onClick={this.removeFilters.bind(this)}
+      >
+        <div className="julynter-toolbar-icon-with-text">
+          <filterIcon.react elementSize="normal" className={toggleClass} elementPosition="center"/>
+          <span className="julynter-toolbar-icon-text">{element}</span>
+        </div>
+      </div>
+    );
+  }
 
   private createModeButton(): JSX.Element {
     let toggleIcon = null;
@@ -282,6 +315,7 @@ export class ToolbarWidget extends ReactWidget {
             {this.createFilterButtons()}
             {this.createViewButton()}
             {this.createRestartButton()}
+            {this.createRestartFilterButton()}
             {this.createModeButton()}
             <div
               key="toolbar-req"

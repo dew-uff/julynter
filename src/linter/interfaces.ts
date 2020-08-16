@@ -213,13 +213,16 @@ export interface ILintOptionsManager {
   checkView(): boolean;
   checkRestart(): boolean;
   checkRequirements(): string;
+  checkFiltered(): string[];
   updateReport(key: ReportId, value: boolean): void;
   updateType(key: ErrorTypeKey, value: boolean): void;
   updateMode(mode: ViewMode): void;
   updateView(view: boolean): void;
   updateRestart(view: boolean): void;
   updateRequirements(req: string): void;
-  initializeOptions(checks: IJulynterLintOptions): void;
+  resetFiltered(): void;
+  addLintFilter(hash:string): void
+  initializeOptions(checks: IJulynterLintOptions, filtered: string[]): void;
   reloadOptions(): void;
   saveOptions(): void;
   checks: IJulynterLintOptions;

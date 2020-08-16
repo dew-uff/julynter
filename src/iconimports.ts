@@ -22,6 +22,7 @@ import neverconnectedSvgstr from '../style/img/neverconnected.svg';
 import toggledownSvgstr from '../style/img/toggle_down.svg';
 import togglerightSvgstr from '../style/img/toggle_right.svg';
 import eyeSvgstr from '../style/img/eye.svg';
+import filterSvgstr from '../style/img/filter.svg';
 
 export const julynterIcon = new LabIcon({name: 'julynter:icon', svgstr: julynterSvgstr});
 export const julynterNewIcon = new LabIcon({name: 'julynter:newicon', svgstr: julynterNewSvgstr});
@@ -45,6 +46,7 @@ export const neverconnectedIcon = new LabIcon({name: 'julynter:neverconnected', 
 export const toggleDownIcon = new LabIcon({name: 'julynter:toggledown', svgstr: toggledownSvgstr});
 export const toggleRightIcon = new LabIcon({name: 'julynter:toggleright', svgstr: togglerightSvgstr});
 export const eyeIcon = new LabIcon({name: 'julynter:eye', svgstr: eyeSvgstr});
+export const filterIcon = new LabIcon({name: 'julynter:filter', svgstr: filterSvgstr});
 
 
 export const iconMap = {

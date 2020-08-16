@@ -192,6 +192,7 @@ export class Julynter extends Panel {
           notebook: this.currentHandler,
           labShell: this._labShell,
           errorHandler: this._eh,
+          filtered: lintResult.filteredIndividual,
         });
       } else {
         listWidget = new EmptyListWidget();

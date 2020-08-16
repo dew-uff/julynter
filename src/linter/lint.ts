@@ -24,7 +24,6 @@ export class Linter {
   hasKernel: boolean;
   options: ILintOptionsManager;
   update: IQueryResult | null;
-  filteredHashes: string[];
 
   constructor(
     options: ILintOptionsManager,
@@ -35,7 +34,6 @@ export class Linter {
     this.options = options;
     this.hasKernel = hasKernel;
     this.update = update;
-    this.filteredHashes = [];
   }
 
   generate(
@@ -315,7 +313,7 @@ export class Linter {
 
   private createFilteredResult(headings: IReport[], notebookHash:string): ILintingResult {
     const options = this.options;
-    
+    const filtered = options.checkFiltered();
     const result: ILintingResult = {
       visible: [],
       filteredType: [],
@@ -324,6 +322,7 @@ export class Linter {
       filteredIndividual: [],
       hash: notebookHash,
     };
+    
     headings.forEach((element) => {
       if (!options.checkType(element.reportType)) {
         result.filteredType.push(element);
@@ -331,7 +330,7 @@ export class Linter {
         result.filteredId.push(element);
       } else if (element.restart && !options.checkRestart()) {
         result.filteredRestart.push(element);
-      } else if (element.hash in this.filteredHashes) {
+      } else if (filtered.includes(element.hash)) {
         result.filteredIndividual.push(element);
       } else {
         result.visible.push(element);
