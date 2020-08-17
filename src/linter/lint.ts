@@ -15,7 +15,6 @@ import {
 import sha1 from 'sha1';
 
 export function hash(value: string): string {
-  // ToDo: apply sha1
   return sha1(value);
 }
 

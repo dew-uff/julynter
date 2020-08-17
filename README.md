@@ -158,7 +158,11 @@ Known issues:
 
 ### Linting list does not update
 
-Sometimes Julynter does not update the linting list after an action. If it occurs, click on the notebook name in the Julynter tab to force a reload.
+Sometimes Julynter does not update the linting list after an action. For instance, after updating the title, Julynter keeps the previous lint.
+
+Sometimes Julynter updates before properly detecting the execution of a cell. It usually occurs when the cell throws an exception.
+
+If either of these things occur, click on the notebook name in the Julynter tab to force a reload.
 
 ### External and global options are not recognized
 

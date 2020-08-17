@@ -500,6 +500,7 @@ export class NotebookHandler implements IDisposable {
       this.hasKernel = true;
       this.update = update.result;
     }
+    this._update();
   }
 
   /**

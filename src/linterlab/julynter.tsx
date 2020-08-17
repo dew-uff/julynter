@@ -140,6 +140,13 @@ export class Julynter extends Panel {
     }
   }
 
+  performQueryAndUpdate(): void {
+    if (this.currentHandler) {
+      this.currentHandler.performQuery();
+    }
+    this.updateJulynter();
+  }
+
   updateJulynter(): void {
     try {
       if (this._mainWidget !== null && this.contains(this._mainWidget)) {
@@ -208,7 +215,7 @@ export class Julynter extends Panel {
         title,
         this._status,
         this._eh,
-        this.updateJulynter.bind(this)
+        this.performQueryAndUpdate.bind(this)
       );
       this._mainWidget = new Panel();
       this._mainWidget.addClass('jp-Julynter');

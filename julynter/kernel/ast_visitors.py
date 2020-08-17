@@ -70,5 +70,6 @@ class JulynterPathVisitor(ast.NodeVisitor):
 
     def visit_Str(self, node):
         """Visit Str Node"""
-        if os.path.abspath(node.s) == node.s and os.path.exists(node.s) and node.s != '/':
+        string = node.s.rstrip('/')
+        if os.path.abspath(string) == string and os.path.exists(string) and node.s != '/':
             self.absolute_paths.add(node.s)

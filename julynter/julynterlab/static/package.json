@@ -57,7 +57,7 @@
         "@jupyterlab/ui-components-extension": "~2.2.0",
         "@jupyterlab/vdom-extension": "~2.2.0",
         "@jupyterlab/vega5-extension": "~2.2.0",
-        "@julynter/labextension": "file:../extensions/julynter-labextension-0.3.5.tgz"
+        "@julynter/labextension": "file:../extensions/julynter-labextension-0.4.1.tgz"
     },
     "devDependencies": {
         "@jupyterlab/buildutils": "^2.2.0",

@@ -1,3 +1,3 @@
 """Define julynter version"""
-version_info = (0, 4, 0, "a")
+version_info = (0, 4, 1)
 __version__ = ".".join(map(str, version_info))
