@@ -1,9 +1,9 @@
 """Handle Server extension requests"""
 import json
 
+from jupyter_server.base.handlers import APIHandler
+from jupyter_server.utils import url_path_join
 import tornado
-from notebook.base.handlers import APIHandler
-from notebook.utils import url_path_join
 from .config import merge
 from .config import load_home_config, load_project_config
 from .config import save_home_config, save_project_config

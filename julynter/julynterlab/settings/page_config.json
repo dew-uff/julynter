@@ -1,5 +1,0 @@
-{
-    "disabledExtensions": [
-        "@jupyterlab/extensionmanager-extension"
-    ]
-}

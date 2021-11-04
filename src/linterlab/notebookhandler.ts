@@ -347,7 +347,7 @@ export class NotebookHandler implements IDisposable {
   }
 
   private _createPromise(error: any = null): Promise<any> {
-    return new Promise<any>((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       if (!error) {
         resolve();
       } else {

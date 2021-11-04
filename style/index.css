@@ -1,3 +1,5 @@
+@import url('base.css');
+
 :root {
   --julynter-font-size1: var(--jp-ui-font-size1);
   --julynter-title-font-size: var(--jp-ui-font-size0);

@@ -1,5 +1,7 @@
 """Julynter module"""
+import json
 import sys
+from pathlib import Path
 
 from ._version import __version__
 
@@ -9,6 +11,17 @@ else:
     from .handlers import setup_handlers
     from .cmd import main
 
+    HERE = Path(__file__).parent.resolve()
+
+    with (HERE / "labextension" / "package.json").open() as fid:
+        data = json.load(fid)
+
+
+def _jupyter_labextension_paths():
+    return [{
+        "src": "labextension",
+        "dest": data["name"]
+    }]
 
 def _jupyter_server_extension_paths():
     """Register julynter server extension"""
@@ -17,17 +30,19 @@ def _jupyter_server_extension_paths():
     }]
 
 
-def load_jupyter_server_extension(lab_app):
+def _load_jupyter_server_extension(server_app):
     """Registers the API handler to receive HTTP requests from the frontend extension.
 
     Parameters
     ----------
-    lab_app: jupyterlab.labapp.LabApp
+    server_app: jupyterlab.labapp.LabApp
         JupyterLab application instance
     """
-    setup_handlers(lab_app.web_app)
-    lab_app.log.info("Registered Julynter extension at URL path /julynter")
+    setup_handlers(server_app.web_app)
+    server_app.log.info("Registered HelloWorld extension at URL path /jftemp")
 
+# For backward compatibility with notebook server - useful for Binder/JupyterHub
+load_jupyter_server_extension = _load_jupyter_server_extension
 
 if __name__ == "__main__":
     main()

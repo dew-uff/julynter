@@ -1,6 +1,6 @@
 # Julynter
 
-![Github Actions Status](https://github.com/dew-uff/julynter/workflows/Build/badge.svg)
+[![Github Actions Status](https://github.com/dew-uff/julynter/workflows/Build/badge.svg)](https://github.com/dew-uff/julynter/actions/workflows/build.yml)
 
 Julynter is a linter for Jupyter Notebooks that aims at improving their Quality and Reproducibility based on the following guidelines [1]:
 
@@ -327,7 +327,9 @@ After defining the Comm, you may set the Julynter interface to automatically exe
 
 Pull requests for bugfixes and new features are welcome! 
 
-### Install
+### Development install
+
+Note: You will need NodeJS to build the extension package.
 
 The `jlpm` command is JupyterLab's pinned version of
 [yarn](https://yarnpkg.com/) that is installed with JupyterLab. You may use
@@ -335,62 +337,47 @@ The `jlpm` command is JupyterLab's pinned version of
 
 ```bash
 # Clone the repo to your local environment
-# Move to julynter directory
+# Change directory to the julynter directory
 
-# Install server extension
+# Install package in development mode
 pip install -e .
-# Register server extension
-jupyter serverextension enable --py julynter --sys-prefix
-
-# Install dependencies
-jlpm
-# Build Typescript source
-jlpm build
 # Link your development version of the extension with JupyterLab
-jupyter labextension link .
-# Rebuild Typescript source after making changes
-jlpm build
-# Rebuild JupyterLab after making any changes
-jupyter lab build
+jupyter labextension develop . --overwrite
+# Server extension must be manually installed in develop mode
+jupyter server extension enable julynter
+# Rebuild extension Typescript source after making changes
+jlpm run build
 ```
 
-You can watch the source directory and run JupyterLab in watch mode to watch for changes in the extension's source and automatically rebuild the extension and application.
+You can watch the source directory and run JupyterLab at the same time in different terminals to watch for changes in the extension's source and automatically rebuild the extension.
 
 ```bash
-# Watch the source directory in another terminal tab
-jlpm watch
-# Run jupyterlab in watch mode in one terminal tab
-jupyter lab --watch
+# Watch the source directory in one terminal, automatically rebuilding when needed
+jlpm run watch
+# Run JupyterLab in another terminal
+jupyter lab
 ```
 
-### Uninstall
+With the watch command running, every saved change will immediately be built locally and available in your running JupyterLab. Refresh JupyterLab to load the change in your browser (you may need to wait several seconds for the extension to be rebuilt).
+
+By default, the `jlpm run build` command generates the source maps for this extension to make it easier to debug using the browser dev tools. To also generate source maps for the JupyterLab core extensions, you can run the following command:
 
 ```bash
-pip uninstall julynter
-jupyter labextension uninstall julynter
+jupyter lab build --minimize=False
 ```
 
-### Publishing Package
-
-(Self notes)
-
-Publish NPM package:
+### Development uninstall
 
 ```bash
-npm login
-npm publish --access public
+# Server extension must be manually disabled in develop mode
+jupyter server extension disable jftemp
+pip uninstall jftemp
 ```
 
-Create local Julynterlab:
-```bash
-rm -rf julynter/julynterlab
-./create_julynterlab.sh
-```
+In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
+command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
+folder is located. Then you can remove the symlink named `julynter` within that folder.
 
+### Packaging the extension
 
-Publish PyPI package:
-```bash
-rm -rf build
-python setup.py bdist_wheel
-twine upload dist/*
-```
+See [RELEASE](RELEASE.md)

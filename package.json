@@ -1,6 +1,6 @@
 {
   "name": "@julynter/labextension",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A quality checker for Jupyter",
   "keywords": [
     "jupyter",
@@ -12,10 +12,13 @@
     "url": "https://github.com/dew-uff/julynter/issues"
   },
   "license": "BSD-3-Clause",
-  "author": "Joao Felipe Pimentel",
+  "author": {
+    "name": "Joao Felipe Pimentel",
+    "email": "joaofelipenp@gmail.com"
+  },
   "files": [
     "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
-    "style/**/*.{css,eot,gif,html,jpg,json,png,svg,woff2,ttf}"
+    "style/**/*.{css,js,eot,gif,html,jpg,json,png,svg,woff2,ttf}"
   ],
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -25,54 +28,58 @@
     "url": "git+https://github.com/dew-uff/julynter.git"
   },
   "scripts": {
-    "build": "jlpm run build:lib",
-    "build:labextension": "cd julynter && rimraf labextension && mkdirp labextension && cd labextension && npm pack ../..",
+    "build": "jlpm run build:lib && jlpm run build:labextension:dev",
+    "build:prod": "jlpm run clean && jlpm run build:lib && jlpm run build:labextension",
+    "build:labextension": "jupyter labextension build .",
+    "build:labextension:dev": "jupyter labextension build --development True .",
     "build:lib": "tsc",
-    "build:all": "jlpm run build:labextension",
     "clean": "jlpm run clean:lib",
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
     "clean:labextension": "rimraf julynter/labextension",
     "clean:all": "jlpm run clean:lib && jlpm run clean:labextension",
     "eslint": "eslint . --ext .ts,.tsx --fix",
     "eslint:check": "eslint . --ext .ts,.tsx",
-    "prepare": "jlpm run clean && jlpm run build",
-    "watch": "tsc -w"
+    "install:extension": "jlpm run build",
+    "watch": "run-p watch:src watch:labextension",
+    "watch:src": "tsc -w",
+    "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
-    "@jupyterlab/application": "^2.0.0",
-    "@jupyterlab/coreutils": "^4.0.0",
-    "@jupyterlab/docmanager": "^2.0.0",
-    "@jupyterlab/fileeditor": "^2.0.0",
-    "@jupyterlab/nbformat": "^2.0.0",
-    "@jupyterlab/notebook": "^2.0.0",
-    "@jupyterlab/services": "^5.0.0",
-    "@lumino/coreutils": "^1.5.2",
-    "@lumino/disposable": "^1.4.2",
-    "react": "~16.9.0",
-    "react-dom": "~16.9.0",
+    "@jupyterlab/application": "^3.2.1",
+    "@jupyterlab/coreutils": "^5.1.0",
+    "@jupyterlab/docmanager": "^3.2.1",
+    "@jupyterlab/notebook": "^3.2.1",
+    "@jupyterlab/services": "^6.1.0",
+    "@lumino/widgets": "^1.29.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "sha1": "^1.1.1"
   },
   "devDependencies": {
-    "@types/react": "~16.9.0",
-    "@types/react-dom": "~16.9.0",
-    "@types/sha1": "^1.1.2",
-    "@typescript-eslint/eslint-plugin": "^3.5.0",
-    "@typescript-eslint/parser": "^3.5.0",
-    "eslint": "^7.4.0",
-    "eslint-config-prettier": "^6.10.1",
-    "eslint-plugin-prettier": "^3.1.2",
-    "eslint-plugin-react": "^7.20.6",
+    "@jupyterlab/builder": "^3.2.1",
+    "@types/react": "^17.0.34",
+    "@types/react-dom": "^17.0.11",
+    "@types/sha1": "^1.1.3",
+    "@typescript-eslint/eslint-plugin": "^4.8.1",
+    "@typescript-eslint/parser": "^4.8.1",
+    "eslint": "^7.14.0",
+    "eslint-config-prettier": "^6.15.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-react": "^7.26.1",
     "mkdirp": "^1.0.3",
-    "prettier": "2.0.5",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.1.1",
     "rimraf": "^3.0.2",
-    "typescript": "~3.9.6"
-  },
-  "resolutions": {
-    "@types/react": "~16.9.0"
+    "typescript": "~4.1.3"
   },
   "sideEffects": [
-    "style/*.css"
+    "style/*.css",
+    "style/index.js"
   ],
+  "styleModule": "style/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
   "jupyterlab": {
     "discovery": {
       "server": {
@@ -84,9 +91,15 @@
         }
       }
     },
-    "extension": true
+    "extension": true,
+    "outputDir": "julynter/labextension"
   },
-  "directories": {
-    "lib": "lib"
+  "jupyter-releaser": {
+    "hooks": {
+      "before-build-npm": [
+        "python -m pip install jupyterlab~=3.2",
+        "jlpm"
+      ]
+    }
   }
 }

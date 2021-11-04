@@ -1,3 +1,18 @@
+
 [build-system]
-requires = ['jupyter_packaging~=0.4.0;python_version>="3.5"', 'jupyterlab~=2.0;python_version>="3.5"', "setuptools>=40.8.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["jupyter_packaging~=0.11,<2", "jupyterlab~=3.2"]
+build-backend = "jupyter_packaging.build_api"
+
+[tool.jupyter-packaging.options]
+skip-if-exists = ["julynter/labextension/static/style.js"]
+ensured-targets = ["julynter/labextension/static/style.js", "julynter/labextension/package.json"]
+
+[tool.jupyter-packaging.builder]
+factory = "jupyter_packaging.npm_builder"
+
+[tool.jupyter-packaging.build-args]
+build_cmd = "build:prod"
+npm = ["jlpm"]
+
+[tool.check-manifest]
+ignore = ["julynter/labextension/**", "yarn.lock", ".*", "package-lock.json"]
